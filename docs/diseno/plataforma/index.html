@@ -1,0 +1,1373 @@
+<title>AGROCULTURA</title>
+<style>
+:root{color-scheme:light}
+body{background:#F2F4F0;color:#17261F;margin:0}
+@media (max-width: 720px){
+  nav[aria-label="Secciones"]{flex:1 1 100% !important;min-width:0 !important;flex-direction:row !important;align-items:center;gap:6px !important;overflow-x:auto;padding:10px 16px !important;border-right:0 !important;border-bottom:1px solid #E1E7E2}
+  nav[aria-label="Secciones"] > div{flex-direction:row !important;gap:6px !important;flex:none}
+  nav[aria-label="Secciones"] > div > div:first-child{display:none}
+  nav[aria-label="Secciones"] > div > button{flex:none;white-space:nowrap}
+  nav[aria-label="Secciones"] > div:last-child{display:none}
+  main{padding:20px 16px 32px !important}
+}
+</style>
+<script src="support.js"></script>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=IBM+Plex+Mono:wght@500&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button,input,select,textarea{font-family:'Nunito Sans',system-ui,sans-serif}
+button{cursor:pointer}
+button:disabled{cursor:not-allowed}
+input::placeholder,textarea::placeholder{color:#7A867E}
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-direction: column; background: #F2F4F0; font-family: 'Nunito Sans', system-ui, sans-serif; color: #17261F">
+
+  <!-- ===================== ENCABEZADO ===================== -->
+  <header style="background: #1F3A2E; color: #E7EFE9; display: flex; align-items: center; gap: 20px; padding: 10px 24px; min-height: 64px; box-sizing: border-box; flex: none; flex-wrap: wrap">
+    <div style="display: flex; align-items: center; gap: 12px; min-width: 0">
+      <div style="width: 36px; height: 36px; border-radius: 10px; background: #B8323F; display: flex; align-items: center; justify-content: center; flex: none">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+      </div>
+      <div style="display: flex; flex-direction: column; line-height: 1.2">
+        <span style="font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 700; letter-spacing: 0.12em; font-size: 16px; color: #FFFFFF">AGROCULTURA</span>
+        <span style="font-size: 12px; color: #A9C4B0">Memoria cafetera de Minca y sectores aledaños · datos de ejemplo</span>
+      </div>
+    </div>
+    <div style="flex: 1 1 auto; min-width: 0; display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex-wrap: wrap">
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 14px; border-radius: 10px; background: #2A4A3B; border: 1px solid #3A5E4C; white-space: nowrap">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A9C4B0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+        <div style="display: flex; flex-direction: column; gap: 2px">
+          <span style="font-size: 11px; color: #A9C4B0">Historias en el mapa</span>
+          <span style="font-weight: 700; font-size: 14px; color: #FFFFFF">{{ nPub }} publicadas</span>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 7px 14px; border-radius: 10px; background: #2A4A3B; border: 1px solid #3A5E4C; white-space: nowrap">
+        <span style="width: 9px; height: 9px; border-radius: 5px; background: #E0B13A; flex: none"></span>
+        <div style="display: flex; flex-direction: column; gap: 2px">
+          <span style="font-size: 11px; color: #A9C4B0">Esperando revisión</span>
+          <span style="font-weight: 700; font-size: 14px; color: #FFFFFF">{{ nRev }} historias</span>
+        </div>
+      </div>
+      <button aria-pressed="{{ offlinePressed }}" onClick="{{ toggleOnline }}" style="display: flex; align-items: center; gap: 10px; padding: 7px 14px; border-radius: 10px; background: {{ conBg }}; border: 1px solid {{ conBorde }}; color: #FFFFFF; white-space: nowrap; text-align: left">
+        <span style="width: 9px; height: 9px; border-radius: 5px; background: {{ conDot }}; flex: none"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px">
+          <span style="font-size: 11px; color: #C9DBCD">Simular conexión · F10</span>
+          <span style="font-weight: 700; font-size: 14px">{{ conTexto }}</span>
+        </span>
+      </button>
+      <span style="width: 1px; height: 32px; background: #3A5E4C"></span>
+      <sc-if value="{{ logged }}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; align-items: center; gap: 10px">
+          <div style="width: 36px; height: 36px; border-radius: 18px; background: #E7EFE9; color: #1F3A2E; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; flex: none">{{ iniciales }}</div>
+          <div style="display: flex; flex-direction: column; line-height: 1.2">
+            <span style="font-weight: 700; font-size: 14px; color: #FFFFFF">{{ usuarioNombre }}</span>
+            <span style="font-size: 12px; color: #A9C4B0">{{ usuarioRol }}</span>
+          </div>
+          <button onClick="{{ salir }}" style="height: 32px; padding: 0 12px; border-radius: 8px; border: 1px solid #3A5E4C; background: transparent; color: #E7EFE9; font-size: 13px; font-weight: 700">Salir</button>
+        </div>
+      </sc-if>
+      <sc-if value="{{ notLogged }}" hint-placeholder-val="{{ true }}">
+        <button onClick="{{ abrirLogin }}" style="height: 40px; padding: 0 16px; border-radius: 10px; border: 0; background: #FFFFFF; color: #1F3A2E; display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 800">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1F3A2E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+          <span>Ingresar</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #4A5B50">F2</span>
+        </button>
+      </sc-if>
+    </div>
+  </header>
+
+  <div style="flex: 1; display: flex; flex-wrap: wrap; align-items: stretch">
+
+    <!-- ===================== MENÚ LATERAL ===================== -->
+    <nav aria-label="Secciones" style="flex: 1 1 276px; min-width: 268px; box-sizing: border-box; background: #FFFFFF; border-right: 1px solid #E1E7E2; padding: 20px 16px; display: flex; flex-direction: column; gap: 18px">
+      <sc-for list="{{ menu }}" as="g" hint-placeholder-count="4">
+        <div style="display: flex; flex-direction: column; gap: 3px">
+          <div style="padding: 0 10px 4px; font-size: 11px; font-weight: 800; letter-spacing: 0.12em; color: #6B776F">{{ g.titulo }}</div>
+          <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="2">
+            <button aria-current="{{ it.current }}" onClick="{{ it.ir }}" style="height: 40px; border-radius: 10px; border: 0; background: {{ it.bg }}; color: {{ it.fg }}; display: flex; align-items: center; gap: 10px; padding: 0 10px; font-size: 14.5px; font-weight: {{ it.peso }}; text-align: left">
+              <sc-if value="{{ it.iMapa }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg></sc-if>
+              <sc-if value="{{ it.iMic }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></sc-if>
+              <sc-if value="{{ it.iLista }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></svg></sc-if>
+              <sc-if value="{{ it.iBandeja }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="M4 13l2-8h12l2 8v6H4z"/><path d="M4 13h5l1 2h4l1-2h5"/></svg></sc-if>
+              <sc-if value="{{ it.iBandera }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg></sc-if>
+              <sc-if value="{{ it.iEngranaje }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg></sc-if>
+              <sc-if value="{{ it.iGlobo }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></sc-if>
+              <sc-if value="{{ it.iAvatar }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><circle cx="12" cy="7" r="3.5"/><path d="M5.5 21a6.5 6.5 0 0 1 13 0"/><path d="M3 9V5a2 2 0 0 1 2-2h2M21 9V5a2 2 0 0 0-2-2h-2"/></svg></sc-if>
+              <span style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ it.label }}</span>
+              <sc-if value="{{ it.hayCuenta }}" hint-placeholder-val="{{ false }}"><span style="min-width: 22px; height: 22px; padding: 0 7px; box-sizing: border-box; border-radius: 11px; background: {{ it.cuentaBg }}; color: {{ it.cuentaFg }}; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center">{{ it.cuenta }}</span></sc-if>
+              <sc-if value="{{ it.lock }}" hint-placeholder-val="{{ false }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8A968E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="Solo administradores" role="img" style="flex: none"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></sc-if>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: {{ it.codeFg }}; background: {{ it.codeBg }}; border-radius: 4px; padding: 1px 4px; flex: none">{{ it.code }}</span>
+            </button>
+          </sc-for>
+        </div>
+      </sc-for>
+      <div style="margin-top: auto; border-radius: 12px; background: #F2F4F0; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px">
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 800; color: #1F3A2E">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1F3A2E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>
+          <span style="flex: 1">Voz e íconos</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #6B776F">F9</span>
+        </div>
+        <div style="font-size: 12.5px; line-height: 1.45; color: #4A5B50">Cada página tiene un botón «Escuchar» que la lee en voz alta.</div>
+      </div>
+    </nav>
+
+    <!-- ===================== CONTENIDO ===================== -->
+    <main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 28px 28px 40px; display: flex; flex-direction: column; gap: 20px">
+
+      <!-- ========== MAPA DE HISTORIAS (F1, F11, F12) ========== -->
+      <sc-if value="{{ vMapa }}" hint-placeholder-val="{{ true }}">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap">
+          <div style="display: flex; flex-direction: column; gap: 4px">
+            <h1 style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-size: 28px; font-weight: 700">Mapa de historias</h1>
+            <p style="margin: 0; font-size: 14.5px; color: #4A5B50">Historias aprobadas de la cultura cafetera, ubicadas donde ocurrieron.</p>
+          </div>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap">
+            <button onClick="{{ leerMapa }}" style="height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid #C9D3CB; background: #FFFFFF; color: #1F3A2E; display: flex; align-items: center; gap: 8px; font-size: 14.5px; font-weight: 700">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1F3A2E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>
+              <span>Escuchar</span>
+            </button>
+            <button onClick="{{ irContar }}" style="height: 44px; padding: 0 18px; border-radius: 10px; border: 0; background: #B8323F; color: #FFFFFF; display: flex; align-items: center; gap: 8px; font-size: 14.5px; font-weight: 800; box-shadow: 0 4px 12px rgba(184, 50, 63, 0.25)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+              <span>Contar una historia</span>
+            </button>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px">
+          <div style="background: #FFFFFF; border: 1px solid #E1E7E2; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 10px">
+            <div style="display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 700; color: #33433A"><span style="width: 32px; height: 32px; border-radius: 9px; background: #E4ECE3; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1F3A2E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg></span>Historias publicadas</div>
+            <div style="font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-size: 34px; font-weight: 700; line-height: 1">{{ nPub }}</div>
+            <div style="font-size: 13px; color: #4A5B50">{{ kpiOrigen }}</div>
+          </div>
+          <div style="background: #FFFFFF; border: 1px solid #E1E7E2; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 10px">
+            <div style="display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 700; color: #33433A"><span style="width: 32px; height: 32px; border-radius: 9px; background: #E4ECE3; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1F3A2E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg></span>Sectores con historias</div>
+            <div style="display: flex; align-items: baseline; gap: 8px"><span style="font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-size: 34px; font-weight: 700; line-height: 1">{{ nSectores }}</span><span style="font-size: 13px; color: #4A5B50">de 4 sectores</span></div>
+            <div style="height: 6px; border-radius: 3px; background: #E4ECE3; overflow: hidden"><div style="height: 6px; width: {{ pctSectores }}%; background: #1F3A2E; border-radius: 3px"></div></div>
+          </div>
+          <div style="background: #FFFFFF; border: 1px solid #E1E7E2; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 10px">
+            <div style="display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 700; color: #33433A"><span style="width: 32px; height: 32px; border-radius: 9px; background: #E4ECE3; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1F3A2E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span>Formatos</div>
+            <div style="display: flex; gap: 14px; align-items: baseline; flex-wrap: wrap">
+              <span><b style="font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-size: 26px">{{ nAudio }}</b> <span style="font-size: 13px; color: #4A5B50">audio</span></span>
+              <span><b style="font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-size: 26px">{{ nFoto }}</b> <span style="font-size: 13px; color: #4A5B50">foto</span></span>
+              <span><b style="font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-size: 26px">{{ nVideo }}</b> <span style="font-size: 13px; color: #4A5B50">video</span></span>
+            </div>
+            <div style="font-size: 13px; color: #4A5B50">Una historia puede tener varios formatos.</div>
+          </div>
+          <div style="background: #FFF8E6; border: 1px solid #F0D58C; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 10px">
+            <div style="display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 700; color: #5C4300"><span style="width: 32px; height: 32px; border-radius: 9px; background: #FFE9B0; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5C4300" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>En revisión</div>
+            <div style="font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-size: 34px; font-weight: 700; line-height: 1; color: #5C4300">{{ nRev }}</div>
+            <div style="font-size: 13px; line-height: 1.4; color: #5C4300">No salen en el mapa hasta que un administrador las aprueba (F6).</div>
+          </div>
+        </div>
+
+        <div style="background: #FFFFFF; border: 1px solid #E1E7E2; border-radius: 16px; display: flex; flex-direction: column; overflow: hidden">
+          <div style="display: flex; flex-direction: column; gap: 14px; padding: 16px 18px; border-bottom: 1px solid #EDF1EE">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap">
+              <div role="group" aria-label="Filtrar por sector" style="display: flex; gap: 4px; flex-wrap: wrap; background: #F2F4F0; border-radius: 10px; padding: 4px">
+                <sc-for list="{{ sectorTabs }}" as="t" hint-placeholder-count="5">
+                  <button aria-pressed="{{ t.pressed }}" onClick="{{ t.elegir }}" style="height: 32px; padding: 0 12px; border-radius: 8px; border: 0; background: {{ t.bg }}; color: #17261F; display: flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 700; box-shadow: {{ t.sombra }}">
+                    <span>{{ t.nombre }}</span><span style="font-size: 12px; color: #6B776F">{{ t.cuenta }}</span>
+                  </button>
+                </sc-for>
+              </div>
+              <div style="display: flex; align-items: center; gap: 4px; background: #F2F4F0; border-radius: 10px; padding: 4px" role="group" aria-label="Filtrar por origen (F12)">
+                <sc-for list="{{ origenTabs }}" as="o" hint-placeholder-count="3">
+                  <button aria-pressed="{{ o.pressed }}" onClick="{{ o.elegir }}" style="height: 32px; padding: 0 12px; border-radius: 8px; border: 0; background: {{ o.bg }}; color: #17261F; display: flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 700; box-shadow: {{ o.sombra }}"><span style="width: 8px; height: 8px; border-radius: 4px; background: {{ o.dot }}"></span>{{ o.nombre }}</button>
+                </sc-for>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+              <div style="display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border: 1px solid #C9D3CB; border-radius: 10px; background: #FFFFFF; flex: 1 1 280px; min-width: 0; box-sizing: border-box">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B776F" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="flex: none"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg>
+                <input type="search" aria-label="Buscar historias" value="{{ q }}" onChange="{{ onQ }}" placeholder="Buscar por título, narrador o etiqueta…" style="border: 0; outline: none; flex: 1; min-width: 0; font-size: 14px; color: #17261F; background: transparent">
+              </div>
+              <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: #4A5B50">Época
+                <select value="{{ fEpoca }}" onChange="{{ onEpoca }}" style="height: 40px; border: 1px solid #C9D3CB; border-radius: 10px; background: #FFFFFF; padding: 0 10px; font-size: 14px; color: #17261F">
+                  <option value="Todas">Todas</option>
+                  <option value="Antes de 1960">Antes de 1960</option>
+                  <option value="1960 a 1979">1960 a 1979</option>
+                  <option value="1980 a 1999">1980 a 1999</option>
+                  <option value="2000 en adelante">2000 en adelante</option>
+                </select>
+              </label>
+              <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: #4A5B50">Formato
+                <select value="{{ fFormato }}" onChange="{{ onFormato }}" style="height: 40px; border: 1px solid #C9D3CB; border-radius: 10px; background: #FFFFFF; padding: 0 10px; font-size: 14px; color: #17261F">
+                  <option value="Todos">Todos</option>
+                  <option value="Audio">Audio</option>
+                  <option value="Foto">Foto</option>
+                  <option value="Video">Video</option>
+                  <option value="Texto">Texto</option>
+                </select>
+              </label>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #6B776F">F11</span>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-wrap: wrap; align-items: stretch">
+            <div style="flex: 3 1 420px; min-width: 0; position: relative; height: 470px; background: #E6EDE5; overflow: hidden">
+              <svg width="100%" height="100%" viewBox="0 0 800 470" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="position: absolute; left: 0; top: 0">
+                <g fill="none" stroke="#CBDACB" stroke-width="1.5">
+                  <path d="M-20 90C120 50 240 110 380 70S640 30 820 80"/>
+                  <path d="M-20 150C130 110 250 170 390 130S650 95 820 140"/>
+                  <path d="M-20 210C140 175 260 230 400 195S660 160 820 205"/>
+                  <path d="M-20 270C150 240 270 290 410 260S670 228 820 268"/>
+                  <path d="M-20 330C160 305 280 350 420 325S680 296 820 332"/>
+                  <path d="M-20 390C170 370 290 410 430 390S690 364 820 396"/>
+                </g>
+                <path d="M150 -10C175 90 110 170 230 250S260 380 220 480" fill="none" stroke="#B7CFD6" stroke-width="12" stroke-linecap="round"/>
+                <path d="M150 -10C175 90 110 170 230 250S260 380 220 480" fill="none" stroke="#D3E3E8" stroke-width="4" stroke-linecap="round"/>
+                <path d="M820 300C700 280 640 330 560 300S430 250 360 280" fill="none" stroke="#F4F6F3" stroke-width="5" stroke-dasharray="10 8"/>
+              </svg>
+              <sc-for list="{{ etiquetasMapa }}" as="em" hint-placeholder-count="4">
+                <span style="position: absolute; left: {{ em.left }}; top: {{ em.top }}; transform: translate(-50%, 34px); font-size: 11px; font-weight: 800; letter-spacing: 0.14em; color: #5E7A66; white-space: nowrap">{{ em.nombre }}</span>
+              </sc-for>
+              <sc-for list="{{ pins }}" as="p" hint-placeholder-count="6">
+                <button aria-label="Ver {{ p.titulo }}" onClick="{{ p.abrir }}" style="position: absolute; left: {{ p.left }}; top: {{ p.top }}; width: {{ p.w }}px; height: {{ p.h }}px; transform: translate(-50%, -100%); padding: 0; border: 0; background: transparent">
+                  <svg width="100%" height="100%" viewBox="0 0 40 48" aria-hidden="true"><path d="M20 46C20 46 4 32 4 18a16 16 0 0 1 32 0c0 14-16 28-16 28z" fill="{{ p.fill }}" stroke="#FFFFFF" stroke-width="2.5"/><circle cx="20" cy="18" r="6" fill="#FFFFFF"/></svg>
+                </button>
+                <sc-if value="{{ p.sel }}" hint-placeholder-val="{{ false }}">
+                  <span style="position: absolute; left: {{ p.left }}; top: {{ p.top }}; transform: translate(-50%, -100%) translateY(-62px); background: #17261F; color: #FFFFFF; font-size: 12.5px; font-weight: 700; padding: 6px 10px; border-radius: 8px; white-space: nowrap; box-shadow: 0 6px 16px rgba(23, 38, 31, 0.25)">{{ p.titulo }}</span>
+                </sc-if>
+              </sc-for>
+              <div style="position: absolute; left: 14px; bottom: 14px; display: flex; gap: 12px; background: rgba(255, 255, 255, 0.92); border-radius: 10px; padding: 8px 12px; font-size: 12.5px; color: #33433A">
+                <span style="display: flex; align-items: center; gap: 6px"><span style="width: 10px; height: 10px; border-radius: 5px; background: #B8323F"></span>Comunidad</span>
+                <span style="display: flex; align-items: center; gap: 6px"><span style="width: 10px; height: 10px; border-radius: 5px; background: #2F6F73"></span>Proyecto</span>
+                <span style="color: #6B776F">Mapa ilustrativo, no a escala</span>
+              </div>
+              <span style="position: absolute; right: 14px; top: 14px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #4A5B50; background: rgba(255, 255, 255, 0.92); border-radius: 6px; padding: 3px 8px">F1</span>
+            </div>
+
+            <div style="flex: 2 1 320px; min-width: 0; max-height: 470px; overflow-y: auto; border-left: 1px solid #EDF1EE; display: flex; flex-direction: column">
+              <sc-if value="{{ sinResultados }}" hint-placeholder-val="{{ false }}">
+                <div style="padding: 28px 22px; display: flex; flex-direction: column; gap: 6px">
+                  <div style="font-weight: 800; font-size: 16px">No hay historias con estos filtros</div>
+                  <div style="font-size: 14px; color: #4A5B50">Prueba con otro sector, otra época o borra la búsqueda.</div>
+                </div>
+              </sc-if>
+              <sc-for list="{{ lista }}" as="h" hint-placeholder-count="5">
+                <button onClick="{{ h.abrir }}" style="display: flex; gap: 12px; align-items: flex-start; padding: 14px 18px; border: 0; border-bottom: 1px solid #EDF1EE; background: {{ h.bg }}; text-align: left; color: #17261F">
+                  <span style="width: 64px; height: 64px; border-radius: 10px; flex: none; background: repeating-linear-gradient(135deg, #D7E0D6, #D7E0D6 7px, #E1E8E0 7px, #E1E8E0 14px); display: flex; align-items: center; justify-content: center; color: #4F6857">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4F6857" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="M4 18l5-5 4 4 3-3 4 4"/></svg>
+                  </span>
+                  <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px">
+                    <span style="display: flex; align-items: center; gap: 8px"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #6B776F">{{ h.code }}</span><span style="height: 18px; padding: 0 7px; border-radius: 9px; background: {{ h.origenBg }}; color: {{ h.origenFg }}; font-size: 11px; font-weight: 800; display: flex; align-items: center">{{ h.origen }}</span></span>
+                    <span style="font-weight: 800; font-size: 15px; line-height: 1.25">{{ h.titulo }}</span>
+                    <span style="font-size: 13px; color: #4A5B50">{{ h.narrador }} · {{ h.sector }} · {{ h.epoca }}</span>
+                    <span style="display: flex; gap: 5px; flex-wrap: wrap">
+                      <sc-for list="{{ h.formatos }}" as="fm" hint-placeholder-count="2"><span style="height: 22px; padding: 0 8px; border-radius: 6px; background: #F2F4F0; border: 1px solid #E1E7E2; font-size: 12px; font-weight: 700; color: #33433A; display: flex; align-items: center">{{ fm }}</span></sc-for>
+                    </span>
+                  </span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 18px; border-top: 1px solid #EDF1EE; font-size: 13px; color: #4A5B50">
+            <span>Mostrando {{ nLista }} de {{ nPub }} historias publicadas</span>
+            <span>Toca un punto del mapa o una historia de la lista para abrir su ficha (F8).</span>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ========== CONTAR UNA HISTORIA (F3, F4, F5, F13, F10) ========== -->
+      <sc-if value="{{ vContar }}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap">
+          <div style="display: flex; flex-direction: column; gap: 4px">
+            <h1 style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-size: 28px; font-weight: 700">Contar una historia</h1>
+            <p style="margin: 0; font-size: 14.5px; color: #4A5B50">Con tu voz, una foto, un video o por escrito. Nadie la ve hasta que un administrador la aprueba.</p>
+          </div>
+          <button onClick="{{ leerContar }}" style="height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid #C9D3CB; background: #FFFFFF; color: #1F3A2E; display: flex; align-items: center; gap: 8px; font-size: 14.5px; font-weight: 700">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1F3A2E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>
+            <span>Escuchar instrucciones</span>
+          </button>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+          <sc-for list="{{ pasos }}" as="pa" hint-placeholder-count="3">
+            <div style="display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 16px 0 8px; border-radius: 22px; background: {{ pa.bg }}; border: 1px solid {{ pa.borde }}; color: {{ pa.fg }}">
+              <span style="width: 28px; height: 28px; border-radius: 14px; background: {{ pa.numBg }}; color: {{ pa.numFg }}; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800">{{ pa.n }}</span>
+              <span style="font-size: 14px; font-weight: 800">{{ pa.label }}</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; opacity: 0.75">{{ pa.codes }}</span>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start">
+          <div style="flex: 2 1 480px; min-width: 0; background: #FFFFFF; border: 1px solid #E1E7E2; border-radius: 16px; padding: 22px; display: flex; flex-direction: column; gap: 20px">
+
+            <sc-if value="{{ paso1 }}" hint-placeholder-val="{{ true }}">
+              <div style="display: flex; flex-direction: column; gap: 8px">
+                <div style="display: flex; align-items: center; justify-content: space-between"><span style="font-size: 15px; font-weight: 800">Grábala con tu voz</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #6B776F">F5</span></div>
+                <div style="border-radius: 14px; background: #F6F8F5; border: 1px solid #E1E7E2; padding: 18px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap">
+                  <sc-if value="{{ grabando }}" hint-placeholder-val="{{ false }}">
+                    <button aria-label="Terminar de grabar" onClick="{{ grabar }}" style="width: 72px; height: 72px; border-radius: 36px; border: 5px solid #F3D3D6; background: #B8323F; display: flex; align-items: center; justify-content: center; flex: none">
+                      <svg width="26" height="26" viewBox="0 0 24 24" fill="#FFFFFF" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+                    </button>
+                    <div style="flex: 1; min-width: 180px; display: flex; flex-direction: column; gap: 8px">
+                      <span style="font-weight: 800; font-size: 17px; color: #B8323F">Grabando… {{ tiempoGrab }}</span>
+                      <svg width="100%" height="28" viewBox="0 0 300 28" preserveAspectRatio="none" aria-hidden="true"><g fill="#E39AA2"><rect x="0" y="10" width="6" height="8" rx="3"/><rect x="14" y="5" width="6" height="18" rx="3"/><rect x="28" y="1" width="6" height="26" rx="3"/><rect x="42" y="8" width="6" height="12" rx="3"/><rect x="56" y="3" width="6" height="22" rx="3"/><rect x="70" y="9" width="6" height="10" rx="3"/><rect x="84" y="0" width="6" height="28" rx="3"/><rect x="98" y="6" width="6" height="16" rx="3"/><rect x="112" y="2" width="6" height="24" rx="3"/><rect x="126" y="8" width="6" height="12" rx="3"/><rect x="140" y="4" width="6" height="20" rx="3"/><rect x="154" y="10" width="6" height="8" rx="3"/><rect x="168" y="3" width="6" height="22" rx="3"/><rect x="182" y="7" width="6" height="14" rx="3"/><rect x="196" y="1" width="6" height="26" rx="3"/><rect x="210" y="9" width="6" height="10" rx="3"/><rect x="224" y="5" width="6" height="18" rx="3"/><rect x="238" y="11" width="6" height="6" rx="3"/><rect x="252" y="6" width="6" height="16" rx="3"/><rect x="266" y="10" width="6" height="8" rx="3"/><rect x="280" y="12" width="6" height="4" rx="2"/></g></svg>
+                      <span style="font-size: 13px; color: #4A5B50">Toca el botón cuando termines.</span>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ audioListo }}" hint-placeholder-val="{{ false }}">
+                    <span style="width: 72px; height: 72px; border-radius: 36px; background: #CFE6D3; display: flex; align-items: center; justify-content: center; flex: none">
+                      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#1F3A2E" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>
+                    </span>
+                    <div style="flex: 1; min-width: 180px; display: flex; flex-direction: column; gap: 4px">
+                      <span style="font-weight: 800; font-size: 17px">Audio grabado · {{ durAudio }}</span>
+                      <span style="font-size: 13px; color: #4A5B50">Se guarda en este dispositivo hasta que la envíes.</span>
+                    </div>
+                    <div style="display: flex; gap: 8px">
+                      <button onClick="{{ grabar }}" style="height: 38px; padding: 0 14px; border-radius: 10px; border: 1px solid #B8323F; background: #FFFFFF; color: #B8323F; font-size: 13.5px; font-weight: 800">Grabar de nuevo</button>
+                      <button onClick="{{ borrarAudio }}" style="height: 38px; padding: 0 14px; border-radius: 10px; border: 1px solid #C9D3CB; background: #FFFFFF; color: #33433A; font-size: 13.5px; font-weight: 700">Quitar</button>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ sinAudio }}" hint-placeholder-val="{{ true }}">
+                    <button aria-label="Grabar tu historia" onClick="{{ grabar }}" style="width: 72px; height: 72px; border-radius: 36px; border: 5px solid #F3D3D6; background: #B8323F; display: flex; align-items: center; justify-content: center; flex: none">
+                      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+                    </button>
+                    <div style="flex: 1; min-width: 180px; display: flex; flex-direction: column; gap: 4px">
+                      <span style="font-weight: 800; font-size: 17px">Toca para grabar</span>
+                      <span style="font-size: 13px; line-height: 1.4; color: #4A5B50">Habla con calma, como si se la contaras a un vecino. Si no te gusta, puedes grabar de nuevo.</span>
+                    </div>
+                  </sc-if>
+                </div>
+              </div>
+
+              <div style="display: flex; flex-direction: column; gap: 8px">
+                <div style="display: flex; align-items: center; justify-content: space-between"><label for="ag-texto" style="font-size: 15px; font-weight: 800">O escríbela</label><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #6B776F">F3</span></div>
+                <textarea id="ag-texto" value="{{ texto }}" onChange="{{ onTexto }}" placeholder="Cuenta qué pasó, quiénes estaban y por qué es importante para tu familia." style="min-height: 110px; border-radius: 12px; border: 1px solid #C9D3CB; padding: 12px 14px; box-sizing: border-box; font-size: 15px; line-height: 1.5; color: #17261F; resize: vertical; width: 100%"></textarea>
+              </div>
+
+              <div style="display: flex; flex-direction: column; gap: 10px">
+                <div style="font-size: 15px; font-weight: 800">Fotos y video</div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap">
+                  <button onClick="{{ agregarFoto }}" style="height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid #1F3A2E; background: #FFFFFF; color: #1F3A2E; display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 800">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1F3A2E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+                    <span>Agregar foto</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #6B776F">F4</span>
+                  </button>
+                  <button onClick="{{ agregarVideo }}" disabled="{{ hayVideo }}" style="height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid #1F3A2E; background: #FFFFFF; color: #1F3A2E; opacity: {{ opVideo }}; display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 800">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1F3A2E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3z"/></svg>
+                    <span>Agregar video</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #6B776F">F13</span>
+                  </button>
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap">
+                  <sc-for list="{{ adjuntos }}" as="a" hint-placeholder-count="0">
+                    <span style="display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 6px 0 12px; border-radius: 9px; background: #F2F4F0; border: 1px solid #E1E7E2; font-size: 13px; color: #33433A">
+                      <b>{{ a.tipo }}</b><span>{{ a.nombre }} · {{ a.peso }}</span>
+                      <button aria-label="Quitar {{ a.nombre }}" onClick="{{ a.quitar }}" style="width: 26px; height: 26px; border-radius: 6px; border: 0; background: transparent; display: flex; align-items: center; justify-content: center">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4A5B50" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                      </button>
+                    </span>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ paso2 }}" hint-placeholder-val="{{ false }}">
+              <div style="display: flex; flex-direction: column; gap: 8px">
+                <label for="ag-titulo" style="font-size: 15px; font-weight: 800">Ponle un título</label>
+                <input id="ag-titulo" type="text" value="{{ titulo }}" onChange="{{ onTitulo }}" placeholder="Por ejemplo: la primera siembra de mi abuelo" style="height: 46px; border-radius: 10px; border: 1px solid #C9D3CB; padding: 0 14px; box-sizing: border-box; font-size: 15px; color: #17261F; width: 100%">
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 8px">
+                <div style="display: flex; align-items: center; justify-content: space-between"><span style="font-size: 15px; font-weight: 800">¿Dónde ocurrió? Toca el sector en el mapa</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #6B776F">F1</span></div>
+                <div style="position: relative; height: 230px; border-radius: 14px; overflow: hidden; background: #E6EDE5; border: 1px solid #D3DED4">
+                  <svg width="100%" height="100%" viewBox="0 0 800 470" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="position: absolute; left: 0; top: 0">
+                    <g fill="none" stroke="#CBDACB" stroke-width="1.5"><path d="M-20 150C130 110 250 170 390 130S650 95 820 140"/><path d="M-20 270C150 240 270 290 410 260S670 228 820 268"/><path d="M-20 390C170 370 290 410 430 390S690 364 820 396"/></g>
+                    <path d="M150 -10C175 90 110 170 230 250S260 380 220 480" fill="none" stroke="#B7CFD6" stroke-width="12" stroke-linecap="round"/>
+                  </svg>
+                  <sc-for list="{{ sectoresMini }}" as="sx" hint-placeholder-count="4">
+                    <button aria-pressed="{{ sx.pressed }}" onClick="{{ sx.elegir }}" style="position: absolute; left: {{ sx.left }}; top: {{ sx.top }}; transform: translate(-50%, -50%); height: 38px; padding: 0 14px; border-radius: 19px; border: 1.5px solid {{ sx.borde }}; background: {{ sx.bg }}; color: {{ sx.fg }}; display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 800; box-shadow: 0 3px 10px rgba(23, 38, 31, 0.14); white-space: nowrap">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+                      <span>{{ sx.nombre }}</span>
+                    </button>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="display: flex; gap: 20px; flex-wrap: wrap">
+                <label style="flex: 1 1 200px; display: flex; flex-direction: column; gap: 8px; font-size: 15px; font-weight: 800">¿Cuándo ocurrió?
+                  <select value="{{ epoca }}" onChange="{{ onEpocaForm }}" style="height: 46px; border-radius: 10px; border: 1px solid #C9D3CB; background: #FFFFFF; padding: 0 12px; font-size: 15px; font-weight: 600; color: #17261F">
+                    <option value="">Elige una época</option>
+                    <option value="Antes de 1960">Antes de 1960</option>
+                    <option value="1960 a 1979">1960 a 1979</option>
+                    <option value="1980 a 1999">1980 a 1999</option>
+                    <option value="2000 en adelante">2000 en adelante</option>
+                  </select>
+                </label>
+                <div style="flex: 2 1 280px; display: flex; flex-direction: column; gap: 8px">
+                  <span style="font-size: 15px; font-weight: 800">Etiquetas</span>
+                  <div style="display: flex; gap: 8px; flex-wrap: wrap">
+                    <sc-for list="{{ tagsOpc }}" as="tg" hint-placeholder-count="6">
+                      <button aria-pressed="{{ tg.pressed }}" onClick="{{ tg.elegir }}" style="height: 34px; padding: 0 12px; border-radius: 17px; border: 1px solid {{ tg.borde }}; background: {{ tg.bg }}; color: {{ tg.fg }}; font-size: 13.5px; font-weight: 700">{{ tg.nombre }}</button>
+                    </sc-for>
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ paso3 }}" hint-placeholder-val="{{ false }}">
+              <div style="display: flex; flex-direction: column; gap: 6px">
+                <span style="font-size: 13px; font-weight: 800; letter-spacing: 0.08em; color: #6B776F">REVISA ANTES DE ENVIAR</span>
+                <span style="font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-size: 24px; font-weight: 700">{{ prev.titulo }}</span>
+                <span style="font-size: 14px; color: #4A5B50">{{ prev.lugar }} · {{ prev.epoca }} · Narra {{ prev.narrador }}</span>
+              </div>
+              <p style="margin: 0; font-size: 15px; line-height: 1.55; color: #33433A">{{ prev.texto }}</p>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap">
+                <sc-for list="{{ prev.formatos }}" as="pf" hint-placeholder-count="2"><span style="height: 28px; padding: 0 10px; border-radius: 7px; background: #F2F4F0; border: 1px solid #E1E7E2; font-size: 13px; font-weight: 700; display: flex; align-items: center">{{ pf }}</span></sc-for>
+                <sc-for list="{{ prev.tags }}" as="pt" hint-placeholder-count="1"><span style="height: 28px; padding: 0 10px; border-radius: 14px; background: #E4ECE3; color: #1F3A2E; font-size: 13px; font-weight: 700; display: flex; align-items: center">{{ pt }}</span></sc-for>
+              </div>
+              <div style="display: flex; gap: 12px; align-items: flex-start; border-radius: 12px; padding: 14px 16px; background: {{ envioBg }}; border: 1px solid {{ envioBorde }}; color: {{ envioFg }}">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 1px"><path d="M5 12.6a10 10 0 0 1 14 0M8.5 16.1a5 5 0 0 1 7 0M2 9a15 15 0 0 1 20 0M12 20h.01"/></svg>
+                <div style="display: flex; flex-direction: column; gap: 2px"><b style="font-size: 14.5px">{{ envioTitulo }}</b><span style="font-size: 14px; line-height: 1.45">{{ envioTexto }}</span></div>
+                <span style="margin-left: auto; font-family: 'IBM Plex Mono', monospace; font-size: 11px; opacity: 0.8">F10</span>
+              </div>
+            </sc-if>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-top: 1px solid #EDF1EE; padding-top: 18px">
+              <span style="font-size: 13.5px; color: #4A5B50">{{ ayudaPaso }}</span>
+              <div style="display: flex; gap: 10px">
+                <sc-if value="{{ hayAtras }}" hint-placeholder-val="{{ false }}">
+                  <button onClick="{{ atras }}" style="height: 46px; padding: 0 18px; border-radius: 10px; border: 1px solid #C9D3CB; background: #FFFFFF; color: #1F3A2E; font-size: 14.5px; font-weight: 800">Atrás</button>
+                </sc-if>
+                <button onClick="{{ siguiente }}" disabled="{{ sigDisabled }}" style="height: 46px; padding: 0 22px; border-radius: 10px; border: 0; background: {{ sigBg }}; color: #FFFFFF; opacity: {{ sigOp }}; font-size: 14.5px; font-weight: 800">{{ sigLabel }}</button>
+              </div>
+            </div>
+          </div>
+
+          <div style="flex: 1 1 280px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+            <div style="background: #FFFFFF; border: 1px solid #E1E7E2; border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 10px">
+              <span style="font-size: 12px; font-weight: 800; letter-spacing: 0.1em; color: #6B776F">ASÍ VA TU HISTORIA</span>
+              <span style="font-weight: 800; font-size: 17px">{{ prev.titulo }}</span>
+              <div style="display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; color: #33433A">
+                <span>Lugar: <b>{{ prev.lugar }}</b></span>
+                <span>Época: <b>{{ prev.epoca }}</b></span>
+                <span>Formatos: <b>{{ prev.formatosTexto }}</b></span>
+              </div>
+            </div>
+            <div style="border-radius: 16px; padding: 16px 18px; display: flex; gap: 12px; background: {{ envioBg }}; border: 1px solid {{ envioBorde }}; color: {{ envioFg }}">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="M3 3l18 18M8.5 16.4a5 5 0 0 1 7 0M5 12.9a10 10 0 0 1 3-1.9M10.7 5.1A15 15 0 0 1 22 9M2 9a15 15 0 0 1 3.5-2.4M12 20h.01"/></svg>
+              <span style="font-size: 13.5px; line-height: 1.5">Todo se guarda en el dispositivo mientras la cuentas. Si no hay señal al final, queda como borrador y se envía sola después.</span>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ========== MIS HISTORIAS (F10, F6) ========== -->
+      <sc-if value="{{ vMis }}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap">
+          <div style="display: flex; flex-direction: column; gap: 4px">
+            <h1 style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-size: 28px; font-weight: 700">Mis historias</h1>
+            <p style="margin: 0; font-size: 14.5px; color: #4A5B50">Lo que has contado y en qué va cada historia.</p>
+          </div>
+          <button onClick="{{ irContar }}" style="height: 44px; padding: 0 18px; border-radius: 10px; border: 0; background: #B8323F; color: #FFFFFF; display: flex; align-items: center; gap: 8px; font-size: 14.5px; font-weight: 800">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            <span>Contar otra historia</span>
+          </button>
+        </div>
+        <sc-if value="{{ offline }}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; gap: 12px; align-items: center; background: #FFF1CC; border: 1px solid #E0B13A; border-radius: 14px; padding: 14px 18px; color: #4A3A0B; flex-wrap: wrap">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4A3A0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="M3 3l18 18M8.5 16.4a5 5 0 0 1 7 0M5 12.9a10 10 0 0 1 3-1.9M10.7 5.1A15 15 0 0 1 22 9M2 9a15 15 0 0 1 3.5-2.4M12 20h.01"/></svg>
+            <span style="flex: 1; min-width: 220px; font-size: 14.5px; line-height: 1.45"><b>Sin señal.</b> Tus borradores están guardados en este dispositivo y se enviarán solos cuando vuelva la conexión.</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px">F10</span>
+          </div>
+        </sc-if>
+        <div style="background: #FFFFFF; border: 1px solid #E1E7E2; border-radius: 16px; overflow: hidden">
+          <div style="padding: 14px 18px; border-bottom: 1px solid #EDF1EE">
+            <div role="group" aria-label="Filtrar por estado" style="display: inline-flex; gap: 4px; flex-wrap: wrap; background: #F2F4F0; border-radius: 10px; padding: 4px">
+              <sc-for list="{{ misTabs }}" as="t" hint-placeholder-count="5">
+                <button aria-pressed="{{ t.pressed }}" onClick="{{ t.elegir }}" style="height: 32px; padding: 0 12px; border-radius: 8px; border: 0; background: {{ t.bg }}; color: #17261F; display: flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 700; box-shadow: {{ t.sombra }}"><span style="width: 8px; height: 8px; border-radius: 4px; background: {{ t.dot }}"></span><span>{{ t.nombre }}</span><span style="font-size: 12px; color: #6B776F">{{ t.cuenta }}</span></button>
+              </sc-for>
+            </div>
+          </div>
+          <div style="overflow-x: auto">
+            <div style="min-width: 860px">
+              <div style="display: grid; grid-template-columns: 130px minmax(220px, 2fr) 120px 150px 110px 130px minmax(150px, 1fr); gap: 12px; padding: 10px 18px; background: #F8FAF7; border-bottom: 1px solid #EDF1EE; font-size: 11.5px; font-weight: 800; letter-spacing: 0.06em; color: #6B776F">
+                <span>CÓDIGO</span><span>HISTORIA</span><span>SECTOR</span><span>FORMATOS</span><span>FECHA</span><span>ESTADO</span><span>QUÉ SIGUE</span>
+              </div>
+              <sc-if value="{{ misVacio }}" hint-placeholder-val="{{ false }}">
+                <div style="padding: 28px 18px; font-size: 14.5px; color: #4A5B50">No hay historias en este estado.</div>
+              </sc-if>
+              <sc-for list="{{ misFilas }}" as="r" hint-placeholder-count="3">
+                <div style="display: grid; grid-template-columns: 130px minmax(220px, 2fr) 120px 150px 110px 130px minmax(150px, 1fr); gap: 12px; align-items: center; padding: 14px 18px; border-bottom: 1px solid #EDF1EE; font-size: 14px">
+                  <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: #33433A">{{ r.code }}</span>
+                  <span style="font-weight: 800">{{ r.titulo }}</span>
+                  <span>{{ r.sector }}</span>
+                  <span style="color: #4A5B50">{{ r.formatos }}</span>
+                  <span style="color: #4A5B50">{{ r.fecha }}</span>
+                  <span><span style="display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 13px; background: {{ r.chipBg }}; color: {{ r.chipFg }}; font-size: 12.5px; font-weight: 800"><span style="width: 6px; height: 6px; border-radius: 3px; background: {{ r.dot }}"></span>{{ r.estado }}</span></span>
+                  <span style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #4A5B50">
+                    <sc-if value="{{ r.publicada }}" hint-placeholder-val="{{ false }}"><button onClick="{{ r.ver }}" style="height: 32px; padding: 0 12px; border-radius: 8px; border: 1px solid #1F3A2E; background: #FFFFFF; color: #1F3A2E; font-size: 13px; font-weight: 800">Ver ficha</button></sc-if>
+                    <span>{{ r.sigue }}</span>
+                  </span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ========== REVISIÓN (F6) ========== -->
+      <sc-if value="{{ vRevision }}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <h1 style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-size: 28px; font-weight: 700">Revisión de historias</h1>
+          <p style="margin: 0; font-size: 14.5px; color: #4A5B50">Ninguna historia se publica sin pasar por aquí. Revisa el contenido, márcalo y decide.</p>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px">
+          <div style="background: #FFF8E6; border: 1px solid #F0D58C; border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 13.5px; font-weight: 700; color: #5C4300">Por revisar</span><span style="font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-size: 30px; font-weight: 700; color: #5C4300">{{ nRev }}</span></div>
+          <div style="background: #FFFFFF; border: 1px solid #E1E7E2; border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 13.5px; font-weight: 700; color: #33433A">Aprobadas de la comunidad</span><span style="font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-size: 30px; font-weight: 700">{{ nAprobComunidad }}</span></div>
+          <div style="background: #FFFFFF; border: 1px solid #E1E7E2; border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 13.5px; font-weight: 700; color: #33433A">Rechazadas</span><span style="font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-size: 30px; font-weight: 700">{{ nRech }}</span></div>
+        </div>
+        <div style="background: #FFFFFF; border: 1px solid #E1E7E2; border-radius: 16px; overflow: hidden">
+          <div style="padding: 14px 18px; border-bottom: 1px solid #EDF1EE; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap">
+            <div role="group" aria-label="Filtrar por estado" style="display: inline-flex; gap: 4px; background: #F2F4F0; border-radius: 10px; padding: 4px">
+              <sc-for list="{{ revTabs }}" as="t" hint-placeholder-count="3">
+                <button aria-pressed="{{ t.pressed }}" onClick="{{ t.elegir }}" style="height: 32px; padding: 0 12px; border-radius: 8px; border: 0; background: {{ t.bg }}; color: #17261F; display: flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 700; box-shadow: {{ t.sombra }}"><span style="width: 8px; height: 8px; border-radius: 4px; background: {{ t.dot }}"></span><span>{{ t.nombre }}</span><span style="font-size: 12px; color: #6B776F">{{ t.cuenta }}</span></button>
+              </sc-for>
+            </div>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #6B776F">F6 · F7</span>
+          </div>
+          <div style="overflow-x: auto">
+            <div style="min-width: 900px">
+              <div style="display: grid; grid-template-columns: 130px minmax(220px, 2fr) minmax(150px, 1fr) 110px 150px 110px 130px; gap: 12px; padding: 10px 18px; background: #F8FAF7; border-bottom: 1px solid #EDF1EE; font-size: 11.5px; font-weight: 800; letter-spacing: 0.06em; color: #6B776F">
+                <span>CÓDIGO</span><span>HISTORIA</span><span>NARRADOR</span><span>SECTOR</span><span>FORMATOS</span><span>ENVIADA</span><span style="text-align: right">ACCIÓN</span>
+              </div>
+              <sc-if value="{{ revVacio }}" hint-placeholder-val="{{ false }}">
+                <div style="padding: 28px 18px; font-size: 14.5px; color: #4A5B50">{{ revVacioTexto }}</div>
+              </sc-if>
+              <sc-for list="{{ revFilas }}" as="r" hint-placeholder-count="3">
+                <div style="display: grid; grid-template-columns: 130px minmax(220px, 2fr) minmax(150px, 1fr) 110px 150px 110px 130px; gap: 12px; align-items: center; padding: 14px 18px; border-bottom: 1px solid #EDF1EE; font-size: 14px">
+                  <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: #33433A">{{ r.code }}</span>
+                  <span style="display: flex; flex-direction: column; gap: 3px"><b>{{ r.titulo }}</b><sc-if value="{{ r.hayMotivo }}" hint-placeholder-val="{{ false }}"><span style="font-size: 12.5px; color: #8A1F2B">{{ r.motivo }}</span></sc-if></span>
+                  <span>{{ r.narrador }}</span>
+                  <span>{{ r.sector }}</span>
+                  <span style="color: #4A5B50">{{ r.formatos }}</span>
+                  <span style="color: #4A5B50">{{ r.fecha }}</span>
+                  <span style="display: flex; justify-content: flex-end"><button onClick="{{ r.abrir }}" style="height: 34px; padding: 0 14px; border-radius: 8px; border: {{ r.btnBorde }}; background: {{ r.btnBg }}; color: {{ r.btnFg }}; font-size: 13px; font-weight: 800">{{ r.btnLabel }}</button></span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ========== HISTORIAS DEL PROYECTO (F12) ========== -->
+      <sc-if value="{{ vProyecto }}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap">
+          <div style="display: flex; flex-direction: column; gap: 4px">
+            <h1 style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-size: 28px; font-weight: 700">Historias del proyecto</h1>
+            <p style="margin: 0; font-size: 14.5px; color: #4A5B50">Las sube el equipo. En el mapa se ven en otro color para distinguirlas de las de la comunidad.</p>
+          </div>
+          <button onClick="{{ abrirNuevaP }}" style="height: 44px; padding: 0 18px; border-radius: 10px; border: 0; background: #2F6F73; color: #FFFFFF; display: flex; align-items: center; gap: 8px; font-size: 14.5px; font-weight: 800">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            <span>Nueva historia del proyecto</span>
+          </button>
+        </div>
+        <div style="background: #FFFFFF; border: 1px solid #E1E7E2; border-radius: 16px; overflow: hidden">
+          <div style="overflow-x: auto">
+            <div style="min-width: 760px">
+              <div style="display: grid; grid-template-columns: 130px minmax(240px, 2fr) 120px 150px 160px 120px; gap: 12px; padding: 10px 18px; background: #F8FAF7; border-bottom: 1px solid #EDF1EE; font-size: 11.5px; font-weight: 800; letter-spacing: 0.06em; color: #6B776F">
+                <span>CÓDIGO</span><span>HISTORIA</span><span>SECTOR</span><span>ÉPOCA</span><span>FORMATOS</span><span style="text-align: right">FICHA</span>
+              </div>
+              <sc-for list="{{ proyFilas }}" as="r" hint-placeholder-count="2">
+                <div style="display: grid; grid-template-columns: 130px minmax(240px, 2fr) 120px 150px 160px 120px; gap: 12px; align-items: center; padding: 14px 18px; border-bottom: 1px solid #EDF1EE; font-size: 14px">
+                  <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: #33433A">{{ r.code }}</span>
+                  <b>{{ r.titulo }}</b>
+                  <span>{{ r.sector }}</span>
+                  <span style="color: #4A5B50">{{ r.epoca }}</span>
+                  <span style="color: #4A5B50">{{ r.formatos }}</span>
+                  <span style="display: flex; justify-content: flex-end"><button onClick="{{ r.abrir }}" style="height: 34px; padding: 0 14px; border-radius: 8px; border: 1px solid #2F6F73; background: #FFFFFF; color: #2F6F73; font-size: 13px; font-weight: 800">Ver ficha</button></span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ========== CONFIGURACIÓN (F7) ========== -->
+      <sc-if value="{{ vConfig }}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <h1 style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-size: 28px; font-weight: 700">Configuración del portal</h1>
+          <p style="margin: 0; font-size: 14.5px; color: #4A5B50">Lo que puede cambiar el administrador (F7).</p>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; align-items: start">
+          <div style="background: #FFFFFF; border: 1px solid #E1E7E2; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+            <h2 style="margin: 0; font-size: 17px; font-weight: 800">Portal</h2>
+            <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; font-weight: 700; color: #33433A">Nombre del portal
+              <input type="text" value="{{ portalNombre }}" onChange="{{ onPortalNombre }}" style="height: 42px; border-radius: 10px; border: 1px solid #C9D3CB; padding: 0 12px; box-sizing: border-box; font-size: 14.5px; color: #17261F">
+            </label>
+            <span style="font-size: 12.5px; color: #8A5A00">El nombre definitivo está por confirmar con el profesor.</span>
+          </div>
+          <div style="background: #FFFFFF; border: 1px solid #E1E7E2; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+            <h2 style="margin: 0; font-size: 17px; font-weight: 800">Moderación</h2>
+            <div style="display: flex; align-items: center; gap: 12px">
+              <span style="width: 42px; height: 24px; border-radius: 12px; background: #1F3A2E; position: relative; flex: none"><span style="position: absolute; right: 3px; top: 3px; width: 18px; height: 18px; border-radius: 9px; background: #FFFFFF"></span></span>
+              <span style="font-size: 14px; line-height: 1.4"><b>Toda historia pasa por revisión.</b> Fijo: es un criterio del proyecto.</span>
+            </div>
+            <button role="switch" aria-checked="{{ avisarChecked }}" onClick="{{ toggleAvisar }}" style="display: flex; align-items: center; gap: 12px; border: 0; background: transparent; padding: 0; text-align: left; color: #17261F">
+              <span style="width: 42px; height: 24px; border-radius: 12px; background: {{ avisarBg }}; position: relative; flex: none"><span style="position: absolute; left: {{ avisarLeft }}px; top: 3px; width: 18px; height: 18px; border-radius: 9px; background: #FFFFFF"></span></span>
+              <span style="font-size: 14px; line-height: 1.4"><b>Avisar al narrador si se rechaza.</b> Por definir con el profesor.</span>
+            </button>
+          </div>
+          <div style="background: #FFFFFF; border: 1px solid #E1E7E2; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+            <h2 style="margin: 0; font-size: 17px; font-weight: 800">Sectores del mapa</h2>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap">
+              <span style="height: 32px; padding: 0 12px; border-radius: 16px; background: #E4ECE3; color: #1F3A2E; font-size: 13.5px; font-weight: 700; display: flex; align-items: center">Minca</span>
+              <span style="height: 32px; padding: 0 12px; border-radius: 16px; background: #E4ECE3; color: #1F3A2E; font-size: 13.5px; font-weight: 700; display: flex; align-items: center">La Tagua</span>
+              <span style="height: 32px; padding: 0 12px; border-radius: 16px; background: #E4ECE3; color: #1F3A2E; font-size: 13.5px; font-weight: 700; display: flex; align-items: center">San Lorenzo</span>
+              <span style="height: 32px; padding: 0 12px; border-radius: 16px; background: #E4ECE3; color: #1F3A2E; font-size: 13.5px; font-weight: 700; display: flex; align-items: center">Tijereras</span>
+            </div>
+            <span style="font-size: 12.5px; color: #4A5B50">Los sectores y sus límites se confirmarán con las familias de la zona.</span>
+          </div>
+          <div style="background: #FFFFFF; border: 1px solid #E1E7E2; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+            <h2 style="margin: 0; font-size: 17px; font-weight: 800">Etiquetas</h2>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap">
+              <sc-for list="{{ etiquetasConfig }}" as="e" hint-placeholder-count="6">
+                <span style="display: flex; align-items: center; gap: 4px; height: 32px; padding: 0 4px 0 12px; border-radius: 16px; background: #F2F4F0; border: 1px solid #E1E7E2; font-size: 13.5px; font-weight: 700">
+                  <span>{{ e.nombre }}</span>
+                  <button aria-label="Quitar {{ e.nombre }}" onClick="{{ e.quitar }}" style="width: 24px; height: 24px; border-radius: 12px; border: 0; background: transparent; display: flex; align-items: center; justify-content: center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4A5B50" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+                </span>
+              </sc-for>
+            </div>
+            <div style="display: flex; gap: 8px">
+              <input type="text" aria-label="Nueva etiqueta" value="{{ nuevaEtiqueta }}" onChange="{{ onNuevaEtiqueta }}" placeholder="#nueva-etiqueta" style="flex: 1; min-width: 0; height: 40px; border-radius: 10px; border: 1px solid #C9D3CB; padding: 0 12px; box-sizing: border-box; font-size: 14px">
+              <button onClick="{{ agregarEtiqueta }}" style="height: 40px; padding: 0 14px; border-radius: 10px; border: 0; background: #1F3A2E; color: #FFFFFF; font-size: 13.5px; font-weight: 800">Agregar</button>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ========== FASES FUTURAS (F14, F15) ========== -->
+      <sc-if value="{{ vFutura }}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <div style="display: flex; align-items: center; gap: 10px"><h1 style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-size: 28px; font-weight: 700">{{ fut.titulo }}</h1><span style="height: 24px; padding: 0 9px; border-radius: 6px; background: #FFF1CC; color: #6B4E00; font-size: 12px; font-weight: 800; display: flex; align-items: center">FASE FUTURA · {{ fut.code }}</span></div>
+          <p style="margin: 0; font-size: 14.5px; color: #4A5B50">{{ fut.que }}</p>
+        </div>
+        <div style="display: flex; gap: 20px; flex-wrap: wrap; align-items: stretch">
+          <div style="flex: 2 1 420px; min-height: 320px; border-radius: 16px; border: 2px dashed #B9C4BC; background: repeating-linear-gradient(135deg, #EEF2ED, #EEF2ED 12px, #F6F8F5 12px, #F6F8F5 24px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: #4A5B50; text-align: center; padding: 24px; box-sizing: border-box">
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#4A5B50" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+            <b style="font-size: 16px">No se construye en esta entrega</b>
+            <span style="font-size: 14px; max-width: 420px; line-height: 1.5">{{ fut.nota }}</span>
+          </div>
+          <div style="flex: 1 1 260px; background: #FFFFFF; border: 1px solid #E1E7E2; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+            <span style="font-size: 12px; font-weight: 800; letter-spacing: 0.1em; color: #6B776F">DEPENDE DE</span>
+            <sc-for list="{{ fut.deps }}" as="d" hint-placeholder-count="2">
+              <div style="display: flex; gap: 10px; align-items: baseline"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; font-weight: 500; color: #1F3A2E; width: 34px; flex: none">{{ d.code }}</span><span style="font-size: 14px">{{ d.nombre }}</span></div>
+            </sc-for>
+            <span style="font-size: 12.5px; color: #4A5B50">Origen: {{ fut.origen }}</span>
+          </div>
+        </div>
+      </sc-if>
+    </main>
+  </div>
+
+  <!-- ===================== FICHA DE HISTORIA (F8) ===================== -->
+  <sc-if value="{{ hayDet }}" hint-placeholder-val="{{ false }}">
+    <div style="position: fixed; inset: 0; background: rgba(23, 38, 31, 0.5); display: flex; align-items: flex-start; justify-content: center; padding: 40px 20px; overflow-y: auto; z-index: 50">
+      <div role="dialog" aria-modal="true" aria-label="Ficha de la historia" style="width: 100%; max-width: 920px; background: #FFFFFF; border-radius: 18px; box-shadow: 0 24px 64px rgba(23, 38, 31, 0.3); display: flex; flex-direction: column; overflow: hidden">
+        <div style="display: flex; align-items: center; gap: 12px; padding: 16px 22px; border-bottom: 1px solid #EDF1EE; flex-wrap: wrap">
+          <div style="flex: 1; min-width: 200px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 500">{{ det.code }}</span>
+            <span style="height: 24px; padding: 0 10px; border-radius: 12px; background: {{ det.origenBg }}; color: {{ det.origenFg }}; font-size: 12px; font-weight: 800; display: flex; align-items: center">{{ det.origen }}</span>
+            <span style="font-size: 13px; color: #6B776F">Ficha de historia · F8</span>
+          </div>
+          <button onClick="{{ leerDet }}" style="height: 36px; padding: 0 12px; border-radius: 9px; border: 1px solid #C9D3CB; background: #FFFFFF; color: #1F3A2E; display: flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 700">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1F3A2E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>Escuchar
+          </button>
+          <button aria-label="Cerrar" onClick="{{ cerrarDet }}" style="width: 36px; height: 36px; border-radius: 9px; border: 1px solid #C9D3CB; background: #FFFFFF; display: flex; align-items: center; justify-content: center">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17261F" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>
+        <div style="display: flex; flex-wrap: wrap">
+          <div style="flex: 1 1 340px; min-width: 0; padding: 20px 22px; display: flex; flex-direction: column; gap: 14px; background: #F8FAF7">
+            <sc-if value="{{ det.hasFoto }}" hint-placeholder-val="{{ true }}">
+              <div style="height: 220px; border-radius: 12px; background: repeating-linear-gradient(135deg, #D7E0D6, #D7E0D6 10px, #E1E8E0 10px, #E1E8E0 20px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #4F6857">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#4F6857" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="M4 18l5-5 4 4 3-3 4 4"/></svg>
+                <span style="font-size: 13px; font-weight: 700">Foto de la historia · F4</span>
+              </div>
+            </sc-if>
+            <sc-if value="{{ det.hasVideo }}" hint-placeholder-val="{{ false }}">
+              <div style="height: 150px; border-radius: 12px; background: #17261F; display: flex; align-items: center; justify-content: center; gap: 10px; color: #C9DBCD">
+                <span style="width: 48px; height: 48px; border-radius: 24px; background: #F3F6F1; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="#1F3A2E" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>
+                <span style="font-size: 13px; font-weight: 700">Video de la historia · F13</span>
+              </div>
+            </sc-if>
+            <sc-if value="{{ det.hasAudio }}" hint-placeholder-val="{{ true }}">
+              <div style="border-radius: 12px; background: #1F3A2E; color: #F3F6F1; padding: 14px 16px; display: flex; align-items: center; gap: 14px">
+                <button aria-label="{{ playLabel }}" onClick="{{ play }}" style="width: 48px; height: 48px; border-radius: 24px; border: 0; background: #F3F6F1; display: flex; align-items: center; justify-content: center; flex: none">
+                  <sc-if value="{{ sonando }}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="#1F3A2E" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg></sc-if>
+                  <sc-if value="{{ quieto }}" hint-placeholder-val="{{ true }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="#1F3A2E" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></sc-if>
+                </button>
+                <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 7px">
+                  <span style="font-size: 14px; font-weight: 800">Audio del narrador · F5</span>
+                  <div style="height: 6px; border-radius: 3px; background: #3F6B4F"><div style="width: {{ prog }}%; height: 6px; border-radius: 3px; background: #F3F6F1"></div></div>
+                  <div style="display: flex; justify-content: space-between; font-size: 12px; color: #B7CDBC"><span>{{ tiempo }}</span><span>{{ det.dur }}</span></div>
+                </div>
+              </div>
+            </sc-if>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap">
+              <button disabled="{{ true }}" style="flex: 1 1 140px; height: 40px; border-radius: 10px; border: 1px dashed #B9C4BC; background: #FFFFFF; color: #6B776F; font-size: 13px; font-weight: 700">Ver en 360° · F14</button>
+              <button disabled="{{ true }}" style="flex: 1 1 140px; height: 40px; border-radius: 10px; border: 1px dashed #B9C4BC; background: #FFFFFF; color: #6B776F; font-size: 13px; font-weight: 700">Avatar en RA · F15</button>
+            </div>
+            <span style="font-size: 12px; color: #6B776F">360° y realidad aumentada quedan para fases futuras.</span>
+          </div>
+          <div style="flex: 1 1 380px; min-width: 0; padding: 22px; display: flex; flex-direction: column; gap: 14px">
+            <h2 style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-size: 26px; font-weight: 700; line-height: 1.15">{{ det.titulo }}</h2>
+            <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; font-size: 13.5px">
+              <div style="display: flex; flex-direction: column; gap: 2px"><span style="color: #6B776F">Ocurrió</span><b>{{ det.epoca }}</b></div>
+              <div style="display: flex; flex-direction: column; gap: 2px"><span style="color: #6B776F">Lugar</span><b>{{ det.sector }}</b></div>
+              <div style="display: flex; flex-direction: column; gap: 2px"><span style="color: #6B776F">Narra</span><b>{{ det.narrador }}</b></div>
+              <div style="display: flex; flex-direction: column; gap: 2px"><span style="color: #6B776F">Publicada</span><b>{{ det.fecha }}</b></div>
+            </div>
+            <p style="margin: 0; font-size: 15.5px; line-height: 1.6; color: #33433A">{{ det.texto }}</p>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap">
+              <sc-for list="{{ det.tags }}" as="dt" hint-placeholder-count="2"><span style="height: 28px; padding: 0 10px; border-radius: 14px; background: #E4ECE3; color: #1F3A2E; font-size: 13px; font-weight: 700; display: flex; align-items: center">{{ dt }}</span></sc-for>
+            </div>
+            <button onClick="{{ verEnMapa }}" style="margin-top: auto; align-self: flex-start; height: 42px; padding: 0 16px; border-radius: 10px; border: 1px solid #1F3A2E; background: #FFFFFF; color: #1F3A2E; display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 800">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1F3A2E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Ver en el mapa
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ===================== REVISAR UNA HISTORIA (F6) ===================== -->
+  <sc-if value="{{ hayRev }}" hint-placeholder-val="{{ false }}">
+    <div style="position: fixed; inset: 0; background: rgba(23, 38, 31, 0.5); display: flex; align-items: flex-start; justify-content: center; padding: 40px 20px; overflow-y: auto; z-index: 50">
+      <div role="dialog" aria-modal="true" aria-label="Revisar historia" style="width: 100%; max-width: 880px; background: #FFFFFF; border-radius: 18px; box-shadow: 0 24px 64px rgba(23, 38, 31, 0.3); display: flex; flex-direction: column; overflow: hidden">
+        <div style="display: flex; align-items: center; gap: 12px; padding: 16px 22px; border-bottom: 1px solid #EDF1EE">
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 2px">
+            <span style="font-size: 12.5px; color: #6B776F">Revisar historia · F6</span>
+            <span style="display: flex; align-items: center; gap: 10px"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 500">{{ rev.code }}</span><span style="height: 24px; padding: 0 10px; border-radius: 12px; background: #FFE9B0; color: #4A3A0B; font-size: 12px; font-weight: 800; display: flex; align-items: center">Por revisar</span></span>
+          </div>
+          <button aria-label="Cerrar" onClick="{{ cerrarRev }}" style="width: 36px; height: 36px; border-radius: 9px; border: 1px solid #C9D3CB; background: #FFFFFF; display: flex; align-items: center; justify-content: center">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17261F" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>
+        <div style="display: flex; flex-wrap: wrap">
+          <div style="flex: 3 1 380px; min-width: 0; padding: 20px 22px; display: flex; flex-direction: column; gap: 12px">
+            <h2 style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-size: 24px; font-weight: 700">{{ rev.titulo }}</h2>
+            <span style="font-size: 13.5px; color: #4A5B50">Narra {{ rev.narrador }} · {{ rev.sector }} · {{ rev.epoca }} · enviada {{ rev.fecha }}</span>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap">
+              <sc-for list="{{ rev.formatos }}" as="rf" hint-placeholder-count="2"><span style="height: 30px; padding: 0 12px; border-radius: 8px; background: #F2F4F0; border: 1px solid #E1E7E2; font-size: 13px; font-weight: 700; display: flex; align-items: center">{{ rf }}</span></sc-for>
+            </div>
+            <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #33433A">{{ rev.texto }}</p>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap">
+              <sc-for list="{{ rev.tags }}" as="rt" hint-placeholder-count="2"><span style="height: 28px; padding: 0 10px; border-radius: 14px; background: #E4ECE3; color: #1F3A2E; font-size: 13px; font-weight: 700; display: flex; align-items: center">{{ rt }}</span></sc-for>
+            </div>
+          </div>
+          <div style="flex: 2 1 280px; min-width: 0; padding: 20px 22px; background: #F8FAF7; border-left: 1px solid #EDF1EE; display: flex; flex-direction: column; gap: 12px">
+            <span style="font-size: 12px; font-weight: 800; letter-spacing: 0.1em; color: #6B776F">ANTES DE APROBAR</span>
+            <sc-for list="{{ checks }}" as="c" hint-placeholder-count="3">
+              <button role="checkbox" aria-checked="{{ c.checked }}" onClick="{{ c.toggle }}" style="display: flex; align-items: flex-start; gap: 10px; border: 1px solid {{ c.borde }}; background: #FFFFFF; border-radius: 10px; padding: 10px 12px; text-align: left; font-size: 14px; line-height: 1.4; color: #17261F">
+                <span style="width: 20px; height: 20px; border-radius: 5px; border: 2px solid #1F3A2E; background: {{ c.bg }}; display: flex; align-items: center; justify-content: center; flex: none; box-sizing: border-box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg></span>
+                <span>{{ c.texto }}</span>
+              </button>
+            </sc-for>
+            <sc-if value="{{ rechazando }}" hint-placeholder-val="{{ false }}">
+              <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; font-weight: 800; color: #8A1F2B">Motivo del rechazo
+                <select value="{{ motivo }}" onChange="{{ onMotivo }}" style="height: 42px; border-radius: 10px; border: 1px solid #E3A9B0; background: #FFFFFF; padding: 0 10px; font-size: 14px; color: #17261F">
+                  <option value="">Elige un motivo</option>
+                  <option value="Fuera del tema: no trata de la cultura cafetera">Fuera del tema</option>
+                  <option value="Fuera del territorio: no ocurrió en Minca ni sectores aledaños">Fuera del territorio</option>
+                  <option value="Contenido incompleto o no se entiende">Contenido incompleto</option>
+                  <option value="Expone datos personales de otras personas">Expone datos de otros</option>
+                </select>
+              </label>
+              <span style="font-size: 12.5px; color: #6B776F">Qué se le dice al narrador está por definir con el profesor.</span>
+            </sc-if>
+          </div>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px; padding: 14px 22px; border-top: 1px solid #EDF1EE; flex-wrap: wrap">
+          <sc-if value="{{ noRechazando }}" hint-placeholder-val="{{ true }}">
+            <button onClick="{{ empezarRechazo }}" style="height: 44px; padding: 0 18px; border-radius: 10px; border: 1px solid #B8323F; background: #FFFFFF; color: #B8323F; font-size: 14.5px; font-weight: 800">Rechazar</button>
+            <button onClick="{{ aprobar }}" disabled="{{ noPuedeAprobar }}" style="height: 44px; padding: 0 20px; border-radius: 10px; border: 0; background: #1F3A2E; color: #FFFFFF; opacity: {{ opAprobar }}; font-size: 14.5px; font-weight: 800">Aprobar y publicar</button>
+          </sc-if>
+          <sc-if value="{{ rechazando }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ cancelarRechazo }}" style="height: 44px; padding: 0 18px; border-radius: 10px; border: 1px solid #C9D3CB; background: #FFFFFF; color: #33433A; font-size: 14.5px; font-weight: 700">Volver</button>
+            <button onClick="{{ confirmarRechazo }}" disabled="{{ sinMotivo }}" style="height: 44px; padding: 0 20px; border-radius: 10px; border: 0; background: #B8323F; color: #FFFFFF; opacity: {{ opRechazo }}; font-size: 14.5px; font-weight: 800">Confirmar rechazo</button>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ===================== INGRESAR (F2, F7) ===================== -->
+  <sc-if value="{{ showLogin }}" hint-placeholder-val="{{ false }}">
+    <div style="position: fixed; inset: 0; background: rgba(23, 38, 31, 0.5); display: flex; align-items: flex-start; justify-content: center; padding: 60px 20px; overflow-y: auto; z-index: 55">
+      <div role="dialog" aria-modal="true" aria-label="Ingresar" style="width: 100%; max-width: 440px; background: #FFFFFF; border-radius: 18px; box-shadow: 0 24px 64px rgba(23, 38, 31, 0.3); padding: 24px; display: flex; flex-direction: column; gap: 16px">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px">
+          <div style="display: flex; flex-direction: column; gap: 4px">
+            <h2 style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-size: 24px; font-weight: 700">Ingresar</h2>
+            <span style="font-size: 13.5px; color: #4A5B50">{{ loginAviso }}</span>
+          </div>
+          <button aria-label="Cerrar" onClick="{{ cerrarLogin }}" style="width: 36px; height: 36px; border-radius: 9px; border: 1px solid #C9D3CB; background: #FFFFFF; display: flex; align-items: center; justify-content: center; flex: none">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17261F" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>
+        <div role="group" aria-label="Tipo de usuario" style="display: flex; gap: 4px; background: #F2F4F0; border-radius: 10px; padding: 4px">
+          <button aria-pressed="{{ tabNarrPressed }}" onClick="{{ tabNarr }}" style="flex: 1; height: 36px; border-radius: 8px; border: 0; background: {{ tabNarrBg }}; color: #17261F; font-size: 14px; font-weight: 800; box-shadow: {{ tabNarrSombra }}">Narrador · F2</button>
+          <button aria-pressed="{{ tabAdminPressed }}" onClick="{{ tabAdmin }}" style="flex: 1; height: 36px; border-radius: 8px; border: 0; background: {{ tabAdminBg }}; color: #17261F; font-size: 14px; font-weight: 800; box-shadow: {{ tabAdminSombra }}">Administrador · F7</button>
+        </div>
+        <sc-if value="{{ loginNarr }}" hint-placeholder-val="{{ true }}">
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 800">Tu nombre
+            <input type="text" value="{{ loginNombre }}" onChange="{{ onLoginNombre }}" style="height: 46px; border-radius: 10px; border: 1px solid #C9D3CB; padding: 0 12px; box-sizing: border-box; font-size: 15px; font-weight: 600; color: #17261F">
+          </label>
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 800">Número de celular
+            <input type="tel" value="{{ loginCel }}" onChange="{{ onLoginCel }}" style="height: 46px; border-radius: 10px; border: 1px solid #C9D3CB; padding: 0 12px; box-sizing: border-box; font-size: 15px; font-weight: 600; color: #17261F">
+          </label>
+          <span style="font-size: 12.5px; line-height: 1.45; color: #4A5B50">Sin correo ni contraseña, para quien usa poco el celular. En el prototipo los datos no se guardan.</span>
+        </sc-if>
+        <sc-if value="{{ loginAdm }}" hint-placeholder-val="{{ false }}">
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 800">Usuario
+            <input type="text" value="{{ loginUsuario }}" onChange="{{ onLoginUsuario }}" style="height: 46px; border-radius: 10px; border: 1px solid #C9D3CB; padding: 0 12px; box-sizing: border-box; font-size: 15px; font-weight: 600; color: #17261F">
+          </label>
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 800">Contraseña
+            <input type="password" value="{{ loginClave }}" onChange="{{ onLoginClave }}" style="height: 46px; border-radius: 10px; border: 1px solid #C9D3CB; padding: 0 12px; box-sizing: border-box; font-size: 15px; color: #17261F">
+          </label>
+          <span style="font-size: 12.5px; line-height: 1.45; color: #4A5B50">Prototipo: cualquier usuario y contraseña sirven.</span>
+        </sc-if>
+        <button onClick="{{ ingresar }}" disabled="{{ noPuedeIngresar }}" style="height: 48px; border-radius: 10px; border: 0; background: #1F3A2E; color: #FFFFFF; opacity: {{ opIngresar }}; font-size: 15px; font-weight: 800">Ingresar</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ===================== NUEVA HISTORIA DEL PROYECTO (F12) ===================== -->
+  <sc-if value="{{ showNuevaP }}" hint-placeholder-val="{{ false }}">
+    <div style="position: fixed; inset: 0; background: rgba(23, 38, 31, 0.5); display: flex; align-items: flex-start; justify-content: center; padding: 60px 20px; overflow-y: auto; z-index: 55">
+      <div role="dialog" aria-modal="true" aria-label="Nueva historia del proyecto" style="width: 100%; max-width: 520px; background: #FFFFFF; border-radius: 18px; box-shadow: 0 24px 64px rgba(23, 38, 31, 0.3); padding: 24px; display: flex; flex-direction: column; gap: 16px">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px">
+          <div style="display: flex; flex-direction: column; gap: 4px">
+            <h2 style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-size: 22px; font-weight: 700">Nueva historia del proyecto</h2>
+            <span style="font-size: 13.5px; color: #4A5B50">Se publica de una vez y se marca como «del proyecto» (F12).</span>
+          </div>
+          <button aria-label="Cerrar" onClick="{{ cerrarNuevaP }}" style="width: 36px; height: 36px; border-radius: 9px; border: 1px solid #C9D3CB; background: #FFFFFF; display: flex; align-items: center; justify-content: center; flex: none">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17261F" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 800">Título
+          <input type="text" value="{{ npTitulo }}" onChange="{{ onNpTitulo }}" placeholder="Título de la historia" style="height: 44px; border-radius: 10px; border: 1px solid #C9D3CB; padding: 0 12px; box-sizing: border-box; font-size: 15px; color: #17261F">
+        </label>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap">
+          <label style="flex: 1 1 180px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 800">Sector
+            <select value="{{ npSector }}" onChange="{{ onNpSector }}" style="height: 44px; border-radius: 10px; border: 1px solid #C9D3CB; background: #FFFFFF; padding: 0 10px; font-size: 14.5px; color: #17261F">
+              <option value="Minca">Minca</option>
+              <option value="La Tagua">La Tagua</option>
+              <option value="San Lorenzo">San Lorenzo</option>
+              <option value="Tijereras">Tijereras</option>
+            </select>
+          </label>
+          <label style="flex: 1 1 180px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 800">Época
+            <select value="{{ npEpoca }}" onChange="{{ onNpEpoca }}" style="height: 44px; border-radius: 10px; border: 1px solid #C9D3CB; background: #FFFFFF; padding: 0 10px; font-size: 14.5px; color: #17261F">
+              <option value="Antes de 1960">Antes de 1960</option>
+              <option value="1960 a 1979">1960 a 1979</option>
+              <option value="1980 a 1999">1980 a 1999</option>
+              <option value="2000 en adelante">2000 en adelante</option>
+            </select>
+          </label>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <span style="font-size: 14px; font-weight: 800">Formatos</span>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap">
+            <sc-for list="{{ npFormatos }}" as="nf" hint-placeholder-count="3">
+              <button aria-pressed="{{ nf.pressed }}" onClick="{{ nf.elegir }}" style="height: 34px; padding: 0 12px; border-radius: 17px; border: 1px solid {{ nf.borde }}; background: {{ nf.bg }}; color: {{ nf.fg }}; font-size: 13.5px; font-weight: 700">{{ nf.nombre }}</button>
+            </sc-for>
+          </div>
+        </div>
+        <button onClick="{{ crearProyecto }}" disabled="{{ npInvalido }}" style="height: 46px; border-radius: 10px; border: 0; background: #2F6F73; color: #FFFFFF; opacity: {{ opNp }}; font-size: 15px; font-weight: 800">Publicar historia del proyecto</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ===================== AVISOS ===================== -->
+  <sc-if value="{{ hayLeyendo }}" hint-placeholder-val="{{ false }}">
+    <div role="status" style="position: fixed; left: 24px; bottom: 24px; display: flex; align-items: center; gap: 12px; padding: 10px 10px 10px 16px; border-radius: 12px; background: #17261F; color: #F3F6F1; box-shadow: 0 12px 32px rgba(23, 38, 31, 0.3); z-index: 60; max-width: 420px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F0A3AA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>
+      <span style="font-size: 14px; line-height: 1.35">Leyendo en voz alta: <b>{{ leyendo }}</b></span>
+      <button onClick="{{ pararLectura }}" style="height: 32px; padding: 0 12px; border-radius: 8px; border: 0; background: #F3F6F1; color: #17261F; font-size: 13px; font-weight: 800">Detener</button>
+    </div>
+  </sc-if>
+  <sc-if value="{{ hayToast }}" hint-placeholder-val="{{ false }}">
+    <div role="status" style="position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 12px; background: #17261F; color: #FFFFFF; font-size: 14px; box-shadow: 0 12px 32px rgba(23, 38, 31, 0.3); z-index: 65; max-width: 90vw">
+      <span style="width: 10px; height: 10px; border-radius: 5px; background: {{ toastDot }}; flex: none"></span>
+      <span>{{ toast }}</span>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1040}}'>
+const SECTORES = ['Minca', 'La Tagua', 'San Lorenzo', 'Tijereras'];
+const ANCLA = { 'Minca': [50, 30], 'La Tagua': [76, 44], 'San Lorenzo': [20, 52], 'Tijereras': [56, 74] };
+const DESPLAZA = [[0, 0], [-38, 26], [36, 24], [-30, -34], [42, -28], [4, 50], [-50, -4]];
+const TAGS = ['#café', '#finca', '#familia', '#cosecha', '#cocina', '#oficios'];
+const HOY = '22 oct 2026';
+const ESTADOS = {
+  borrador: { label: 'Borrador', bg: '#E4E8E5', fg: '#33433A', dot: '#7A867E', sigue: 'Se envía cuando haya señal' },
+  revision: { label: 'En revisión', bg: '#FFE9B0', fg: '#4A3A0B', dot: '#D9A92E', sigue: 'Lo revisa un administrador' },
+  publicada: { label: 'Publicada', bg: '#CFE6D3', fg: '#14301F', dot: '#2E8B57', sigue: 'Ya está en el mapa' },
+  rechazada: { label: 'No publicada', bg: '#F6D5D8', fg: '#6E1520', dot: '#B8323F', sigue: '' },
+};
+
+function semilla() {
+  const t = (code, titulo, narrador, sector, epoca, formatos, estado, origen, tags, fecha, dur, texto, extra) =>
+    ({ id: code, code, titulo, narrador, sector, epoca, formatos, estado, origen, tags, fecha, dur, texto, mia: false, motivo: '', ...(extra || {}) });
+  return [
+    t('HIS-2026-001', 'El camino de mulas hasta Santa Marta', 'Aurelio Martínez', 'Minca', 'Antes de 1960', ['Audio', 'Foto'], 'publicada', 'comunidad', ['#café', '#oficios'], '14 sep 2026', 204, 'Antes de que hubiera carretera, el café bajaba en mula por el camino viejo. Mi papá salía de madrugada con la carga y volvía al otro día.'),
+    t('HIS-2026-002', 'La primera cosecha de la familia', 'Rosa Elena Pérez', 'La Tagua', '1960 a 1979', ['Foto', 'Audio'], 'publicada', 'comunidad', ['#familia', '#cosecha'], '16 sep 2026', 251, 'Recuerdo la primera cosecha que recogimos todos juntos: mis hermanos, mi mamá y unos vecinos que vinieron a ayudar.'),
+    t('HIS-2026-003', 'Las mingas de recolección', 'Hernando Ruiz', 'San Lorenzo', '1980 a 1999', ['Audio'], 'publicada', 'comunidad', ['#cosecha', '#familia'], '20 sep 2026', 312, 'Cuando una finca no daba abasto, los vecinos se juntaban a recoger. Después se compartía la comida y nadie cobraba.'),
+    t('HIS-2026-004', 'El patio donde se secaba el café', 'Equipo AGROCULTURA', 'Tijereras', '1960 a 1979', ['Foto'], 'publicada', 'proyecto', ['#finca', '#café'], '22 sep 2026', 0, 'Historia preparada por el equipo del proyecto a partir de fotos y conversaciones con familias del sector.'),
+    t('HIS-2026-005', 'Cuando llegó la roya', 'Luz Marina Ospina', 'Minca', '1980 a 1999', ['Audio', 'Video'], 'publicada', 'comunidad', ['#café', '#finca'], '25 sep 2026', 276, 'Las hojas se llenaron de manchas y la cosecha se perdió casi entera. Ese año tocó aprender a cuidar el cafetal de otra forma.'),
+    t('HIS-2026-006', 'La fiesta de fin de cosecha', 'Equipo AGROCULTURA', 'Minca', '2000 en adelante', ['Video', 'Foto'], 'publicada', 'proyecto', ['#familia', '#cocina'], '1 oct 2026', 0, 'Registro del proyecto sobre cómo las familias celebran el final de la cosecha.'),
+    t('HIS-2026-007', 'El fogón de leña de la casa', '', 'La Tagua', 'Antes de 1960', ['Audio'], 'publicada', 'comunidad', ['#cocina', '#familia'], '3 oct 2026', 188, 'En el fogón de leña se tostaba el café de la casa. Mi abuela sabía por el olor cuándo estaba listo.', { mia: true }),
+    t('HIS-2026-008', 'El beneficiadero comunitario', 'Jorge Iván Castro', 'La Tagua', '2000 en adelante', ['Audio', 'Foto'], 'revision', 'comunidad', ['#café', '#oficios'], '18 oct 2026', 341, 'Entre varias familias armamos un beneficiadero para lavar y secar el café de todos.'),
+    t('HIS-2026-009', 'Recetas con café de la abuela', 'Marta Lucía Rojas', 'San Lorenzo', 'Antes de 1960', ['Audio'], 'revision', 'comunidad', ['#cocina'], '19 oct 2026', 198, 'Con el café no solo se hacía tinto: mi abuela preparaba dulces y bebidas para las visitas.'),
+    t('HIS-2026-010', 'De la finca a la escuela', 'Wilmer Rangel', 'Tijereras', '1980 a 1999', ['Video'], 'revision', 'comunidad', ['#familia'], '20 oct 2026', 0, 'Para ir a la escuela había que caminar más de una hora entre cafetales.'),
+    t('HIS-2026-011', 'Cómo aprendí a tostar café', '', 'Minca', '2000 en adelante', ['Audio', 'Foto'], 'revision', 'comunidad', ['#café', '#oficios'], '21 oct 2026', 145, 'Aprendí mirando a mi papá: el café se mueve todo el tiempo para que no se queme.', { mia: true }),
+    t('HIS-2026-012', 'Un viaje a la ciudad', 'Carlos Peña', 'Minca', '2000 en adelante', ['Texto'], 'rechazada', 'comunidad', ['#familia'], '12 oct 2026', 0, 'Relato de un viaje a la ciudad, sin relación con el café.', { motivo: 'Fuera del tema: no trata de la cultura cafetera' }),
+  ];
+}
+
+function formVacio() {
+  return { paso: 1, grabando: false, seg: 0, audio: 0, texto: '', adjuntos: [], titulo: '', sector: null, epoca: '', tags: [] };
+}
+
+function inicial() {
+  return {
+    vista: 'mapa', rol: 'visitante', nombre: '', online: true, stories: semilla(), seq: 13, adjSeq: 1,
+    fSector: 'Todos', fEpoca: 'Todas', fFormato: 'Todos', fOrigen: 'todos', q: '', selId: null,
+    detId: null, playing: false, prog: 0,
+    showLogin: false, loginTab: 'narrador', loginNombre: 'Ana Beltrán', loginCel: '300 555 0192', loginUsuario: 'admin', loginClave: 'prototipo', despues: null,
+    misTab: 'todas', revTab: 'revision', revId: null, checks: [false, false, false], rechazando: false, motivo: '',
+    showNuevaP: false, npTitulo: '', npSector: 'Minca', npEpoca: '1960 a 1979', npFormatos: ['Foto'], proySeq: 1,
+    portalNombre: 'AGROCULTURA', avisar: false, etiquetas: TAGS.slice(), nuevaEtiqueta: '',
+    toast: '', toastTipo: 'ok', leyendo: '',
+    ...formVacio(),
+  };
+}
+
+const seg2 = (n) => Math.floor(n / 60) + ':' + String(n % 60).padStart(2, '0');
+const tabStyle = (on) => ({ bg: on ? '#FFFFFF' : 'transparent', sombra: on ? '0 1px 3px rgba(23, 38, 31, 0.15)' : 'none', pressed: on ? 'true' : 'false' });
+const chipStyle = (on) => (on ? { bg: '#1F3A2E', fg: '#FFFFFF', borde: '#1F3A2E', pressed: 'true' } : { bg: '#FFFFFF', fg: '#1F3A2E', borde: '#C9D3CB', pressed: 'false' });
+
+class Component extends DCLogic {
+  constructor(...args) {
+    super(...args);
+    this.state = inicial();
+    this.timers = {};
+  }
+
+  componentWillUnmount() { Object.keys(this.timers).forEach((k) => { clearInterval(this.timers[k]); clearTimeout(this.timers[k]); }); }
+
+  avisar(msg, tipo) {
+    clearTimeout(this.timers.toast);
+    this.setState({ toast: msg, toastTipo: tipo || 'ok' });
+    this.timers.toast = setTimeout(() => this.setState({ toast: '' }), 3800);
+  }
+
+  leer(que) {
+    clearTimeout(this.timers.leer);
+    this.setState({ leyendo: que });
+    this.timers.leer = setTimeout(() => this.setState({ leyendo: '' }), 5000);
+  }
+
+  pararAudio() { clearInterval(this.timers.play); this.timers.play = null; }
+
+  pararGrabacion() {
+    if (!this.state.grabando) return;
+    clearInterval(this.timers.rec); this.timers.rec = null;
+    this.setState((s) => ({ grabando: false, audio: Math.max(1, s.seg) }));
+  }
+
+  ir(vista) {
+    const s = this.state;
+    const deNarrador = vista === 'contar' || vista === 'mis';
+    const deAdmin = vista === 'revision' || vista === 'proyecto' || vista === 'config';
+    if (deNarrador && s.rol !== 'narrador') { this.setState({ showLogin: true, loginTab: 'narrador', despues: vista }); return; }
+    if (deAdmin && s.rol !== 'admin') { this.setState({ showLogin: true, loginTab: 'admin', despues: vista }); return; }
+    this.pararGrabacion();
+    this.setState({ vista, ...(vista === 'contar' && s.vista !== 'contar' ? formVacio() : {}) });
+  }
+
+  ingresar() {
+    const s = this.state;
+    const destino = s.despues;
+    if (s.loginTab === 'narrador') {
+      const nombre = s.loginNombre.trim();
+      if (!nombre) return;
+      this.setState({ rol: 'narrador', nombre, showLogin: false, despues: null });
+      this.avisar('Hola, ' + nombre.split(' ')[0] + '. Ya puedes contar tus historias.');
+      if (destino === 'contar' || destino === 'mis') this.ir(destino);
+    } else {
+      this.setState({ rol: 'admin', showLogin: false, despues: null });
+      this.avisar('Ingresaste como administrador.');
+      if (destino === 'revision' || destino === 'proyecto' || destino === 'config') this.ir(destino);
+    }
+  }
+
+  salir() {
+    const s = this.state;
+    const protegida = ['contar', 'mis', 'revision', 'proyecto', 'config'].includes(s.vista);
+    this.pararGrabacion();
+    this.setState({ rol: 'visitante', vista: protegida ? 'mapa' : s.vista });
+    this.avisar('Sesión cerrada.', 'info');
+  }
+
+  toggleOnline() {
+    const s = this.state;
+    if (s.online) { this.setState({ online: false }); this.avisar('Sin señal: lo que cuentes se guarda en el dispositivo.', 'info'); return; }
+    const n = s.stories.filter((x) => x.estado === 'borrador').length;
+    this.setState((st) => ({ online: true, stories: st.stories.map((x) => (x.estado === 'borrador' ? { ...x, estado: 'revision', fecha: HOY } : x)) }));
+    this.avisar(n ? 'Volvió la señal: ' + (n === 1 ? 'se envió 1 borrador' : 'se enviaron ' + n + ' borradores') + ' a revisión.' : 'Volvió la señal.');
+  }
+
+  abrirDet(id) { this.pararAudio(); this.setState({ detId: id, playing: false, prog: 0 }); }
+
+  play() {
+    const s = this.state;
+    if (s.playing) { this.pararAudio(); this.setState({ playing: false }); return; }
+    this.setState({ playing: true, prog: s.prog >= 100 ? 0 : s.prog });
+    this.timers.play = setInterval(() => this.setState((st) => {
+      const p = st.prog + 1;
+      if (p >= 100) { clearInterval(this.timers.play); return { prog: 100, playing: false }; }
+      return { prog: p };
+    }), 120);
+  }
+
+  grabar() {
+    if (this.state.grabando) { this.pararGrabacion(); return; }
+    clearInterval(this.timers.rec);
+    this.setState({ grabando: true, seg: 0, audio: 0 });
+    this.timers.rec = setInterval(() => this.setState((s) => ({ seg: s.seg + 1 })), 1000);
+  }
+
+  siguiente() {
+    const s = this.state;
+    if (s.paso === 1) { this.pararGrabacion(); this.setState({ paso: 2 }); return; }
+    if (s.paso === 2) { this.setState({ paso: 3 }); return; }
+    const formatos = [];
+    if (s.audio) formatos.push('Audio');
+    if (s.adjuntos.some((a) => a.tipo === 'Foto')) formatos.push('Foto');
+    if (s.adjuntos.some((a) => a.tipo === 'Video')) formatos.push('Video');
+    if (!formatos.length) formatos.push('Texto');
+    const code = 'HIS-2026-' + String(s.seq).padStart(3, '0');
+    const h = {
+      id: code, code, titulo: s.titulo.trim(), narrador: '', sector: s.sector, epoca: s.epoca, formatos,
+      estado: s.online ? 'revision' : 'borrador', origen: 'comunidad', mia: true, motivo: '',
+      tags: s.tags.length ? s.tags.slice() : ['#café'], fecha: HOY, dur: s.audio,
+      texto: s.texto.trim() || 'Historia contada en audio. La transcripción se agrega después.',
+    };
+    this.setState({ stories: [h, ...s.stories], seq: s.seq + 1, vista: 'mis', misTab: 'todas', ...formVacio() });
+    this.avisar(s.online ? 'Enviada. Un administrador la revisará antes de publicarla.' : 'Sin señal: quedó como borrador en el dispositivo.', s.online ? 'ok' : 'info');
+  }
+
+  decidir(aprobar) {
+    const s = this.state;
+    const id = s.revId;
+    this.setState({
+      stories: s.stories.map((x) => (x.id === id ? { ...x, estado: aprobar ? 'publicada' : 'rechazada', fecha: HOY, motivo: aprobar ? '' : s.motivo } : x)),
+      revId: null, rechazando: false, motivo: '', checks: [false, false, false],
+    });
+    this.avisar(aprobar ? 'Publicada: ya aparece en el mapa.' : 'Rechazada: no se publica.', aprobar ? 'ok' : 'info');
+  }
+
+  crearProyecto() {
+    const s = this.state;
+    const code = 'HIS-2026-' + String(s.seq).padStart(3, '0');
+    const h = {
+      id: code, code, titulo: s.npTitulo.trim(), narrador: 'Equipo AGROCULTURA', sector: s.npSector, epoca: s.npEpoca,
+      formatos: s.npFormatos.slice(), estado: 'publicada', origen: 'proyecto', mia: false, motivo: '', tags: ['#café'], fecha: HOY,
+      dur: s.npFormatos.includes('Audio') ? 150 : 0, texto: 'Historia preparada por el equipo del proyecto.',
+    };
+    this.setState({ stories: [h, ...s.stories], seq: s.seq + 1, showNuevaP: false, npTitulo: '' });
+    this.avisar('Historia del proyecto publicada en ' + h.sector + '.');
+  }
+
+  renderVals() {
+    const s = this.state;
+    const isAdmin = s.rol === 'admin';
+    const isNarr = s.rol === 'narrador';
+    const nom = (x) => (x.mia ? (s.nombre || 'Ana Beltrán') : x.narrador);
+    const pub = s.stories.filter((x) => x.estado === 'publicada');
+    const enRev = s.stories.filter((x) => x.estado === 'revision');
+    const mias = s.stories.filter((x) => x.mia);
+    const porId = (id) => s.stories.find((x) => x.id === id);
+    const origenEst = (x) => (x.origen === 'proyecto' ? { origen: 'Proyecto', origenBg: '#D6E9EA', origenFg: '#1D4A4D' } : { origen: 'Comunidad', origenBg: '#F6D5D8', origenFg: '#6E1520' });
+
+    // ---------- Menú ----------
+    const item = (id, label, icono, code, o) => {
+      o = o || {};
+      const on = s.vista === id;
+      return {
+        label, code, current: on ? 'page' : 'false',
+        bg: on ? '#E4ECE3' : 'transparent', fg: on ? '#1F3A2E' : '#33433A', peso: on ? 800 : 600, codeFg: o.futura ? '#6B4E00' : (on ? '#1F3A2E' : '#8A968E'), codeBg: o.futura ? '#FFF1CC' : 'transparent',
+        iMapa: icono === 'mapa', iMic: icono === 'mic', iLista: icono === 'lista', iBandeja: icono === 'bandeja',
+        iBandera: icono === 'bandera', iEngranaje: icono === 'engranaje', iGlobo: icono === 'globo', iAvatar: icono === 'avatar',
+        hayCuenta: o.cuenta > 0 && !o.lock, cuenta: o.cuenta || 0, cuentaBg: o.alerta ? '#FFE9B0' : '#E4ECE3', cuentaFg: o.alerta ? '#4A3A0B' : '#1F3A2E',
+        lock: !!o.lock,
+        ir: () => this.ir(id),
+      };
+    };
+    const menu = [
+      { titulo: 'EXPLORAR', items: [item('mapa', 'Mapa de historias', 'mapa', 'F1', { cuenta: pub.length })] },
+      { titulo: 'NARRADOR', items: [item('contar', 'Contar una historia', 'mic', 'F3'), item('mis', 'Mis historias', 'lista', 'F10', { cuenta: isNarr ? mias.length : 0 })] },
+      { titulo: 'ADMINISTRACIÓN', items: [
+        item('revision', 'Revisión', 'bandeja', 'F6', { cuenta: enRev.length, alerta: true, lock: !isAdmin }),
+        item('proyecto', 'Historias propias', 'bandera', 'F12', { lock: !isAdmin }),
+        item('config', 'Configuración', 'engranaje', 'F7', { lock: !isAdmin }),
+      ] },
+      { titulo: 'PRÓXIMAMENTE', items: [item('f360', 'Recorridos 360°', 'globo', 'F14', { futura: true }), item('fra', 'Avatares en RA', 'avatar', 'F15', { futura: true })] },
+    ];
+
+    // ---------- Mapa ----------
+    const q = s.q.trim().toLowerCase();
+    const pasa = (x) => (s.fEpoca === 'Todas' || x.epoca === s.fEpoca) && (s.fFormato === 'Todos' || x.formatos.includes(s.fFormato))
+      && (s.fOrigen === 'todos' || x.origen === s.fOrigen)
+      && (!q || [x.titulo, nom(x), x.sector, x.epoca, x.tags.join(' ')].join(' ').toLowerCase().includes(q));
+    const filtrada = pub.filter(pasa);
+    const visibles = filtrada.filter((x) => s.fSector === 'Todos' || x.sector === s.fSector);
+    const usados = {};
+    const pos = {};
+    pub.slice().sort((a, b) => (a.code < b.code ? -1 : 1)).forEach((x) => {
+      const i = (usados[x.sector] = usados[x.sector] === undefined ? 0 : usados[x.sector] + 1);
+      const a = ANCLA[x.sector]; const d = DESPLAZA[i % DESPLAZA.length];
+      pos[x.id] = { left: 'calc(' + a[0] + '% + ' + d[0] + 'px)', top: 'calc(' + a[1] + '% + ' + d[1] + 'px)' };
+    });
+    const pins = visibles.map((x) => {
+      const sel = x.id === s.selId;
+      return {
+        titulo: x.titulo, left: pos[x.id].left, top: pos[x.id].top, w: sel ? 46 : 34, h: sel ? 55 : 41, sel,
+        fill: sel ? '#17261F' : (x.origen === 'proyecto' ? '#2F6F73' : '#B8323F'),
+        abrir: () => { this.setState({ selId: x.id }); this.abrirDet(x.id); },
+      };
+    });
+    const lista = visibles.slice().sort((a, b) => (a.code < b.code ? 1 : -1)).map((x) => ({
+      code: x.code, titulo: x.titulo, narrador: nom(x), sector: x.sector, epoca: x.epoca, formatos: x.formatos, ...origenEst(x),
+      bg: x.id === s.selId ? '#F4F8F3' : '#FFFFFF',
+      abrir: () => { this.setState({ selId: x.id }); this.abrirDet(x.id); },
+    }));
+    const sectorTabs = ['Todos', ...SECTORES].map((n) => ({
+      nombre: n, cuenta: n === 'Todos' ? filtrada.length : filtrada.filter((x) => x.sector === n).length, ...tabStyle(s.fSector === n),
+      elegir: () => this.setState({ fSector: n, selId: null }),
+    }));
+    const origenTabs = [['todos', 'Todas', '#7A867E'], ['comunidad', 'Comunidad', '#B8323F'], ['proyecto', 'Proyecto', '#2F6F73']].map(([id, nombre, dot]) => ({
+      nombre, dot, ...tabStyle(s.fOrigen === id), elegir: () => this.setState({ fOrigen: id, selId: null }),
+    }));
+    const nSec = SECTORES.filter((n) => pub.some((x) => x.sector === n)).length;
+    const nCom = pub.filter((x) => x.origen === 'comunidad').length;
+
+    // ---------- Ficha ----------
+    const d0 = porId(s.detId);
+    const det = d0 ? {
+      code: d0.code, titulo: d0.titulo, epoca: d0.epoca, sector: d0.sector + ', zona de Minca', narrador: nom(d0),
+      fecha: d0.estado === 'publicada' ? d0.fecha : 'Sin publicar', texto: d0.texto, tags: d0.tags, ...origenEst(d0),
+      hasFoto: d0.formatos.includes('Foto'), hasVideo: d0.formatos.includes('Video'), hasAudio: d0.formatos.includes('Audio'), dur: seg2(d0.dur || 0),
+    } : { code: '', titulo: '', epoca: '', sector: '', narrador: '', fecha: '', texto: '', tags: [], origen: '', origenBg: '#FFFFFF', origenFg: '#17261F', hasFoto: false, hasVideo: false, hasAudio: false, dur: '0:00' };
+    const tiempo = d0 ? seg2(Math.round((d0.dur || 0) * s.prog / 100)) : '0:00';
+
+    // ---------- Contar ----------
+    const fotos = s.adjuntos.filter((a) => a.tipo === 'Foto');
+    const hayVideo = s.adjuntos.some((a) => a.tipo === 'Video');
+    const puede1 = s.audio > 0 || s.grabando || s.texto.trim().length > 0;
+    const puede2 = s.titulo.trim().length > 0 && !!s.sector && !!s.epoca;
+    const puede = s.paso === 1 ? puede1 : (s.paso === 2 ? puede2 : true);
+    const pasos = [[1, 'Cuéntala', 'F3 F4 F5 F13'], [2, 'Dónde y cuándo', 'F3 F1'], [3, 'Revisar y enviar', 'F10']].map(([n, label, codes]) => {
+      const act = n === s.paso; const hecho = n < s.paso;
+      return {
+        n: hecho ? '✓' : n, label, codes,
+        bg: act ? '#1F3A2E' : '#FFFFFF', borde: act ? '#1F3A2E' : '#E1E7E2', fg: act ? '#FFFFFF' : '#33433A',
+        numBg: act ? '#FFFFFF' : (hecho ? '#CFE6D3' : '#F2F4F0'), numFg: '#1F3A2E',
+      };
+    });
+    const fmtPrev = [];
+    if (s.audio) fmtPrev.push('Audio ' + seg2(s.audio));
+    if (fotos.length) fmtPrev.push(fotos.length === 1 ? '1 foto' : fotos.length + ' fotos');
+    if (hayVideo) fmtPrev.push('Video');
+    const prev = {
+      titulo: s.titulo.trim() || 'Sin título todavía', lugar: s.sector || 'Sin elegir', epoca: s.epoca || 'Sin elegir', narrador: s.nombre || 'Ana Beltrán',
+      texto: s.texto.trim() || (s.audio ? 'Historia contada en audio. La transcripción se agrega después.' : 'Todavía no has grabado ni escrito la historia.'),
+      formatos: fmtPrev.length ? fmtPrev : ['Texto'], formatosTexto: fmtPrev.length ? fmtPrev.join(' · ') : 'Ninguno todavía', tags: s.tags,
+    };
+    const ayudas = {
+      1: puede1 ? 'Puedes agregar fotos o un video si los tienes.' : 'Graba un audio o escribe la historia para seguir.',
+      2: puede2 ? 'Todo listo para revisar.' : 'Falta el título, el sector o la época.',
+      3: s.online ? 'Al enviarla pasa a revisión (F6).' : 'Sin señal: quedará como borrador.',
+    };
+
+    // ---------- Mis historias ----------
+    const misDef = [['todas', 'Todas', '#7A867E'], ['borrador', 'Borrador', '#7A867E'], ['revision', 'En revisión', '#D9A92E'], ['publicada', 'Publicada', '#2E8B57'], ['rechazada', 'No publicada', '#B8323F']];
+    const misTabs = misDef.map(([id, nombre, dot]) => ({
+      nombre, dot, cuenta: id === 'todas' ? mias.length : mias.filter((x) => x.estado === id).length, ...tabStyle(s.misTab === id),
+      elegir: () => this.setState({ misTab: id }),
+    }));
+    const misFilas = mias.filter((x) => s.misTab === 'todas' || x.estado === s.misTab).map((x) => {
+      const e = ESTADOS[x.estado];
+      return {
+        code: x.code, titulo: x.titulo, sector: x.sector, formatos: x.formatos.join(' · '), fecha: x.fecha,
+        estado: e.label, chipBg: e.bg, chipFg: e.fg, dot: e.dot, publicada: x.estado === 'publicada',
+        sigue: x.estado === 'rechazada' ? x.motivo : (x.estado === 'publicada' ? '' : e.sigue),
+        ver: () => this.abrirDet(x.id),
+      };
+    });
+
+    // ---------- Revisión ----------
+    const revDef = [['revision', 'Por revisar', '#D9A92E'], ['publicada', 'Aprobadas', '#2E8B57'], ['rechazada', 'Rechazadas', '#B8323F']];
+    const deComunidad = s.stories.filter((x) => x.origen === 'comunidad');
+    const revTabs = revDef.map(([id, nombre, dot]) => ({
+      nombre, dot, cuenta: deComunidad.filter((x) => x.estado === id).length, ...tabStyle(s.revTab === id),
+      elegir: () => this.setState({ revTab: id }),
+    }));
+    const revFilas = deComunidad.filter((x) => x.estado === s.revTab).map((x) => {
+      const porRev = x.estado === 'revision';
+      return {
+        code: x.code, titulo: x.titulo, narrador: nom(x), sector: x.sector, formatos: x.formatos.join(' · '), fecha: x.fecha,
+        hayMotivo: x.estado === 'rechazada' && !!x.motivo, motivo: x.motivo,
+        btnLabel: porRev ? 'Revisar' : 'Ver ficha', btnBg: porRev ? '#1F3A2E' : '#FFFFFF', btnFg: porRev ? '#FFFFFF' : '#1F3A2E', btnBorde: porRev ? '0' : '1px solid #1F3A2E',
+        abrir: () => (porRev ? this.setState({ revId: x.id, checks: [false, false, false], rechazando: false, motivo: '' }) : this.abrirDet(x.id)),
+      };
+    });
+    const r0 = porId(s.revId);
+    const rev = r0 ? { code: r0.code, titulo: r0.titulo, narrador: nom(r0), sector: r0.sector, epoca: r0.epoca, fecha: r0.fecha, formatos: r0.formatos, texto: r0.texto, tags: r0.tags }
+      : { code: '', titulo: '', narrador: '', sector: '', epoca: '', fecha: '', formatos: [], texto: '', tags: [] };
+    const CHECKS = ['Trata de la cultura cafetera.', 'Ocurrió en Minca o en un sector aledaño.', 'No expone datos personales de otras personas.'];
+    const checks = CHECKS.map((texto, i) => ({
+      texto, checked: s.checks[i] ? 'true' : 'false', bg: s.checks[i] ? '#1F3A2E' : '#FFFFFF', borde: s.checks[i] ? '#1F3A2E' : '#E1E7E2',
+      toggle: () => this.setState({ checks: s.checks.map((c, j) => (j === i ? !c : c)) }),
+    }));
+    const todosChecks = s.checks.every(Boolean);
+
+    // ---------- Proyecto ----------
+    const proyFilas = s.stories.filter((x) => x.origen === 'proyecto').map((x) => ({
+      code: x.code, titulo: x.titulo, sector: x.sector, epoca: x.epoca, formatos: x.formatos.join(' · '), abrir: () => this.abrirDet(x.id),
+    }));
+    const npFormatos = ['Foto', 'Audio', 'Video'].map((n) => ({
+      nombre: n, ...chipStyle(s.npFormatos.includes(n)),
+      elegir: () => this.setState({ npFormatos: s.npFormatos.includes(n) ? s.npFormatos.filter((f) => f !== n) : [...s.npFormatos, n] }),
+    }));
+    const npInvalido = !s.npTitulo.trim() || s.npFormatos.length === 0;
+
+    // ---------- Futuras ----------
+    const FUT = {
+      f360: { titulo: 'Recorridos 360°', code: 'F14', que: 'Mostrar un lugar en imagen 360 desde la ficha de la historia.', origen: 'Asesoría',
+        nota: 'Se vería dentro de la ficha (F8) y se subiría junto con la historia (F3).', deps: [['F8', 'Ficha de historia'], ['F3', 'Subir historia']] },
+      fra: { titulo: 'Avatares en realidad aumentada', code: 'F15', que: 'Presentar a un narrador como avatar en realidad aumentada.', origen: 'Ejemplo del profesor',
+        nota: 'Necesita contenido grabado con audio (F5) o video (F13) y se abriría desde la ficha (F8).', deps: [['F8', 'Ficha de historia'], ['F5', 'Audio'], ['F13', 'Video']] },
+    };
+    const f0 = FUT[s.vista] || FUT.f360;
+    const fut = { titulo: f0.titulo, code: f0.code, que: f0.que, nota: f0.nota, origen: f0.origen, deps: f0.deps.map(([code, nombre]) => ({ code, nombre })) };
+
+    const nombreUsuario = isAdmin ? 'Administración' : s.nombre;
+    const iniciales = isAdmin ? 'AD' : s.nombre.split(' ').filter(Boolean).slice(0, 2).map((p) => p[0].toUpperCase()).join('');
+
+    return {
+      // encabezado
+      nPub: pub.length, nRev: enRev.length,
+      offline: !s.online, offlinePressed: s.online ? 'false' : 'true', toggleOnline: () => this.toggleOnline(),
+      conBg: s.online ? '#2A4A3B' : '#6B4E00', conBorde: s.online ? '#3A5E4C' : '#B8862A', conDot: s.online ? '#6FCF97' : '#E0B13A', conTexto: s.online ? 'En línea' : 'Sin señal',
+      logged: s.rol !== 'visitante', notLogged: s.rol === 'visitante', usuarioNombre: nombreUsuario, iniciales,
+      usuarioRol: isAdmin ? 'Administrador · F7' : 'Narrador · F2', salir: () => this.salir(),
+      abrirLogin: () => this.setState({ showLogin: true, loginTab: 'narrador', despues: null }),
+      menu,
+
+      // vistas
+      vMapa: s.vista === 'mapa', vContar: s.vista === 'contar', vMis: s.vista === 'mis', vRevision: s.vista === 'revision',
+      vProyecto: s.vista === 'proyecto', vConfig: s.vista === 'config', vFutura: s.vista === 'f360' || s.vista === 'fra',
+      irContar: () => this.ir('contar'),
+
+      // mapa
+      kpiOrigen: nCom + ' de la comunidad · ' + (pub.length - nCom) + ' del proyecto',
+      nSectores: nSec, pctSectores: Math.round(nSec / 4 * 100),
+      nAudio: pub.filter((x) => x.formatos.includes('Audio')).length, nFoto: pub.filter((x) => x.formatos.includes('Foto')).length, nVideo: pub.filter((x) => x.formatos.includes('Video')).length,
+      sectorTabs, origenTabs, q: s.q, onQ: (e) => this.setState({ q: e.target.value, selId: null }),
+      fEpoca: s.fEpoca, onEpoca: (e) => this.setState({ fEpoca: e.target.value, selId: null }),
+      fFormato: s.fFormato, onFormato: (e) => this.setState({ fFormato: e.target.value, selId: null }),
+      etiquetasMapa: SECTORES.map((n) => ({ nombre: n.toUpperCase(), left: ANCLA[n][0] + '%', top: ANCLA[n][1] + '%' })),
+      pins, lista, nLista: lista.length, sinResultados: lista.length === 0,
+      leerMapa: () => this.leer('Mapa de historias'),
+
+      // ficha
+      hayDet: !!d0, det, prog: s.prog, tiempo, sonando: s.playing, quieto: !s.playing, playLabel: s.playing ? 'Pausar' : 'Escuchar el audio',
+      play: () => this.play(), cerrarDet: () => { this.pararAudio(); this.setState({ detId: null, playing: false }); },
+      leerDet: () => this.leer(det.titulo),
+      verEnMapa: () => { this.pararAudio(); this.setState({ detId: null, playing: false, vista: 'mapa', fSector: 'Todos', fEpoca: 'Todas', fFormato: 'Todos', fOrigen: 'todos', q: '', selId: d0 ? d0.id : null }); },
+
+      // contar
+      pasos, paso1: s.paso === 1, paso2: s.paso === 2, paso3: s.paso === 3,
+      grabando: s.grabando, audioListo: !s.grabando && s.audio > 0, sinAudio: !s.grabando && !s.audio,
+      tiempoGrab: seg2(s.seg), durAudio: seg2(s.audio), grabar: () => this.grabar(), borrarAudio: () => this.setState({ audio: 0 }),
+      texto: s.texto, onTexto: (e) => this.setState({ texto: e.target.value }),
+      agregarFoto: () => this.setState({ adjuntos: [...s.adjuntos, { id: s.adjSeq, tipo: 'Foto', nombre: 'foto_' + String(s.adjSeq).padStart(2, '0') + '.jpg', peso: (1 + (s.adjSeq % 4) * 0.4).toFixed(1).replace('.', ',') + ' MB' }], adjSeq: s.adjSeq + 1 }),
+      agregarVideo: () => { if (!hayVideo) this.setState({ adjuntos: [...s.adjuntos, { id: s.adjSeq, tipo: 'Video', nombre: 'video_' + String(s.adjSeq).padStart(2, '0') + '.mp4', peso: '24 MB' }], adjSeq: s.adjSeq + 1 }); },
+      hayVideo, opVideo: hayVideo ? 0.45 : 1,
+      adjuntos: s.adjuntos.map((a) => ({ tipo: a.tipo, nombre: a.nombre, peso: a.peso, quitar: () => this.setState({ adjuntos: s.adjuntos.filter((b) => b.id !== a.id) }) })),
+      titulo: s.titulo, onTitulo: (e) => this.setState({ titulo: e.target.value }),
+      sectoresMini: SECTORES.map((n) => ({ nombre: n, left: ANCLA[n][0] + '%', top: ANCLA[n][1] + '%', ...chipStyle(s.sector === n), elegir: () => this.setState({ sector: n }) })),
+      epoca: s.epoca, onEpocaForm: (e) => this.setState({ epoca: e.target.value }),
+      tagsOpc: s.etiquetas.map((n) => ({ nombre: n, ...chipStyle(s.tags.includes(n)), elegir: () => this.setState({ tags: s.tags.includes(n) ? s.tags.filter((t) => t !== n) : [...s.tags, n] }) })),
+      prev, ayudaPaso: ayudas[s.paso],
+      envioBg: s.online ? '#EAF5EC' : '#FFF1CC', envioBorde: s.online ? '#A8D3B2' : '#E0B13A', envioFg: s.online ? '#14301F' : '#4A3A0B',
+      envioTitulo: s.online ? 'Hay señal' : 'Sin señal',
+      envioTexto: s.online ? 'Se envía ahora y un administrador la revisa antes de publicarla.' : 'Se guarda en el dispositivo y se envía sola cuando vuelva la señal.',
+      hayAtras: s.paso > 1, atras: () => this.setState({ paso: s.paso - 1 }), siguiente: () => this.siguiente(),
+      sigDisabled: !puede, sigOp: puede ? 1 : 0.45, sigBg: s.paso === 3 ? '#B8323F' : '#1F3A2E',
+      sigLabel: s.paso === 3 ? (s.online ? 'Enviar historia' : 'Guardar en el dispositivo') : 'Siguiente',
+      leerContar: () => this.leer('Contar una historia, paso ' + s.paso),
+
+      // mis historias
+      misTabs, misFilas, misVacio: misFilas.length === 0,
+
+      // revisión
+      nAprobComunidad: nCom, nRech: s.stories.filter((x) => x.estado === 'rechazada').length,
+      revTabs, revFilas, revVacio: revFilas.length === 0, revVacioTexto: s.revTab === 'revision' ? 'No hay historias por revisar. Cuando un narrador envíe una, aparece aquí.' : 'No hay historias en este estado.',
+      hayRev: !!r0, rev, checks, rechazando: s.rechazando, noRechazando: !s.rechazando,
+      noPuedeAprobar: !todosChecks, opAprobar: todosChecks ? 1 : 0.45,
+      aprobar: () => this.decidir(true), empezarRechazo: () => this.setState({ rechazando: true }), cancelarRechazo: () => this.setState({ rechazando: false, motivo: '' }),
+      motivo: s.motivo, onMotivo: (e) => this.setState({ motivo: e.target.value }), sinMotivo: !s.motivo, opRechazo: s.motivo ? 1 : 0.45,
+      confirmarRechazo: () => this.decidir(false), cerrarRev: () => this.setState({ revId: null, rechazando: false, motivo: '' }),
+
+      // proyecto
+      proyFilas, abrirNuevaP: () => this.setState({ showNuevaP: true }), cerrarNuevaP: () => this.setState({ showNuevaP: false }), showNuevaP: s.showNuevaP,
+      npTitulo: s.npTitulo, onNpTitulo: (e) => this.setState({ npTitulo: e.target.value }),
+      npSector: s.npSector, onNpSector: (e) => this.setState({ npSector: e.target.value }),
+      npEpoca: s.npEpoca, onNpEpoca: (e) => this.setState({ npEpoca: e.target.value }),
+      npFormatos, npInvalido, opNp: npInvalido ? 0.45 : 1, crearProyecto: () => this.crearProyecto(),
+
+      // configuración
+      portalNombre: s.portalNombre, onPortalNombre: (e) => this.setState({ portalNombre: e.target.value }),
+      avisarChecked: s.avisar ? 'true' : 'false', avisarBg: s.avisar ? '#1F3A2E' : '#C9D3CB', avisarLeft: s.avisar ? 21 : 3, toggleAvisar: () => this.setState({ avisar: !s.avisar }),
+      etiquetasConfig: s.etiquetas.map((n) => ({ nombre: n, quitar: () => this.setState({ etiquetas: s.etiquetas.filter((t) => t !== n), tags: s.tags.filter((t) => t !== n) }) })),
+      nuevaEtiqueta: s.nuevaEtiqueta, onNuevaEtiqueta: (e) => this.setState({ nuevaEtiqueta: e.target.value }),
+      agregarEtiqueta: () => {
+        let t = s.nuevaEtiqueta.trim().toLowerCase().replace(/\s+/g, '-');
+        if (!t) return;
+        if (t[0] !== '#') t = '#' + t;
+        if (s.etiquetas.includes(t)) { this.setState({ nuevaEtiqueta: '' }); return; }
+        this.setState({ etiquetas: [...s.etiquetas, t], nuevaEtiqueta: '' });
+        this.avisar('Etiqueta ' + t + ' agregada.');
+      },
+
+      // futuras
+      fut,
+
+      // ingresar
+      showLogin: s.showLogin, cerrarLogin: () => this.setState({ showLogin: false, despues: null }),
+      loginAviso: s.despues === 'contar' || s.despues === 'mis' ? 'Para contar una historia necesitas ingresar.' : (s.loginTab === 'admin' ? 'Esta sección es solo para administradores.' : 'Elige cómo vas a usar la plataforma.'),
+      loginNarr: s.loginTab === 'narrador', loginAdm: s.loginTab === 'admin',
+      tabNarrPressed: tabStyle(s.loginTab === 'narrador').pressed, tabNarrBg: tabStyle(s.loginTab === 'narrador').bg, tabNarrSombra: tabStyle(s.loginTab === 'narrador').sombra,
+      tabAdminPressed: tabStyle(s.loginTab === 'admin').pressed, tabAdminBg: tabStyle(s.loginTab === 'admin').bg, tabAdminSombra: tabStyle(s.loginTab === 'admin').sombra,
+      tabNarr: () => this.setState({ loginTab: 'narrador' }), tabAdmin: () => this.setState({ loginTab: 'admin' }),
+      loginNombre: s.loginNombre, onLoginNombre: (e) => this.setState({ loginNombre: e.target.value }),
+      loginCel: s.loginCel, onLoginCel: (e) => this.setState({ loginCel: e.target.value }),
+      loginUsuario: s.loginUsuario, onLoginUsuario: (e) => this.setState({ loginUsuario: e.target.value }),
+      loginClave: s.loginClave, onLoginClave: (e) => this.setState({ loginClave: e.target.value }),
+      noPuedeIngresar: s.loginTab === 'narrador' && !s.loginNombre.trim(), opIngresar: s.loginTab === 'narrador' && !s.loginNombre.trim() ? 0.45 : 1,
+      ingresar: () => this.ingresar(),
+
+      // avisos
+      hayLeyendo: !!s.leyendo, leyendo: s.leyendo, pararLectura: () => { clearTimeout(this.timers.leer); this.setState({ leyendo: '' }); },
+      hayToast: !!s.toast, toast: s.toast, toastDot: s.toastTipo === 'info' ? '#E0B13A' : '#6FCF97',
+    };
+  }
+}
+</script>
