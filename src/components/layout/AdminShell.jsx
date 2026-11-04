@@ -1,12 +1,14 @@
 import { Link, Outlet } from 'react-router-dom'
 import AdminLogin from '../auth/AdminLogin.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
+import useFocusOnNavigation from '../../hooks/useFocusOnNavigation.js'
 import { usePortalData } from '../../context/PortalDataContext.jsx'
 import Icon from '../ui/Icon.jsx'
 import NavMenu from './NavMenu.jsx'
 
 /** Frame of the administration panel (F6, F7, F12). Meant mostly for desktop. */
 export default function AdminShell() {
+  useFocusOnNavigation()
   const { config, stats } = usePortalData()
   const { user, role, logout } = useAuth()
   const isAdmin = role === 'administrador'
@@ -32,6 +34,11 @@ export default function AdminShell() {
 
   return (
     <div className="ag-app ag-app--admin">
+      {isAdmin && (
+        <a href="#contenido" className="ag-skip">
+          Saltar al contenido
+        </a>
+      )}
       <header className="ag-header ag-header--admin">
         <div className="ag-brand">
           <div className="ag-brand__logo">
@@ -75,7 +82,7 @@ export default function AdminShell() {
               </Link>
             }
           />
-          <main className="ag-main">
+          <main id="contenido" tabIndex={-1} className="ag-main">
             <Outlet />
           </main>
         </div>

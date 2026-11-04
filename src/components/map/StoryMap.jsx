@@ -49,14 +49,22 @@ function pinIcon(story, selected) {
   return L.divIcon({ className: 'ag-pin-icon', html: pinElement(story, selected), iconSize: [width, height], iconAnchor: [width / 2, height] })
 }
 
+/**
+ * A group of stories. Leaflet already makes the marker itself a focusable button (Enter zooms in), so inside there is
+ * only text: the number for the eye, and the whole sentence for a screen reader.
+ */
 function clusterIcon(cluster) {
   const count = cluster.getChildCount()
-  const button = document.createElement('button')
-  button.type = 'button'
-  button.className = 'ag-cluster'
-  button.setAttribute('aria-label', `${count} historias juntas: toca para acercar`)
-  button.textContent = String(count)
-  return L.divIcon({ className: 'ag-cluster-icon', html: button, iconSize: [44, 44] })
+  const group = document.createElement('span')
+  group.className = 'ag-cluster'
+  const number = document.createElement('span')
+  number.setAttribute('aria-hidden', 'true')
+  number.textContent = String(count)
+  const label = document.createElement('span')
+  label.className = 'ag-sr-only'
+  label.textContent = `${count} historias juntas: toca para acercar`
+  group.append(number, label)
+  return L.divIcon({ className: 'ag-cluster-icon', html: group, iconSize: [44, 44] })
 }
 
 function sectorLabel(sector) {

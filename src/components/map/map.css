@@ -231,6 +231,7 @@
   background: transparent;
 }
 .ag-cluster {
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -257,7 +258,7 @@
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.14em;
-  color: #5e7a66;
+  color: #3f5a49; /* was #5e7a66 (4.3:1) */
   white-space: nowrap;
   text-shadow: 0 0 3px #fff, 0 0 3px #fff;
 }

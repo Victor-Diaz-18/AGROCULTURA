@@ -2,10 +2,12 @@ import { useState } from 'react'
 import { useAuth } from '../../context/AuthContext.jsx'
 import FCode from '../ui/FCode.jsx'
 import Field from '../ui/Field.jsx'
+import usePageTitle from '../../hooks/usePageTitle.js'
 import useSignIn from './useSignIn.js'
 
 /** "Acceso del equipo": what /admin shows until an administrator signs in. */
 export default function AdminLogin() {
+  usePageTitle('Acceso del equipo')
   const { user } = useAuth()
   const [usuario, setUsuario] = useState('')
   const [clave, setClave] = useState('')
@@ -22,7 +24,7 @@ export default function AdminLogin() {
   }
 
   return (
-    <div className="ag-adminlogin-wrap">
+    <main id="contenido" className="ag-adminlogin-wrap">
       <form className="ag-adminlogin" onSubmit={submit} noValidate>
         <div className="ag-adminlogin__head">
           <div className="ag-adminlogin__title">
@@ -53,6 +55,6 @@ export default function AdminLogin() {
           Ingresar
         </button>
       </form>
-    </div>
+    </main>
   )
 }

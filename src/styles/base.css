@@ -57,3 +57,55 @@ a {
   outline: 3px solid var(--verde-azulado);
   outline-offset: 2px;
 }
+
+/* Text only for screen readers. */
+.ag-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* "Saltar al contenido": the first thing a keyboard reaches, so it does not have to tab through the whole menu. */
+.ag-skip {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 100;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: var(--verde-oscuro);
+  color: #fff;
+  font-weight: 800;
+  text-decoration: none;
+  transform: translateY(-200%);
+}
+.ag-skip:focus {
+  transform: none;
+}
+
+/* The page that just opened takes the focus (so a screen reader says where it is) without showing a ring on a title. */
+main:focus,
+h1:focus {
+  outline: none;
+}
+
+/* People who ask their phone for less movement get none: no sliding, no map flights, no fades. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
+  .leaflet-zoom-anim .leaflet-zoom-animated {
+    transition: none !important;
+  }
+}
