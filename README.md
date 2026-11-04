@@ -190,6 +190,14 @@ sectores son provisionales hasta confirmarlos con las familias de la zona.
   mapa de relieve sin tocar componentes. El servicio gratuito de OpenStreetMap tiene
   [normas de uso](https://operations.osmfoundation.org/policies/tiles/) para poco tráfico; si el proyecto crece
   habrá que pasar a un proveedor propio.
+- **El lugar puede ser cualquiera de la zona.** «Minca y sectores aledaños» es toda la zona, no solo los
+  sectores. Al contar una historia se toca **cualquier punto del mapa** (o «Usar mi ubicación»); los botones de
+  sector son atajos. Un punto fuera de la zona (`ZONE` en `src/config/map.js`, unos 90 km alrededor de Minca) no se
+  acepta, y el mapa del formulario no deja alejarse más. El **sector se calcula en el servidor a partir del
+  punto**: es el más cercano dentro de 3 km (`SECTOR_RADIUS_KM`), o ninguno, y entonces se muestra «Otro lugar
+  de la zona». Lo que mande el teléfono como sector se ignora. Un sector con punto provisional solo cuenta si la
+  persona lo eligió. Que un punto esté en la zona lo revisa además el administrador (comprobación «Ocurrió en
+  Minca o en un sector aledaño»).
 - **Dónde están los sectores.** Cada sector tiene un punto central (en `lib/seed/catalog.py`) que usan las
   historias que se ubican «en el sector». **Minca, La Tagua y San Lorenzo están confirmados** (los dos últimos
   con puntos de Google Maps que pasó el equipo; el de San Lorenzo cae en «Cuchillas San Lorenzo», una cresta de

@@ -64,7 +64,7 @@ class HistoriaIn(BaseModel):
     titulo: str
     texto: str = Field("", max_length=20000)
     epoca: str
-    sector_id: str = Field(max_length=60)
+    sector_id: str | None = Field(None, max_length=60)  # ignored: the server finds the sector from the point
     etiquetas: list[str] = Field(default_factory=list, max_length=20)
     ubicacion: UbicacionIn
     ubicacion_origen: Literal["gps", "mapa", "sector"]
@@ -156,7 +156,7 @@ class HistoriaMapa(BaseModel):
     codigo: str
     titulo: str
     narrador_nombre: str
-    sector_id: str
+    sector_id: str | None = None  # None: another place of the zone
     epoca: str
     formatos: list[str]
     origen: str
@@ -189,7 +189,7 @@ class HistoriaAdmin(BaseModel):
     titulo: str
     texto: str
     narrador_nombre: str
-    sector_id: str
+    sector_id: str | None = None
     epoca: str
     etiquetas: list[str]
     formatos: list[str]
@@ -218,7 +218,7 @@ class RechazarIn(BaseModel):
 class HistoriaMia(BaseModel):
     codigo: str
     titulo: str
-    sector_id: str
+    sector_id: str | None = None  # None: another place of the zone
     epoca: str
     formatos: list[str]
     estado: str

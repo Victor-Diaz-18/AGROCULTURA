@@ -7,6 +7,7 @@ import { publishProjectStory } from '../../services/admin.js'
 import { readAudioDuration } from '../../utils/audio.js'
 import { formatBytes, formatDuration } from '../../utils/format.js'
 import { newId } from '../../utils/id.js'
+import LocationPicker from '../map/LocationPicker.jsx'
 import MediaPicker from '../tell/MediaPicker.jsx'
 import Chip from '../ui/Chip.jsx'
 import FCode from '../ui/FCode.jsx'
@@ -27,7 +28,7 @@ export default function ProjectStoryModal({ onClose, onPublished }) {
   const { config, reload } = usePortalData()
   const toast = useToast()
   const [titulo, setTitulo] = useState('')
-  const [chosenSector, setSectorId] = useState('')
+  const [location, setLocation] = useState(null) // { lat, lon, origen, sectorId }: anywhere in the zone
   const [chosenEpoca, setEpoca] = useState('')
   const [narrador, setNarrador] = useState('')
   const [texto, setTexto] = useState('')
@@ -43,12 +44,10 @@ export default function ProjectStoryModal({ onClose, onPublished }) {
   const photoNumber = useRef(1)
   const audioInput = useRef(null)
 
-  // The sector starts on the first of the list, as in the design (the configuration may still be loading when the
-  // form opens). The period has no default: a wrong one would go unnoticed.
-  const sectorId = chosenSector || config.sectores[0]?.id || ''
+  // Neither the place nor the period have a default: a wrong one would go unnoticed.
   const epoca = chosenEpoca
 
-  const valid = titulo.trim().length >= LIMITS.tituloMin && Boolean(sectorId) && Boolean(epoca) && (texto.trim().length > 0 || Boolean(audio))
+  const valid = titulo.trim().length >= LIMITS.tituloMin && Boolean(location) && Boolean(epoca) && (texto.trim().length > 0 || Boolean(audio))
 
   const photos = {
     photos: fotos,
@@ -84,10 +83,11 @@ export default function ProjectStoryModal({ onClose, onPublished }) {
     setError('')
     try {
       const story = await publishProjectStory(
-        { clientId, titulo: titulo.trim(), texto: texto.trim(), epoca, sectorId, etiquetas, narrador: narrador.trim(), audio, fotos },
+        { clientId, titulo: titulo.trim(), texto: texto.trim(), epoca, location, etiquetas, narrador: narrador.trim(), audio, fotos },
         { uploaded: uploaded.current },
       )
-      toast(`Historia del proyecto publicada en ${config.sectores.find((sector) => sector.id === story.sector_id)?.nombre ?? story.sector_id}.`)
+      const sector = config.sectores.find((item) => item.id === story.sector_id)
+      toast(sector ? `Historia del proyecto publicada en ${sector.nombre}.` : 'Historia del proyecto publicada.')
       reload() // the counters change
       onPublished?.(story)
     } catch (failure) {
@@ -123,29 +123,22 @@ export default function ProjectStoryModal({ onClose, onPublished }) {
         />
       </label>
 
-      <div className="ag-project-modal__row">
-        <label className="ag-project-modal__field">
-          Sector
-          <select className="ag-project-modal__select" value={sectorId} onChange={(event) => setSectorId(event.target.value)}>
-            {config.sectores.map((sector) => (
-              <option key={sector.id} value={sector.id}>
-                {sector.nombre}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="ag-project-modal__field">
-          Época
-          <select className="ag-project-modal__select" value={epoca} onChange={(event) => setEpoca(event.target.value)}>
-            <option value="">Elige una época</option>
-            {config.epocas.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
+      <div className="ag-project-modal__field">
+        <span>¿Dónde ocurrió? Toca el lugar en el mapa</span>
+        <LocationPicker sectors={config.sectores} value={location} onChange={setLocation} />
       </div>
+
+      <label className="ag-project-modal__field">
+        Época
+        <select className="ag-project-modal__select" value={epoca} onChange={(event) => setEpoca(event.target.value)}>
+          <option value="">Elige una época</option>
+          {config.epocas.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      </label>
 
       <label className="ag-project-modal__field">
         Quién la cuenta

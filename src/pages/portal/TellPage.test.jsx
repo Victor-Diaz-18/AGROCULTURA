@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { toggleSimulatedOffline } from '../../offline/connectivity.js'
@@ -130,6 +130,58 @@ describe('Contar una historia: steps and gating (F3)', () => {
   })
 })
 
+describe('Contar una historia: el lugar puede ser cualquiera de la zona', () => {
+  const setPosition = (latitude, longitude) =>
+    Object.defineProperty(navigator, 'geolocation', { value: { getCurrentPosition: (ok) => ok({ coords: { latitude, longitude } }) }, configurable: true })
+  afterEach(() => delete navigator.geolocation)
+
+  it('a place far from every sector is fine: it is told as "Otro lugar de la zona" and sent as a point', async () => {
+    const user = userEvent.setup()
+    setPosition(11.2, -73.95)
+    const { fetchMock } = open()
+    await writeStory(user)
+    await user.type(screen.getByLabelText('Ponle un título'), 'Un camino de herradura')
+    await user.click(screen.getByRole('button', { name: /Usar mi ubicación/ }))
+    await user.selectOptions(screen.getByRole('combobox', { name: /Cuándo ocurrió/ }), 'Antes de 1960')
+
+    expect(nextButton()).toBeEnabled() // no sector needed
+    expect(screen.getByRole('complementary', { name: 'Resumen de tu historia' })).toHaveTextContent('Lugar: Otro lugar de la zona')
+    await user.click(nextButton())
+    expect(screen.getByText(/Otro lugar de la zona · Antes de 1960/)).toBeInTheDocument()
+    await user.click(nextButton())
+
+    await screen.findByRole('heading', { name: 'Mis historias' })
+    expect(sentBody(fetchMock)).toMatchObject({ ubicacion: { lat: 11.2, lon: -73.95 }, ubicacion_origen: 'gps' })
+    expect(sentBody(fetchMock)).not.toHaveProperty('sector_id')
+  })
+
+  it('a place near a sector is told with its name', async () => {
+    const user = userEvent.setup()
+    setPosition(11.0835, -74.045)
+    open()
+    await writeStory(user)
+    await user.type(screen.getByLabelText('Ponle un título'), 'La trilla')
+
+    await user.click(screen.getByRole('button', { name: /Usar mi ubicación/ }))
+
+    expect(screen.getByRole('complementary', { name: 'Resumen de tu historia' })).toHaveTextContent('Lugar: La Tagua')
+  })
+
+  it('a position outside the zone is not taken: the person is asked to choose another place', async () => {
+    const user = userEvent.setup()
+    setPosition(4.7, -74.07)
+    open()
+    await writeStory(user)
+    await user.type(screen.getByLabelText('Ponle un título'), 'Desde lejos')
+    await user.selectOptions(screen.getByRole('combobox', { name: /Cuándo ocurrió/ }), 'Antes de 1960')
+
+    await user.click(screen.getByRole('button', { name: /Usar mi ubicación/ }))
+
+    expect(screen.getByText(/queda lejos de Minca y sus sectores/)).toBeInTheDocument()
+    expect(nextButton()).toBeDisabled()
+  })
+})
+
 describe('Contar una historia: sending (F3, F5, F4)', () => {
   it('sends a written story for review and goes to "Mis historias"', async () => {
     const user = userEvent.setup()
@@ -150,7 +202,6 @@ describe('Contar una historia: sending (F3, F5, F4)', () => {
       titulo: 'El camino de mulas',
       texto: 'Antes de que hubiera carretera, el café bajaba en mula.',
       epoca: 'Antes de 1960',
-      sector_id: 'minca',
       ubicacion: { lat: 11.14, lon: -74.118 },
       ubicacion_origen: 'sector',
       etiquetas: ['#café'], // the design's default when no tag is chosen

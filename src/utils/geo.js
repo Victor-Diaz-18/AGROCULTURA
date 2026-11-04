@@ -1,3 +1,6 @@
+import { OTHER_PLACE } from '../config/constants.js'
+import { SECTOR_RADIUS_KM, ZONE } from '../config/map.js'
+
 /** Distance in km between two { lat, lon } points (haversine). */
 export function distanceKm(a, b) {
   const toRad = (degrees) => (degrees * Math.PI) / 180
@@ -7,19 +10,30 @@ export function distanceKm(a, b) {
   return 2 * 6371 * Math.asin(Math.sqrt(h))
 }
 
-/** The sector whose center is closest to the point (a sector is { id, nombre, centro: { lat, lon } }). */
-export function nearestSector(point, sectors) {
+/**
+ * The sector a point belongs to: the nearest one within SECTOR_RADIUS_KM, or null ("Otro lugar de la zona").
+ * A sector whose point is not confirmed (`provisional`) only counts when someone chose that very sector.
+ * A sector is { id, nombre, centro: { lat, lon }, provisional }.
+ */
+export function sectorAt(point, sectors, { includeProvisional = false } = {}) {
   let best = null
-  let bestDistance = Infinity
+  let bestDistance = SECTOR_RADIUS_KM
   for (const sector of sectors) {
+    if (sector.provisional && !includeProvisional) continue
     const distance = distanceKm(point, sector.centro)
-    if (distance < bestDistance) {
+    if (distance <= bestDistance) {
       best = sector
       bestDistance = distance
     }
   }
   return best
 }
+
+/** Is the point inside the zone of the project? */
+export const inZone = ({ lat, lon }) => lat >= ZONE.south && lat <= ZONE.north && lon >= ZONE.west && lon <= ZONE.east
+
+/** The name to show for a story's sector, or "Otro lugar de la zona" when it has none. */
+export const placeName = (sectorId, sectors) => sectors.find((sector) => sector.id === sectorId)?.nombre ?? OTHER_PLACE
 
 /** Is the story's point inside the map's view? `bounds` is { south, west, north, east }; no bounds means "everything". */
 export function inBounds(bounds, story) {

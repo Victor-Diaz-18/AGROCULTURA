@@ -89,9 +89,6 @@ def insert_story(
     if existing:
         return existing, False
 
-    sector = catalog.get_sector(db, data.sector_id)
-    if sector is None:
-        raise InvalidDataError("Ese sector no existe. Elige uno de la lista.")
     available_tags = set(catalog.list_tag_names(db))
     for tag in data.etiquetas:
         if tag not in available_tags:
@@ -99,10 +96,20 @@ def insert_story(
     for medio in data.medios:
         check_media_url(medio.url, str(author_id))
 
+    # The story can be anywhere in the zone: its point is what matters. The sector is only a reference, found from
+    # the point (never taken from the client), and there may be none.
     if data.ubicacion is not None:
         location = {"type": "Point", "coordinates": [round(data.ubicacion.lon, 6), round(data.ubicacion.lat, 6)]}
-    else:  # a team story without a point: the center of its sector
+        sector = catalog.sector_at(
+            db, data.ubicacion.lat, data.ubicacion.lon, include_provisional=data.ubicacion_origen == "sector"
+        )
+    else:  # a team story sent without a point (through the API): the center of the sector it names
+        sector = catalog.get_sector(db, data.sector_id) if data.sector_id else None
+        if sector is None:
+            raise InvalidDataError("Elige dónde ocurrió: toca un punto del mapa o un sector.")
         location = dict(sector["centro"])
+    sector_id = sector["_id"] if sector else None
+    sector_name = sector["nombre"] if sector else ""
 
     published = estado == "publicada"
     document = {
@@ -111,7 +118,7 @@ def insert_story(
         "texto": data.texto,
         "epoca": data.epoca,
         "fecha_hechos": None,  # the design only asks for the epoch
-        "sector_id": sector["_id"],
+        "sector_id": sector_id,
         "etiquetas": data.etiquetas,
         "ubicacion": location,
         "ubicacion_origen": data.ubicacion_origen,
@@ -122,7 +129,7 @@ def insert_story(
         "motivo_rechazo": None,
         "origen": origen,
         "ejemplo": False,
-        "busqueda": search_text(data.titulo, narrador_nombre, sector["nombre"], data.epoca, " ".join(data.etiquetas)),
+        "busqueda": search_text(data.titulo, narrador_nombre, sector_name, data.epoca, " ".join(data.etiquetas)),
         "creada_en": now,
         "enviada_en": now,
         "revisada_en": None,
@@ -157,7 +164,7 @@ def my_stories(db: Database, user: dict) -> list[dict]:
         {
             "codigo": story["codigo"],
             "titulo": story["titulo"],
-            "sector_id": story["sector_id"],
+            "sector_id": story.get("sector_id"),
             "epoca": story["epoca"],
             "formatos": formats_of(story),
             "estado": story["estado"],
@@ -184,7 +191,7 @@ def story_for_map(story: dict) -> dict:
         "codigo": story["codigo"],
         "titulo": story["titulo"],
         "narrador_nombre": story.get("narrador_nombre", ""),
-        "sector_id": story["sector_id"],
+        "sector_id": story.get("sector_id"),
         "epoca": story["epoca"],
         "formatos": formats_of(story),
         "origen": story["origen"],

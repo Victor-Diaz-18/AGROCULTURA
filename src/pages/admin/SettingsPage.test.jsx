@@ -130,7 +130,7 @@ describe('Configuración: portal y moderación (F7)', () => {
     open()
 
     const card = (await screen.findByRole('region', { name: 'Sectores del mapa' }))
-    expect(within(card).getAllByRole('listitem').map((item) => item.textContent)).toEqual(['Minca', 'La Tagua', 'San Lorenzo', 'Tijereras'])
+    expect(within(card).getAllByRole('listitem').map((item) => item.textContent.replace(' · punto por confirmar', ''))).toEqual(['Minca', 'La Tagua', 'San Lorenzo', 'Tijereras'])
     expect(within(card).queryByRole('button')).not.toBeInTheDocument()
     expect(within(card).queryByRole('textbox')).not.toBeInTheDocument()
   })

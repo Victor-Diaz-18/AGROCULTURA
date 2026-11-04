@@ -18,6 +18,7 @@ import { ApiError, OfflineError } from '../../services/http.js'
 import { sendStory } from '../../services/stories.js'
 import { formatDuration } from '../../utils/format.js'
 import { newId } from '../../utils/id.js'
+import { placeName } from '../../utils/geo.js'
 
 const SUBTITLE = 'Con tu voz, una foto, un video o por escrito. Nadie la ve hasta que un administrador la aprueba.'
 
@@ -113,7 +114,7 @@ export default function TellPage() {
   if (fotos.length > 0) formats.push(fotos.length === 1 ? '1 foto' : `${fotos.length} fotos`)
   const summary = {
     titulo: titulo.trim() || 'Sin título todavía',
-    lugar: config.sectores.find((sector) => sector.id === location?.sectorId)?.nombre ?? 'Sin elegir',
+    lugar: location ? placeName(location.sectorId, config.sectores) : 'Sin elegir',
     epoca: epoca || 'Sin elegir',
     narrador: user?.nombre ?? '',
     texto:

@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ADMIN } from '../../test/auth.js'
 import { adminStory } from '../../test/fixtures.js'
+import { mockMapSize } from '../../test/layout.js'
 import { callsTo, renderApp, reply } from '../../test/renderApp.jsx'
 
 vi.mock('../../offline/media.js', () => ({
@@ -30,7 +31,10 @@ const api = (overrides = {}) => ({
   ...overrides,
 })
 const open = (route = '/admin/historias', overrides) => renderApp({ route, user: ADMIN, api: api(overrides) })
-const pickPeriod = (dialog, user) => user.selectOptions(within(dialog).getByRole('combobox', { name: 'Época' }), '1960 a 1979')
+const pickPlaceAndPeriod = async (dialog, user) => {
+  await user.click(within(dialog).getByRole('button', { name: 'Minca' }))
+  await user.selectOptions(within(dialog).getByRole('combobox', { name: 'Época' }), '1960 a 1979')
+}
 const publishButton = () => screen.getByRole('button', { name: /Publicar historia del proyecto|Publicando…/ })
 const sentBody = (fetchMock) => JSON.parse(callsTo(fetchMock, '/admin/historias-proyecto')[0][1].body)
 
@@ -107,8 +111,10 @@ describe('Nueva historia del proyecto', () => {
     await user.type(within(dialog).getByLabelText('Título'), 'El patio')
     expect(publishButton()).toBeDisabled()
     await user.type(within(dialog).getByLabelText('Relato'), 'Un relato.')
-    expect(publishButton()).toBeDisabled() // still no period
+    expect(publishButton()).toBeDisabled() // still no place and no period
     await user.selectOptions(within(dialog).getByRole('combobox', { name: 'Época' }), 'Antes de 1960')
+    expect(publishButton()).toBeDisabled() // still no place
+    await user.click(within(dialog).getByRole('button', { name: 'Minca' }))
     expect(publishButton()).toBeEnabled()
   })
 
@@ -118,7 +124,7 @@ describe('Nueva historia del proyecto', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByLabelText('Título'), 'El patio')
 
-    await user.selectOptions(within(dialog).getByRole('combobox', { name: 'Época' }), 'Antes de 1960')
+    await pickPlaceAndPeriod(dialog, user)
     await user.upload(within(dialog).getByLabelText('Elegir un audio'), new File(['x'], 'entrevista.mp3', { type: 'audio/mpeg' }))
 
     expect(await within(dialog).findByText(/entrevista\.mp3/)).toBeInTheDocument()
@@ -131,7 +137,7 @@ describe('Nueva historia del proyecto', () => {
     const dialog = await screen.findByRole('dialog')
 
     await user.type(within(dialog).getByLabelText('Título'), '  El patio de secado ')
-    await user.selectOptions(within(dialog).getByRole('combobox', { name: 'Sector' }), 'Tijereras')
+    await user.click(within(dialog).getByRole('button', { name: 'Tijereras' }))
     await user.selectOptions(within(dialog).getByRole('combobox', { name: 'Época' }), '1980 a 1999')
     await user.type(within(dialog).getByLabelText('Quién la cuenta'), 'Doña Rosa')
     await user.type(within(dialog).getByLabelText('Relato'), 'Se secaba al sol.')
@@ -143,7 +149,8 @@ describe('Nueva historia del proyecto', () => {
       titulo: 'El patio de secado',
       texto: 'Se secaba al sol.',
       epoca: '1980 a 1999',
-      sector_id: 'tijereras',
+      ubicacion: { lat: 11.109, lon: -74.1108 },
+      ubicacion_origen: 'sector',
       etiquetas: ['#finca'],
       narrador_nombre: 'Doña Rosa',
       medios: [],
@@ -152,13 +159,33 @@ describe('Nueva historia del proyecto', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
   })
 
+  it('can be placed on any point of the zone, not only on a sector', async () => {
+    const user = userEvent.setup()
+    const restore = mockMapSize()
+    const { fetchMock } = open('/admin/historias?nueva=1', { '/admin/historias-proyecto': () => ({ ...created, sector_id: null }) })
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByLabelText('Título'), 'Un camino lejos de los sectores')
+    await user.type(within(dialog).getByLabelText('Relato'), 'Texto.')
+    await user.selectOptions(within(dialog).getByRole('combobox', { name: 'Época' }), '1960 a 1979')
+
+    fireEvent.click(within(dialog).getByRole('application', { name: 'Mapa para elegir dónde ocurrió' }), { clientX: 400, clientY: 115 })
+    await user.click(publishButton())
+
+    expect(await screen.findByText('Historia del proyecto publicada.')).toBeInTheDocument()
+    const body = sentBody(fetchMock)
+    expect(body.ubicacion_origen).toBe('mapa')
+    expect(body.ubicacion).toEqual({ lat: expect.any(Number), lon: expect.any(Number) })
+    expect(body).not.toHaveProperty('sector_id')
+    restore()
+  })
+
   it('without naming who tells it the team is credited (the server decides the name)', async () => {
     const user = userEvent.setup()
     const { fetchMock } = open('/admin/historias?nueva=1')
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByLabelText('Título'), 'El patio')
     await user.type(within(dialog).getByLabelText('Relato'), 'Texto.')
-    await pickPeriod(dialog, user)
+    await pickPlaceAndPeriod(dialog, user)
 
     await user.click(publishButton())
 
@@ -171,7 +198,7 @@ describe('Nueva historia del proyecto', () => {
     const { fetchMock } = open('/admin/historias?nueva=1')
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByLabelText('Título'), 'Con archivos')
-    await pickPeriod(dialog, user)
+    await pickPlaceAndPeriod(dialog, user)
     await user.upload(within(dialog).getByLabelText('Elegir fotos'), new File(['p'], 'IMG.jpg', { type: 'image/jpeg' }))
     await user.upload(within(dialog).getByLabelText('Elegir un audio'), new File(['a'], 'voz.mp3', { type: 'audio/mpeg' }))
     await within(dialog).findByText(/^foto_01\.jpg/)
@@ -205,7 +232,7 @@ describe('Nueva historia del proyecto', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByLabelText('Título'), 'Mi título')
     await user.type(within(dialog).getByLabelText('Relato'), 'Mi relato')
-    await pickPeriod(dialog, user)
+    await pickPlaceAndPeriod(dialog, user)
 
     await user.click(publishButton())
 
@@ -220,7 +247,7 @@ describe('Nueva historia del proyecto', () => {
     const { fetchMock } = open('/admin/historias?nueva=1', { '/admin/historias-proyecto': () => (++attempts === 1 ? reply({ detail: 'Falló' }, 500) : created) })
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByLabelText('Título'), 'Con audio')
-    await pickPeriod(dialog, user)
+    await pickPlaceAndPeriod(dialog, user)
     await user.upload(within(dialog).getByLabelText('Elegir un audio'), new File(['a'], 'voz.mp3', { type: 'audio/mpeg' }))
     await within(dialog).findByText(/voz\.mp3/)
 

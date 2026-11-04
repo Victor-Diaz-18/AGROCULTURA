@@ -14,6 +14,7 @@ import { useMyStories } from '../../context/MyStoriesContext.jsx'
 import { usePortalData } from '../../context/PortalDataContext.jsx'
 import useConnectivity from '../../hooks/useConnectivity.js'
 import { formatDate } from '../../utils/format.js'
+import { placeName } from '../../utils/geo.js'
 
 const READ_ALOUD = 'Mis historias. Lo que has contado y en qué va cada historia.'
 
@@ -71,7 +72,6 @@ export default function MyStoriesPage() {
           ? 'No hay historias en este estado.'
           : null,
   }[status]
-  const sectorName = (id) => config.sectores.find((sector) => sector.id === id)?.nombre ?? id
 
   return (
     <>
@@ -116,7 +116,7 @@ export default function MyStoriesPage() {
             <TableRow key={story.codigo}>
               <Cell className="ag-table__code">{story.codigo}</Cell>
               <Cell className="ag-table__title">{story.titulo}</Cell>
-              <Cell>{sectorName(story.sector_id)}</Cell>
+              <Cell>{placeName(story.sector_id, config.sectores)}</Cell>
               <Cell className="ag-table__muted">{story.formatos.join(' · ')}</Cell>
               <Cell className="ag-table__muted">{formatDate(story.enviada_en)}</Cell>
               <Cell>

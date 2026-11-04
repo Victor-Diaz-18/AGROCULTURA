@@ -10,8 +10,8 @@ import StatCard from '../../components/ui/StatCard.jsx'
 import { SHOW_CODES } from '../../config/flags.js'
 import { usePortalData } from '../../context/PortalDataContext.jsx'
 import usePublishedStories from '../../hooks/usePublishedStories.js'
-import { inBounds } from '../../utils/geo.js'
 import { plural } from '../../utils/plural.js'
+import { inBounds, placeName } from '../../utils/geo.js'
 
 /** Map of published stories (F1) with the list of the ones in the visible zone, and their cards (F8). */
 export default function MapPage() {
@@ -39,7 +39,7 @@ export default function MapPage() {
     () => stories.filter((story) => inBounds(view, story)).sort((a, b) => (a.codigo < b.codigo ? 1 : -1)),
     [stories, view],
   )
-  const sectorName = (id) => config.sectores.find((sector) => sector.id === id)?.nombre ?? id
+  const sectorName = (id) => placeName(id, config.sectores)
 
   const open = (story) => {
     setSelected(story.codigo)

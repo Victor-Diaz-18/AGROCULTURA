@@ -8,6 +8,7 @@ import DataTable, { Cell, TableRow } from '../../components/ui/DataTable.jsx'
 import ListenButton from '../../components/ui/ListenButton.jsx'
 import { usePortalData } from '../../context/PortalDataContext.jsx'
 import useAdminStories from '../../hooks/useAdminStories.js'
+import { placeName } from '../../utils/geo.js'
 
 const TEXT = {
   portal: 'Las sube el equipo. En el mapa se ven en otro color para distinguirlas de las de la comunidad.',
@@ -24,7 +25,6 @@ export default function ProjectStoriesPage({ variant = 'portal' }) {
   const creating = params.get('nueva') === '1'
   const [cardCode, setCardCode] = useState(null)
   const card = stories.find((story) => story.codigo === cardCode)
-  const sectorName = (id) => config.sectores.find((sector) => sector.id === id)?.nombre ?? id
 
   const setCreating = (open) => setParams(open ? { nueva: '1' } : {}, { replace: true })
   const emptyText = {
@@ -61,7 +61,7 @@ export default function ProjectStoriesPage({ variant = 'portal' }) {
             <TableRow key={story.codigo}>
               <Cell className="ag-table__code">{story.codigo}</Cell>
               <Cell className="ag-table__title">{story.titulo}</Cell>
-              <Cell>{sectorName(story.sector_id)}</Cell>
+              <Cell>{placeName(story.sector_id, config.sectores)}</Cell>
               <Cell className="ag-table__muted">{story.epoca}</Cell>
               <Cell className="ag-table__muted">{story.formatos.join(' · ')}</Cell>
               <Cell className="ag-table__action">

@@ -43,7 +43,8 @@ def count(db: Database, *, estado: str | None = None, origen: str | None = None,
 
 
 def distinct_sector_ids(db: Database, *, estado: str) -> list[str]:
-    return collection(db).distinct("sector_id", {"estado": estado})
+    """The sectors that have stories (a story in "another place of the zone" has no sector)."""
+    return collection(db).distinct("sector_id", {"estado": estado, "sector_id": {"$ne": None}})
 
 
 COUNTERS = "contadores"

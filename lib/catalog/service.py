@@ -8,8 +8,14 @@ from pymongo.database import Database
 
 from lib.catalog import repository
 from lib.core.errors import ConflictError, InvalidDataError, NotFoundError
+from lib.core.geo import distance_km
 
 MAX_TAGS = 40
+
+# A story can be anywhere in the zone (Minca and the places around it). The sectors are only references: a story
+# belongs to a sector when its point is within this distance of the sector's center, and to none otherwise.
+# Keep it equal to SECTOR_RADIUS_KM in src/config/map.js (the form shows the same answer before sending).
+SECTOR_RADIUS_KM = 3.0
 _TAG = re.compile(r"#[\w-]{1,29}")
 
 
@@ -62,3 +68,20 @@ def remove_tag(db: Database, raw: str) -> list[str]:
     if not repository.remove_tag(db, (raw or "").strip()):
         raise NotFoundError("Esa etiqueta ya no está en la lista.")
     return list_tag_names(db)
+
+
+def sector_at(db: Database, lat: float, lon: float, *, include_provisional: bool = False) -> dict | None:
+    """The sector a point belongs to (the nearest within SECTOR_RADIUS_KM), or None for "another place of the zone".
+
+    A sector whose point is not confirmed only counts when `include_provisional` is set (someone chose that very
+    sector), so a wrong provisional point never labels the stories around it.
+    """
+    best, best_distance = None, SECTOR_RADIUS_KM
+    for sector in repository.list_sectors(db):
+        if sector.get("centro_provisional") and not include_provisional:
+            continue
+        sector_lon, sector_lat = sector["centro"]["coordinates"]
+        distance = distance_km(lat, lon, sector_lat, sector_lon)
+        if distance <= best_distance:
+            best, best_distance = sector, distance
+    return best

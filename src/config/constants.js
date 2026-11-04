@@ -18,6 +18,9 @@ export const DEFAULT_TAG = '#café'
 /** Same limits the server enforces (lib/stories/schemas.py): the form stops the person before the server has to. */
 export const LIMITS = { tituloMin: 3, tituloMax: 120, textoMax: 5000, fotos: 6, etiquetas: 6 }
 
+/** What a story is said to be in when its point is far from every sector (the zone is wider than the four sectors). */
+export const OTHER_PLACE = 'Otro lugar de la zona'
+
 /** Labels and colors of each story state. The narrator sees "No publicada" for a rejected story. */
 export const ESTADOS = {
   borrador: { label: 'Borrador', labelAdmin: 'Borrador', sigue: 'Se envía cuando haya señal' },

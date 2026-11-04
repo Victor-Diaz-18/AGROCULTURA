@@ -1,16 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
-import { DEFAULT_CENTER, DEFAULT_ZOOM, TILE_PROVIDER, ZOOM_LIMITS } from '../../config/map.js'
-import { nearestSector } from '../../utils/geo.js'
+import { DEFAULT_CENTER, DEFAULT_ZOOM, TILE_PROVIDER, ZONE, ZOOM_LIMITS } from '../../config/map.js'
+import { inZone, sectorAt } from '../../utils/geo.js'
 import Button from '../ui/Button.jsx'
 
 /**
  * Where did it happen? (F3, F1)
+ * A story can be anywhere in the zone ("Minca y sectores aledaños"); the sectors are only shortcuts.
  * Three ways, all giving { lat, lon, origen, sectorId }:
  *  - tap a sector button on the map: the story goes to the center of that sector ("sector");
- *  - tap the map itself ("mapa");
+ *  - tap any point of the map ("mapa");
  *  - "Usar mi ubicación", the phone's GPS ("gps"). GPS works without signal.
- * Without map tiles (no signal, nothing cached) the sector buttons and the GPS still work.
+ * `sectorId` is the sector the point falls in, or null for "another place of the zone". A point outside the zone
+ * is not accepted. Without map tiles (no signal, nothing cached) the sector buttons and the GPS still work.
  */
 
 const PIN_SVG =
@@ -24,7 +26,11 @@ export const GPS_MESSAGES = {
   denied: 'No pudimos ver tu ubicación. Permite la ubicación o elige un sector en el mapa.',
   unavailable: 'No pudimos ubicarte ahora. Toca el mapa o elige un sector.',
   unsupported: 'Este dispositivo no puede darnos tu ubicación. Toca el mapa o elige un sector.',
-  noSectors: 'Todavía se están cargando los sectores. Intenta de nuevo en un momento.',
+  outside: 'Tu ubicación queda lejos de Minca y sus sectores. Toca en el mapa el lugar donde ocurrió.',
+}
+
+export const TAP_MESSAGES = {
+  outside: 'Ese punto queda fuera de la zona de Minca y sus alrededores. Elige uno dentro de la zona.',
 }
 
 const escapeHtml = (text) => text.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
@@ -54,8 +60,10 @@ export default function LocationPicker({ sectors, value, onChange }) {
   // The map itself, created once.
   useEffect(() => {
     const map = L.map(elementRef.current, {
-      minZoom: ZOOM_LIMITS.min,
+      minZoom: 10, // the whole zone fits at this zoom: going further out only shows what is not accepted
       maxZoom: ZOOM_LIMITS.max,
+      maxBounds: L.latLngBounds([ZONE.south, ZONE.west], [ZONE.north, ZONE.east]),
+      maxBoundsViscosity: 1,
       scrollWheelZoom: false, // the page must keep scrolling when the mouse passes over the map
     })
     map.setView(DEFAULT_CENTER, DEFAULT_ZOOM)
@@ -63,8 +71,12 @@ export default function LocationPicker({ sectors, value, onChange }) {
     sectorLayer.current = L.layerGroup().addTo(map)
     map.on('click', (event) => {
       const point = { lat: event.latlng.lat, lon: event.latlng.lng }
-      const sector = nearestSector(point, sectorsRef.current)
-      if (sector) onChangeRef.current({ ...point, origen: 'mapa', sectorId: sector.id })
+      if (!inZone(point)) {
+        setGps({ busy: false, message: TAP_MESSAGES.outside })
+        return
+      }
+      setGps({ busy: false, message: '' })
+      onChangeRef.current({ ...point, origen: 'mapa', sectorId: sectorAt(point, sectorsRef.current)?.id ?? null })
     })
     mapRef.current = map
 
@@ -126,13 +138,15 @@ export default function LocationPicker({ sectors, value, onChange }) {
 
   const useMyLocation = () => {
     if (!navigator.geolocation) return setGps({ busy: false, message: GPS_MESSAGES.unsupported })
-    if (sectorsRef.current.length === 0) return setGps({ busy: false, message: GPS_MESSAGES.noSectors })
     setGps({ busy: true, message: GPS_MESSAGES.searching })
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
         const point = { lat: coords.latitude, lon: coords.longitude }
-        const sector = nearestSector(point, sectorsRef.current)
-        onChangeRef.current({ ...point, origen: 'gps', sectorId: sector.id })
+        if (!inZone(point)) {
+          setGps({ busy: false, message: GPS_MESSAGES.outside })
+          return
+        }
+        onChangeRef.current({ ...point, origen: 'gps', sectorId: sectorAt(point, sectorsRef.current)?.id ?? null })
         setGps({ busy: false, message: GPS_MESSAGES.found })
       },
       (failure) => setGps({ busy: false, message: failure?.code === 1 ? GPS_MESSAGES.denied : GPS_MESSAGES.unavailable }),

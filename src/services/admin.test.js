@@ -64,7 +64,7 @@ describe('publishProjectStory', () => {
     titulo: 'El patio',
     texto: 'Texto',
     epoca: '1960 a 1979',
-    sectorId: 'tijereras',
+    location: { lat: 11.109, lon: -74.1108, origen: 'sector' },
     etiquetas: ['#finca'],
     narrador: '',
     audio: { blob: new Blob(['a']), name: 'voz.mp3', seconds: null },
@@ -88,7 +88,8 @@ describe('publishProjectStory', () => {
     const urls = fetchMock.mock.calls.map(([url]) => url)
     expect(urls).toEqual(['/api/medios', '/api/medios', '/api/admin/historias-proyecto'])
     const body = JSON.parse(lastCall()[1].body)
-    expect(body).toMatchObject({ client_id: 'proyecto-0000001', sector_id: 'tijereras', titulo: 'El patio' })
+    expect(body).toMatchObject({ client_id: 'proyecto-0000001', ubicacion: { lat: 11.109, lon: -74.1108 }, ubicacion_origen: 'sector', titulo: 'El patio' })
+    expect(body).not.toHaveProperty('sector_id') // the server finds the sector from the point
     expect(body.medios.map((medio) => medio.url)).toEqual(['https://s/a.mp3', 'https://s/p.jpg'])
     expect(body.medios[0]).not.toHaveProperty('duracion_s') // unknown length: not sent
   })

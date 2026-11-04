@@ -24,7 +24,7 @@ export default function StepWhereWhen({ config, titulo, onTitulo, location, onLo
 
       <div className="ag-tell__block">
         <div className="ag-tell__row">
-          <span className="ag-tell__label">¿Dónde ocurrió? Toca el sector en el mapa</span>
+          <span className="ag-tell__label">¿Dónde ocurrió? Toca el lugar en el mapa</span>
           <FCode>F1</FCode>
         </div>
         <LocationPicker sectors={config.sectores} value={location} onChange={onLocation} />

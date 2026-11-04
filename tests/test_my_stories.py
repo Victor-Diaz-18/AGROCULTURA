@@ -33,7 +33,7 @@ def test_a_narrator_sees_only_their_own_stories_newest_first(client, narrator):
 
 
 def test_each_story_shows_what_the_design_table_needs(client, narrator):
-    client.post("/api/historias", headers=narrator["headers"], json=story_payload(sector_id="la-tagua", epoca="1980 a 1999"))
+    client.post("/api/historias", headers=narrator["headers"], json=story_payload(ubicacion={"lat": 11.0835, "lon": -74.045}, ubicacion_origen="mapa", epoca="1980 a 1999"))
 
     story = mine(client, narrator["headers"]).json()[0]
 

@@ -5,7 +5,7 @@ import { usePortalData } from '../../context/PortalDataContext.jsx'
 import { fetchStory } from '../../services/stories.js'
 import { ApiError, OfflineError } from '../../services/http.js'
 import { formatDate } from '../../utils/format.js'
-import { appleMapsUrl, googleMapsUrl } from '../../utils/geo.js'
+import { appleMapsUrl, googleMapsUrl, placeName } from '../../utils/geo.js'
 import FCode from '../ui/FCode.jsx'
 import Icon from '../ui/Icon.jsx'
 import ListenButton from '../ui/ListenButton.jsx'
@@ -23,9 +23,9 @@ import PhotoGallery from './PhotoGallery.jsx'
 export default function StoryCard({ story, onClose }) {
   const { config } = usePortalData()
   const navigate = useNavigate()
-  const sector = config.sectores.find((item) => item.id === story.sector_id)?.nombre ?? story.sector_id
-  // As in the design: the other sectors are "zona de Minca".
-  const sectorName = story.sector_id === 'minca' ? sector : `${sector}, zona de Minca`
+  // As in the design: the sectors other than Minca are "zona de Minca".
+  const sector = placeName(story.sector_id, config.sectores)
+  const sectorName = story.sector_id && story.sector_id !== 'minca' ? `${sector}, zona de Minca` : sector
   const published = story.estado === undefined || story.estado === 'publicada'
   const photos = story.medios.filter((medio) => medio.tipo === 'foto')
   const audios = story.medios.filter((medio) => medio.tipo === 'audio')

@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { CONFIG } from '../../test/fixtures.js'
+import { mockMapSize } from '../../test/layout.js'
+import { sectorAt } from '../../utils/geo.js'
 import LocationPicker, { GPS_MESSAGES } from './LocationPicker.jsx'
 
 const sectors = CONFIG.sectores
@@ -31,7 +33,7 @@ describe('LocationPicker (F3, F1)', () => {
 
     await user.click(screen.getByRole('button', { name: 'La Tagua' }))
 
-    expect(onChange).toHaveBeenCalledWith({ lat: 11.13, lon: -74.087, origen: 'sector', sectorId: 'la-tagua' })
+    expect(onChange).toHaveBeenCalledWith({ lat: 11.082986, lon: -74.044951, origen: 'sector', sectorId: 'la-tagua' })
   })
 
   it('marks the chosen sector without a pin (the marked button is enough)', () => {
@@ -56,16 +58,54 @@ describe('LocationPicker (F3, F1)', () => {
     expect(container.querySelector('.ag-location-pin')).toBeNull()
   })
 
-  it('"Usar mi ubicación" takes the phone position and picks the nearest sector', async () => {
+  it('"Usar mi ubicación" takes the phone position and says which sector it is in', async () => {
     const user = userEvent.setup()
     const onChange = vi.fn()
-    setGeolocation((ok) => ok({ coords: { latitude: 11.1305, longitude: -74.09 } }))
+    setGeolocation((ok) => ok({ coords: { latitude: 11.0835, longitude: -74.045 } }))
     render(<LocationPicker sectors={sectors} value={null} onChange={onChange} />)
 
     await user.click(screen.getByRole('button', { name: /Usar mi ubicación/ }))
 
-    expect(onChange).toHaveBeenCalledWith({ lat: 11.1305, lon: -74.09, origen: 'gps', sectorId: 'la-tagua' })
+    expect(onChange).toHaveBeenCalledWith({ lat: 11.0835, lon: -74.045, origen: 'gps', sectorId: 'la-tagua' })
     expect(screen.getByText(GPS_MESSAGES.found)).toBeInTheDocument()
+  })
+
+  it('accepts a position anywhere in the zone, with no sector when it is far from all of them', async () => {
+    const user = userEvent.setup()
+    const onChange = vi.fn()
+    setGeolocation((ok) => ok({ coords: { latitude: 11.2, longitude: -73.95 } }))
+    render(<LocationPicker sectors={sectors} value={null} onChange={onChange} />)
+
+    await user.click(screen.getByRole('button', { name: /Usar mi ubicación/ }))
+
+    expect(onChange).toHaveBeenCalledWith({ lat: 11.2, lon: -73.95, origen: 'gps', sectorId: null })
+  })
+
+  it('does not accept a position outside the zone, and says why', async () => {
+    const user = userEvent.setup()
+    const onChange = vi.fn()
+    setGeolocation((ok) => ok({ coords: { latitude: 4.7, longitude: -74.07 } })) // Bogotá
+    render(<LocationPicker sectors={sectors} value={null} onChange={onChange} />)
+
+    await user.click(screen.getByRole('button', { name: /Usar mi ubicación/ }))
+
+    expect(screen.getByText(GPS_MESSAGES.outside)).toBeInTheDocument()
+    expect(onChange).not.toHaveBeenCalled()
+  })
+
+  it('tapping the map picks that very point, wherever it is in the zone', () => {
+    const restore = mockMapSize()
+    const onChange = vi.fn()
+    render(<LocationPicker sectors={sectors} value={null} onChange={onChange} />)
+
+    fireEvent.click(screen.getByRole('application', { name: 'Mapa para elegir dónde ocurrió' }), { clientX: 400, clientY: 115 })
+
+    expect(onChange).toHaveBeenCalledTimes(1)
+    const chosen = onChange.mock.calls[0][0]
+    expect(chosen.origen).toBe('mapa')
+    expect(Number.isFinite(chosen.lat) && Number.isFinite(chosen.lon)).toBe(true)
+    expect(chosen.sectorId).toBe(sectorAt(chosen, sectors)?.id ?? null) // the sector it falls in, or none
+    restore()
   })
 
   it('asks the browser for a precise position', async () => {
@@ -110,13 +150,15 @@ describe('LocationPicker (F3, F1)', () => {
     expect(screen.getByText(GPS_MESSAGES.unsupported)).toBeInTheDocument()
   })
 
-  it('works without sectors loaded yet, and says so when asked for the location', async () => {
+  it('works without the sectors loaded yet: the story is still placed, and the server finds its sector', async () => {
     const user = userEvent.setup()
+    const onChange = vi.fn()
     setGeolocation((ok) => ok({ coords: { latitude: 11.14, longitude: -74.118 } }))
-    render(<LocationPicker sectors={[]} value={null} onChange={vi.fn()} />)
+    render(<LocationPicker sectors={[]} value={null} onChange={onChange} />)
 
     await user.click(screen.getByRole('button', { name: /Usar mi ubicación/ }))
 
-    expect(screen.getByText(GPS_MESSAGES.noSectors)).toBeInTheDocument()
+    expect(onChange).toHaveBeenCalledWith({ lat: 11.14, lon: -74.118, origen: 'gps', sectorId: null })
   })
+
 })

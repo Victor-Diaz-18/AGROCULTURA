@@ -29,7 +29,6 @@ export function buildStoryPayload(draft, medios) {
     titulo: draft.titulo,
     texto: draft.texto,
     epoca: draft.epoca,
-    sector_id: draft.location.sectorId,
     etiquetas: draft.etiquetas,
     ubicacion: { lat: draft.location.lat, lon: draft.location.lon },
     ubicacion_origen: draft.location.origen,

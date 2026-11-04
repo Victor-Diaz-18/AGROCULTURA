@@ -9,6 +9,7 @@ import SegmentedTabs from '../../components/ui/SegmentedTabs.jsx'
 import { usePortalData } from '../../context/PortalDataContext.jsx'
 import useAdminStories from '../../hooks/useAdminStories.js'
 import { formatDate } from '../../utils/format.js'
+import { placeName } from '../../utils/geo.js'
 
 const TEXT = {
   portal: 'Ninguna historia se publica sin pasar por aquí. Revisa el contenido, márcalo y decide.',
@@ -43,7 +44,6 @@ export default function ReviewPage({ variant = 'portal' }) {
 
   const counts = { revision: stats.en_revision, publicada: stats.aprobadas_comunidad, rechazada: stats.rechazadas }
   const items = TABS.map(({ id, label, dot }) => ({ id, label, dot, count: counts[id] }))
-  const sectorName = (id) => config.sectores.find((sector) => sector.id === id)?.nombre ?? id
   const reviewing = tab === 'revision' ? stories.find((story) => story.codigo === openCode) : null
   const card = tab === 'revision' ? null : stories.find((story) => story.codigo === cardCode)
 
@@ -107,7 +107,7 @@ export default function ReviewPage({ variant = 'portal' }) {
                 {story.estado === 'rechazada' && story.motivo_rechazo && <span className="ag-table__reason">{story.motivo_rechazo}</span>}
               </Cell>
               <Cell>{story.narrador_nombre}</Cell>
-              <Cell>{sectorName(story.sector_id)}</Cell>
+              <Cell>{placeName(story.sector_id, config.sectores)}</Cell>
               <Cell className="ag-table__muted">{story.formatos.join(' · ')}</Cell>
               <Cell className="ag-table__muted">{formatDate(story.enviada_en)}</Cell>
               <Cell className="ag-table__action">

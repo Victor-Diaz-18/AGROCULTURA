@@ -5,6 +5,7 @@ import PageHeader from '../../components/layout/PageHeader.jsx'
 import { usePortalData } from '../../context/PortalDataContext.jsx'
 import useAdminStories from '../../hooks/useAdminStories.js'
 import { formatDate } from '../../utils/format.js'
+import { placeName } from '../../utils/geo.js'
 
 const PREVIEW = 5
 
@@ -15,7 +16,6 @@ export default function SummaryPage() {
   const { stories: queue, status, reload } = useAdminStories({ estado: 'revision', limite: 100 })
   const [openCode, setOpenCode] = useState(null)
   const percent = Math.round((stats.sectores_con_historias / Math.max(stats.total_sectores, 1)) * 100)
-  const sectorName = (id) => config.sectores.find((sector) => sector.id === id)?.nombre ?? id
   const reviewing = queue.find((story) => story.codigo === openCode)
 
   useEffect(() => {
@@ -93,7 +93,7 @@ export default function SummaryPage() {
               <div className="ag-pending-list__text">
                 <span className="ag-pending-list__title">{story.titulo}</span>
                 <span className="ag-pending-list__meta">
-                  {story.narrador_nombre} · {sectorName(story.sector_id)} · {story.formatos.join(' · ')} · enviada {formatDate(story.enviada_en)}
+                  {story.narrador_nombre} · {placeName(story.sector_id, config.sectores)} · {story.formatos.join(' · ')} · enviada {formatDate(story.enviada_en)}
                 </span>
               </div>
               <button type="button" className="ag-rowbtn ag-rowbtn--dark ag-rowbtn--lg" onClick={() => setOpenCode(story.codigo)}>

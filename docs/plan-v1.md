@@ -120,7 +120,11 @@ Al cerrar cada bloque se compara el resultado con el diseño de referencia (qué
   - «Reiniciar datos de ejemplo» pide escribir **REINICIAR**, además del texto que dice que borra todas las
     historias, también las reales.
   - El nombre del portal se guarda al salir del campo (o con Enter) y avisa «Nombre del portal guardado.».
-  - Adiciones y decisiones del bloque 5:
+  - **Lugar libre** (corrección posterior al bloque 5): una historia puede ir en cualquier punto de la zona; el
+  sector es opcional y lo calcula el servidor (el más cercano dentro de 3 km; si no, «Otro lugar de la zona»). El
+  diseño decía «Toca el sector en el mapa»; ahora dice «Toca el lugar en el mapa» y los botones de sector son
+  atajos. «Nueva historia del proyecto» también elige el lugar en el mapa (ya no hay lista de sectores).
+- Adiciones y decisiones del bloque 5:
   - El mapa es **Leaflet de verdad** (el del diseño era un dibujo): lleva control de zoom, la atribución de
     OpenStreetMap y agrupa los pines cercanos (un círculo verde oscuro con cuántas historias hay; al tocarlo se acerca).
     Se quitó la nota «Mapa ilustrativo, no a escala».

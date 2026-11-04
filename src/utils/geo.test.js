@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { CONFIG } from '../test/fixtures.js'
-import { appleMapsUrl, distanceKm, googleMapsUrl, inBounds, nearestSector, pointsOf } from './geo.js'
+import { appleMapsUrl, distanceKm, googleMapsUrl, inBounds, inZone, placeName, pointsOf, sectorAt } from './geo.js'
 
 describe('distanceKm', () => {
   it('is zero for the same point and about 111 km per degree of latitude', () => {
@@ -9,18 +9,55 @@ describe('distanceKm', () => {
   })
 })
 
-describe('nearestSector', () => {
-  it('picks the sector whose center is closest', () => {
-    expect(nearestSector({ lat: 11.1305, lon: -74.09 }, CONFIG.sectores).id).toBe('la-tagua')
-    expect(nearestSector({ lat: 11.11, lon: -74.15 }, CONFIG.sectores).id).toBe('san-lorenzo')
-    expect(nearestSector({ lat: 11.14, lon: -74.12 }, CONFIG.sectores).id).toBe('minca')
+describe('sectorAt', () => {
+  const at = (lat, lon, options) => sectorAt({ lat, lon }, CONFIG.sectores, options)?.id ?? null
+
+  it('is the sector whose center is closest, when the point is near it', () => {
+    expect(at(11.0835, -74.045)).toBe('la-tagua')
+    expect(at(11.1165, -74.035)).toBe('san-lorenzo')
+    expect(at(11.14, -74.12)).toBe('minca')
   })
 
-  it('returns null when there are no sectors', () => {
-    expect(nearestSector({ lat: 11, lon: -74 }, [])).toBeNull()
+  it('is none for a point far from every sector: the story is "another place of the zone"', () => {
+    expect(at(11.2, -73.95)).toBeNull()
+    expect(at(11.3, -74.3)).toBeNull()
+  })
+
+  it('takes the nearest one when two are within reach', () => {
+    expect(at(11.1105, -74.0355)).toBe('san-lorenzo')
+    expect(at(11.0905, -74.0445)).toBe('la-tagua')
+  })
+
+  it('does not count a sector whose point is not confirmed, unless it was chosen itself', () => {
+    expect(at(11.111, -74.1108)).toBeNull() // right beside Tijereras
+    expect(at(11.109, -74.1108, { includeProvisional: true })).toBe('tijereras')
+  })
+
+  it('is none when there are no sectors', () => {
+    expect(sectorAt({ lat: 11, lon: -74 }, [])).toBeNull()
   })
 })
 
+describe('inZone', () => {
+  it('includes Minca, the sectors and the places around them', () => {
+    for (const sector of CONFIG.sectores) expect(inZone(sector.centro)).toBe(true)
+    expect(inZone({ lat: 11.24, lon: -74.2 })).toBe(true) // Santa Marta
+  })
+
+  it('leaves out what is far away', () => {
+    expect(inZone({ lat: 4.7, lon: -74.07 })).toBe(false) // Bogotá
+    expect(inZone({ lat: 0, lon: 0 })).toBe(false)
+    expect(inZone({ lat: 11.14, lon: -72 })).toBe(false)
+  })
+})
+
+describe('placeName', () => {
+  it('is the name of the sector, or "Otro lugar de la zona" when there is none', () => {
+    expect(placeName('la-tagua', CONFIG.sectores)).toBe('La Tagua')
+    expect(placeName(null, CONFIG.sectores)).toBe('Otro lugar de la zona')
+    expect(placeName('desaparecido', CONFIG.sectores)).toBe('Otro lugar de la zona')
+  })
+})
 
 describe('inBounds', () => {
   const view = { south: 11.1, west: -74.2, north: 11.2, east: -74.0 }

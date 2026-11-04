@@ -21,7 +21,7 @@ beforeEach(() => resetConnectivityForTests())
 afterEach(() => vi.unstubAllGlobals())
 
 describe('buildStoryPayload', () => {
-  it('maps what the person filled in to what the API expects', () => {
+  it('maps what the person filled in to what the API expects (the point, not the sector: the server finds it)', () => {
     const payload = buildStoryPayload(draft(), [{ tipo: 'audio', url: 'https://x/a.webm', mime: 'audio/webm', bytes: 10, duracion_s: 30 }])
 
     expect(payload).toEqual({
@@ -29,7 +29,6 @@ describe('buildStoryPayload', () => {
       titulo: 'El camino de mulas',
       texto: 'Texto',
       epoca: 'Antes de 1960',
-      sector_id: 'minca',
       etiquetas: ['#café'],
       ubicacion: { lat: 11.14, lon: -74.118 },
       ubicacion_origen: 'sector',

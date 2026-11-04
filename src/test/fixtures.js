@@ -4,9 +4,9 @@ export const CONFIG = {
   portal: { nombre: 'AGROCULTURA', avisar_rechazo: false, datos_de_ejemplo: true, reinicio_disponible: false },
   sectores: [
     { id: 'minca', nombre: 'Minca', centro: { lat: 11.14, lon: -74.118 }, provisional: false },
-    { id: 'la-tagua', nombre: 'La Tagua', centro: { lat: 11.13, lon: -74.087 }, provisional: false },
-    { id: 'san-lorenzo', nombre: 'San Lorenzo', centro: { lat: 11.1245, lon: -74.154 }, provisional: false },
-    { id: 'tijereras', nombre: 'Tijereras', centro: { lat: 11.109, lon: -74.111 }, provisional: false },
+    { id: 'la-tagua', nombre: 'La Tagua', centro: { lat: 11.082986, lon: -74.044951 }, provisional: false },
+    { id: 'san-lorenzo', nombre: 'San Lorenzo', centro: { lat: 11.116315, lon: -74.034676 }, provisional: false },
+    { id: 'tijereras', nombre: 'Tijereras', centro: { lat: 11.109, lon: -74.1108 }, provisional: true },
   ],
   etiquetas: ['#café', '#finca', '#familia', '#cosecha', '#cocina', '#oficios'],
   epocas: ['Antes de 1960', '1960 a 1979', '1980 a 1999', '2000 en adelante'],

@@ -71,7 +71,7 @@ def test_the_story_is_stored_with_its_location_as_a_geojson_point(client, db, na
 
     assert stored["ubicacion"] == {"type": "Point", "coordinates": [-74.0868, 11.1301]}  # longitude first
     assert stored["ubicacion_origen"] == "gps"
-    assert stored["sector_id"] == "minca"
+    assert stored["sector_id"] is None  # far from every sector: "another place of the zone"
 
 
 def test_the_search_text_has_no_accents_or_capitals(client, db, narrator):
@@ -113,7 +113,6 @@ def test_only_narrators_can_tell_stories(client, admin):
         ({"texto": "   "}, "Graba tu historia con tu voz o escríbela."),
         ({"titulo": "ab"}, "Ponle un título"),
         ({"epoca": "Hace mucho"}, "Elige la época"),
-        ({"sector_id": "atlantida"}, "Ese sector no existe"),
         ({"etiquetas": ["#inventada"]}, "ya no está disponible"),
         ({"etiquetas": ["#café", "#finca", "#familia", "#cosecha", "#cocina", "#oficios", "#extra"]}, "hasta 6 etiquetas"),
         ({"client_id": "corto"}, "Identificador de envío"),
