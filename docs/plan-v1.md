@@ -6,8 +6,8 @@ a partir de los diseños aprobados en `docs/diseno/`. Si algo cambia, se actuali
 ## Reglas de trabajo
 
 - Código y comentarios en inglés; textos de la interfaz y documentación en español.
-- Commits pequeños y claros en la rama de la sesión `claude/sweet-franklin-4wiubv`.
-  Al cerrar cada bloque se entrega un resumen; cuando el equipo lo aprueba, se pasa a `main`.
+- Commits pequeños y claros, **directamente en `main`**. Cada push a `main` despliega a producción en
+  Vercel. Al cerrar cada bloque se entrega un resumen para revisión.
 - Sin dependencias pesadas ni servicios de pago. Sin TypeScript. No se construyen F14 ni F15.
 - Las pruebas de cada bloque se escriben junto con el bloque (ver "Pruebas").
 - El diseño aprobado manda: no se rediseñan pantallas, textos, colores ni flujos.
