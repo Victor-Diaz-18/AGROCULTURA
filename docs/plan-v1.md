@@ -126,7 +126,8 @@ Al cerrar cada bloque se compara el resultado con el diseño de referencia (qué
   diseño decía «Toca el sector en el mapa»; ahora dice «Toca el lugar en el mapa» y los botones de sector son
   atajos. «Nueva historia del proyecto» también elige el lugar en el mapa (ya no hay lista de sectores).
 - **Privacidad y nombre del lugar** (decididos con el equipo): lo público ve un punto aproximado (cuadrícula de
-  ~500 m) de las historias contadas con GPS o tocando el mapa; el exacto solo lo ven los administradores. Campo
+  ~500 m) de las historias contadas con GPS o tocando el mapa, **de la comunidad y también del equipo** (decidido
+  después del bloque 6); el exacto solo lo ven los administradores. Campo
   opcional «Nombre del lugar» (hasta 80 letras) en el paso 2 y en «Nueva historia del proyecto». **Tijereras**:
   no se pidió su posición; se queda provisional, sin nombre en el mapa y sin botón de atajo.
 - Adiciones y decisiones del bloque 5:
@@ -176,8 +177,9 @@ Al cerrar cada bloque se compara el resultado con el diseño de referencia (qué
   - Los pedazos de mapa se piden con CORS (`crossOrigin` en `src/config/map.js`) para poder guardarlos sin que el
     navegador los cuente como varios MB cada uno. El servicio de OpenStreetMap lo permite; un proveedor nuevo debe
     permitirlo también.
-  - **Actualizaciones de la aplicación:** el service worker nuevo se activa solo, sin recargar la página (para no
-    cortar a quien está grabando); la versión nueva se ve la siguiente vez que se abre.
+  - **Actualizaciones de la aplicación** (decidido con el equipo): aviso «Hay una versión nueva» con «Actualizar» y
+    «Después». La versión nueva espera hasta que la persona acepta (actualizar recarga la página, y no debe pasar
+    sin avisar mientras alguien graba). Se busca al abrir, cada hora y al volver la aplicación al frente.
   - El indicador «Simular conexión» del encabezado se pone amarillo también cuando la señal se pierde de verdad (antes
     solo lo hacía con el interruptor).
   - Diferencia menor con el diseño: el aviso del último paso usa el ícono de «sin señal» cuando no hay señal (el

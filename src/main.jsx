@@ -23,6 +23,9 @@ import './components/admin/admin.css'
 import './pages/pages.css'
 
 import App from './App.jsx'
+import { watchForUpdates } from './offline/updates.js'
+
+watchForUpdates() // registers the service worker (the built app only) and listens for new versions
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

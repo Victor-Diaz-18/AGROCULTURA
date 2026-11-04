@@ -1,5 +1,6 @@
 import LoginModal from './components/auth/LoginModal.jsx'
 import ConnectivityToasts from './components/layout/ConnectivityToasts.jsx'
+import UpdateNotice from './components/layout/UpdateNotice.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
 import { MyStoriesProvider } from './context/MyStoriesContext.jsx'
 import { OutboxProvider } from './context/OutboxContext.jsx'
@@ -16,6 +17,7 @@ export default function AppProviders({ children }) {
           <PortalDataProvider>
             <OutboxProvider>
               <ConnectivityToasts />
+              <UpdateNotice />
               <MyStoriesProvider>
                 {children}
                 <LoginModal />

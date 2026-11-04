@@ -127,6 +127,9 @@ export default function ProjectStoryModal({ onClose, onPublished }) {
       <div className="ag-project-modal__field">
         <span>¿Dónde ocurrió? Toca el lugar en el mapa</span>
         <LocationPicker sectors={config.sectores} value={location} onChange={setLocation} />
+        <span className="ag-hint">
+          En el mapa público se ve un punto aproximado (a unos 500 metros). El punto exacto solo lo ven los administradores.
+        </span>
       </div>
 
       <label className="ag-project-modal__field">

@@ -427,3 +427,56 @@
     padding: 20px 16px 32px;
   }
 }
+
+/* "Hay una versión nueva" (PWA): yellow like the other notices, on top so it does not hide the toasts at the bottom. */
+.ag-update {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  z-index: 70;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  width: min(560px, calc(100vw - 32px));
+  padding: 12px 14px 12px 16px;
+  border: 1px solid var(--amarillo);
+  border-radius: 14px;
+  background: var(--amarillo-pale);
+  color: var(--amarillo-texto);
+  box-shadow: 0 12px 32px rgba(23, 38, 31, 0.3);
+  transform: translateX(-50%);
+}
+.ag-update__text {
+  display: flex;
+  flex: 1 1 260px;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13.5px;
+  line-height: 1.4;
+}
+.ag-update__text b {
+  font-size: 14.5px;
+}
+.ag-update__actions {
+  display: flex;
+  gap: 8px;
+}
+.ag-update__now,
+.ag-update__later {
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 800;
+}
+.ag-update__now {
+  border: 0;
+  background: var(--verde-oscuro);
+  color: #fff;
+}
+.ag-update__later {
+  border: 1px solid var(--amarillo);
+  background: transparent;
+  color: inherit;
+}

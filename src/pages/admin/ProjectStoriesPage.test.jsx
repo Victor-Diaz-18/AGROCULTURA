@@ -89,6 +89,13 @@ describe('Historias del proyecto (F12)', () => {
     expect(await screen.findByRole('dialog', { name: 'Nueva historia del proyecto' })).toBeInTheDocument()
   })
 
+  it('tells the team that the public map shows only an approximate point, and that only administrators see the exact one', async () => {
+    open('/admin/historias?nueva=1')
+    const dialog = await screen.findByRole('dialog')
+
+    expect(within(dialog).getByText(/En el mapa público se ve un punto aproximado/)).toHaveTextContent('solo lo ven los administradores')
+  })
+
   it('closing the form leaves the list as it was', async () => {
     const user = userEvent.setup()
     open('/admin/historias?nueva=1')

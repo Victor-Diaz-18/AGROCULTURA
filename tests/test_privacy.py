@@ -65,12 +65,34 @@ def test_a_story_placed_on_a_sector_button_is_shown_where_it_is_the_center_is_no
     assert story["aproximada"] is False
 
 
-def test_the_teams_own_stories_are_shown_where_the_team_put_them(client, db, admin):
+def test_the_teams_own_stories_get_an_approximate_point_too(client, db, admin):
     db.historias.insert_one(make_story(codigo="HIS-2026-050", origen="proyecto", ubicacion_origen="mapa", ubicacion={"type": "Point", "coordinates": [-74.04418, 11.08373]}))
 
     story = client.get("/api/historias").json()[0]
+    card = client.get("/api/historias/HIS-2026-050").json()
 
-    assert (story["lat"], story["lon"]) == (11.08373, -74.04418)
+    for public in (story, card):
+        assert (public["lat"], public["lon"]) == (11.085, -74.045)
+        assert public["aproximada"] is True
+    assert "11.08373" not in client.get("/api/historias").text + client.get("/api/historias/HIS-2026-050").text
+
+
+def test_only_an_administrator_sees_the_exact_point_of_the_teams_stories(client, db, admin, narrator):
+    db.historias.insert_one(make_story(codigo="HIS-2026-050", origen="proyecto", ubicacion_origen="gps", ubicacion={"type": "Point", "coordinates": [-74.04418, 11.08373]}))
+
+    for_admin = client.get("/api/admin/historias?origen=proyecto&estado=publicada", headers=admin["headers"]).json()[0]
+    assert (for_admin["lat"], for_admin["lon"]) == (11.08373, -74.04418)
+    # a narrator cannot reach the administrators' list at all
+    assert client.get("/api/admin/historias?origen=proyecto", headers=narrator["headers"]).status_code == 403
+    assert client.get("/api/admin/historias?origen=proyecto").status_code in (401, 403)
+
+
+def test_a_team_story_placed_on_a_sector_button_is_shown_at_the_sector(client, db):
+    db.historias.insert_one(make_story(codigo="HIS-2026-051", origen="proyecto", ubicacion_origen="sector", ubicacion={"type": "Point", "coordinates": [-74.044951, 11.082986]}))
+
+    story = client.get("/api/historias").json()[0]
+
+    assert (story["lat"], story["lon"]) == (11.082986, -74.044951)
     assert story["aproximada"] is False
 
 

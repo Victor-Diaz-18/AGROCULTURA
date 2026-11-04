@@ -5,6 +5,7 @@ import { cleanup } from '@testing-library/react'
 import { setRetryDelayForTests } from '../context/OutboxContext.jsx'
 import { resetConnectivityForTests } from '../offline/connectivity.js'
 import { resetStoreForTests } from '../offline/store.js'
+import { resetUpdatesForTests } from '../offline/updates.js'
 
 // Browser speech synthesis does not exist in jsdom: a controllable fake.
 class FakeUtterance {
@@ -37,6 +38,7 @@ afterEach(async () => {
   sessionStorage.clear()
   resetConnectivityForTests()
   setRetryDelayForTests()
+  resetUpdatesForTests()
   vi.unstubAllGlobals()
   delete navigator.mediaDevices // set by tests that fake a microphone
 })

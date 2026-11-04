@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -20,7 +21,10 @@ const tileUrls = new RegExp(`^https://${tileHost.replace(/\./g, '\\.')}/`)
  * are not left in a cache a different person on the same phone could read.
  */
 const pwa = VitePWA({
-  registerType: 'autoUpdate',
+  // A new version waits until the person agrees ("Hay una versión nueva", src/offline/updates.js): updating reloads the
+  // page, which must not happen by surprise while somebody is recording.
+  registerType: 'prompt',
+  injectRegister: false, // the app registers it itself, to hear about new versions
   manifest: {
     name: 'AGROCULTURA',
     short_name: 'AGROCULTURA',
@@ -44,6 +48,7 @@ const pwa = VitePWA({
     navigateFallback: '/index.html', // any page of the app opens offline...
     navigateFallbackDenylist: [/^\/api\//], // ...but the API is never answered with the page
     cleanupOutdatedCaches: true,
+    clientsClaim: true, // the very first visit is already served by the worker, with no reload needed
     runtimeCaching: [
       {
         urlPattern: tileUrls,
@@ -60,6 +65,8 @@ const pwa = VitePWA({
 
 export default defineConfig(({ mode }) => ({
   plugins: [react(), ...(mode === 'test' ? [] : [pwa])],
+  // The tests have no service worker plugin: its registration module is replaced by one they can steer.
+  resolve: mode === 'test' ? { alias: { 'virtual:pwa-register': fileURLToPath(new URL('./src/test/pwaRegister.js', import.meta.url)) } } : {},
   server: { port: 5173, proxy: api },
   preview: { port: 4173, proxy: api }, // `npm run preview` serves the built app (with its service worker) against the local API
   test: {

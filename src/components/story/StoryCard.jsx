@@ -142,7 +142,7 @@ export default function StoryCard({ story, onClose }) {
               )}
               {story.aproximada && (
                 <p className="ag-hint ag-card-story__approx">
-                  El punto del mapa es aproximado (unos 500 metros) para cuidar la privacidad de quien cuenta.
+                  El punto del mapa es aproximado (unos 500 metros) para cuidar la privacidad del lugar.
                 </p>
               )}
             </div>
