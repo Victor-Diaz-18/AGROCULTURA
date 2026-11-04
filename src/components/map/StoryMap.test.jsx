@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { CONFIG, mapStory } from '../../test/fixtures.js'
+import { SECTOR_LABELS_MIN_ZOOM, ZOOM_LIMITS } from '../../config/map.js'
 import { mockMapSize } from '../../test/layout.js'
 import StoryMap from './StoryMap.jsx'
 
@@ -102,57 +103,68 @@ describe('StoryMap (F1)', () => {
       mapStory({ codigo: 'HIS-2026-001', titulo: 'Oeste', lat: 11.15, lon: -74.3 }),
       mapStory({ codigo: 'HIS-2026-002', titulo: 'Este', lat: 11.05, lon: -73.9 }),
     ]
+    const confirmed = sectors.map((sector) => ({ ...sector, provisional: false }))
     const shown = (container) => [...container.querySelectorAll('.ag-sector-label')].filter((label) => !label.hidden).map((label) => label.textContent)
     const zoom = (direction) => screen.getByRole('button', { name: direction === 'in' ? 'Zoom in' : 'Zoom out' })
     const zoomAll = (direction) => {
       for (let step = 0; step < 12 && zoom(direction).getAttribute('aria-disabled') !== 'true'; step++) zoom(direction).click()
     }
+    /** From the farthest the map goes, zoom in `levels` levels. */
+    const farThenIn = (container, levels) => {
+      zoomAll('out')
+      for (let step = 0; step < levels; step++) zoom('in').click()
+      return shown(container)
+    }
+    const LEVELS_TO_NAMES = SECTOR_LABELS_MIN_ZOOM - ZOOM_LIMITS.min
+
+    it('are not written while the map is far: a real map does not name a village from the sky', () => {
+      const { container } = setup({ stories: spread, sectors: confirmed })
+      expect(shown(container)).toEqual([]) // it starts showing all the stories, which is far
+
+      zoomAll('out')
+      expect(shown(container)).toEqual([])
+      for (let level = 1; level < LEVELS_TO_NAMES; level++) {
+        zoom('in').click()
+        expect(shown(container)).toEqual([]) // each level below the one where they begin
+      }
+    })
+
+    it('appear once the map is close enough', () => {
+      const { container } = setup({ stories: spread, sectors: confirmed })
+
+      expect(farThenIn(container, LEVELS_TO_NAMES).length).toBeGreaterThan(0)
+    })
+
+    it('are written for the sectors that are in view, and no other', () => {
+      const { container } = setup({ stories: spread, sectors: confirmed })
+
+      // A level closer the map shows about 7 km by 4 km around its center, where only Tijereras is.
+      expect(farThenIn(container, LEVELS_TO_NAMES + 1)).toEqual(['TIJERERAS'])
+    })
 
     it('are not written for a sector whose point has not been confirmed', () => {
       const unsure = sectors.map((sector) => ({ ...sector, provisional: sector.id === 'tijereras' }))
       const { container } = setup({ stories: spread, sectors: unsure })
-      zoomAll('out')
       const names = new Set()
 
+      zoomAll('out')
       for (let step = 0; step < 8 && zoom('in').getAttribute('aria-disabled') !== 'true'; step++) {
         zoom('in').click()
         shown(container).forEach((name) => names.add(name))
       }
 
-      expect(names.has('MINCA')).toBe(true)
+      expect(names.size).toBeGreaterThan(0)
       expect(names.has('TIJERERAS')).toBe(false)
     })
 
-    it('are not written when the map starts close up', () => {
-      const { container } = setup() // the stories are a few hundred meters apart: the map starts zoomed in
+    it('are written when the map starts close up, for the sectors in view', () => {
+      const { container } = setup({ sectors: confirmed }) // the stories are in a few km: the map starts at the closest level it fits
 
-      expect(shown(container)).toEqual([])
-    })
-
-    it('are not written when the map is as far as it goes: they would be one over the other', () => {
-      const { container } = setup({ stories: spread })
-
-      zoomAll('out')
-
-      expect(shown(container)).toEqual([])
-    })
-
-    it('appear as the map is zoomed in, once there is room, and then leave when it is close up', () => {
-      const { container } = setup({ stories: spread })
-      zoomAll('out')
-      const seen = []
-
-      for (let step = 0; step < 8 && zoom('in').getAttribute('aria-disabled') !== 'true'; step++) {
-        zoom('in').click()
-        seen.push(shown(container).length)
-      }
-
-      expect(Math.max(...seen)).toBeGreaterThan(0) // at some zoom the names are there...
-      expect(seen.at(-1)).toBe(0) // ...and zoomed in all the way they are gone
+      expect(shown(container)).toContain('MINCA')
     })
 
     it('never show two names one over the other', () => {
-      const { container } = setup({ stories: spread })
+      const { container } = setup({ stories: spread, sectors: confirmed })
       zoomAll('out')
 
       for (let step = 0; step < 8 && zoom('in').getAttribute('aria-disabled') !== 'true'; step++) {

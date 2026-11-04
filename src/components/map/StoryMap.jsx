@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import L from 'leaflet'
 import 'leaflet.markercluster'
 import 'leaflet.markercluster/dist/MarkerCluster.css'
-import { DEFAULT_CENTER, DEFAULT_ZOOM, SECTOR_LABELS_MAX_ZOOM, TILE_PROVIDER, ZOOM_LIMITS } from '../../config/map.js'
+import { DEFAULT_CENTER, DEFAULT_ZOOM, SECTOR_LABELS_MIN_ZOOM, TILE_PROVIDER, ZOOM_LIMITS } from '../../config/map.js'
 import { pointsOf } from '../../utils/geo.js'
 import FCode from '../ui/FCode.jsx'
 
@@ -83,17 +83,18 @@ function labelBox(map, entry) {
 const overlap = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom
 
 /**
- * The sector names behave like a map's own labels: they show only while the map is far enough (they leave when
- * one zooms in, where the base map names things itself) and a name that would be written over another one is
- * left out (zoomed far out, the four sectors are almost the same point).
+ * The sector names behave like a real map's labels: they are written only when the map is close enough
+ * (SECTOR_LABELS_MIN_ZOOM), only for the sectors inside the part of the map that is in view, and a name that would
+ * land on top of another one is left out. Zoomed out, nothing is written; the pins and groups say where the stories are.
  */
 function syncSectorLabels(map, entries) {
   if (!map) return
-  const far = map.getZoom() <= SECTOR_LABELS_MAX_ZOOM
+  const close = map.getZoom() >= SECTOR_LABELS_MIN_ZOOM
+  const view = map.getBounds()
   const boxes = entries.map((entry) => labelBox(map, entry))
   entries.forEach((entry, index) => {
     const clash = boxes.some((other, otherIndex) => otherIndex !== index && overlap(boxes[index], other))
-    entry.label.hidden = !far || clash
+    entry.label.hidden = !close || !view.contains(entry.point) || clash
   })
 }
 
@@ -140,7 +141,7 @@ export default function StoryMap({ stories, sectors, selectedCode, focus, onSele
     }).addTo(map)
     const emit = () => onViewChangeRef.current?.(viewOf(map))
     map.on('moveend', emit)
-    map.on('zoomend', () => syncSectorLabels(map, sectorLabels.current))
+    map.on('moveend zoomend', () => syncSectorLabels(map, sectorLabels.current)) // which names are in view changes as the map moves
     mapRef.current = map
 
     let observer

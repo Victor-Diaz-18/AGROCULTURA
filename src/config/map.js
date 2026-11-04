@@ -20,8 +20,12 @@ export const DEFAULT_ZOOM = 12
 /** How far people can zoom: the area of interest is small. */
 export const ZOOM_LIMITS = { min: 9, max: 17 }
 
-/** The names of the sectors help to find one's way when the map is far; zoomed in, the map's own place names take over. */
-export const SECTOR_LABELS_MAX_ZOOM = 12
+/**
+ * A sector's name is written on the map the way a map writes a village: only once one is close enough (this level or
+ * more: the view is then about 15 km wide, a sector and its surroundings) and only for the sectors that are in view.
+ * Far away they would be four names piled on one point.
+ */
+export const SECTOR_LABELS_MIN_ZOOM = 13
 
 /**
  * The zone of the project: "Minca y sectores aledaños". A story can be placed anywhere inside it (the sectors are

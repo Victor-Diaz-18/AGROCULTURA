@@ -225,9 +225,11 @@ sectores son provisionales hasta confirmarlos con las familias de la zona.
   lo avisa. Quien viva ahí toca el lugar exacto en el mapa. Solo sirve de sector para las historias de ejemplo. Para corregirlos: cambia las coordenadas y **sube `SECTORES_VERSION`**. En el siguiente arranque
   la aplicación mueve los sectores guardados y también las historias ubicadas «en el sector» (con la misma
   distancia); las historias con punto propio (GPS o un toque en el mapa) no se mueven.
-- **Nombres de los sectores en el mapa.** Se comportan como las etiquetas de un mapa: salen en un rango de
-  acercamiento (hasta el nivel 12, `SECTOR_LABELS_MAX_ZOOM` en `src/config/map.js`), desaparecen al acercar más y,
-  con el mapa muy alejado, un nombre que quedaría escrito sobre otro no se pone.
+- **Nombres de los sectores en el mapa.** Se comportan como los nombres de un mapa real: con el mapa alejado no se
+  escribe ninguno; solo salen cuando se está cerca (desde el nivel 13, `SECTOR_LABELS_MIN_ZOOM` en
+  `src/config/map.js`, una vista de unos 15 km) y **solo los de los sectores que están a la vista**: al acercarse
+  a La Tagua se lee «LA TAGUA», y al mover el mapa a otro lado el nombre se va. Un sector sin punto confirmado no se
+  escribe y, si dos nombres quedaran uno sobre otro, se deja uno.
 - **Pines.** Rojo: comunidad. Verde azulado: proyecto. Un pin marcado se ve oscuro, más grande y con su título.
   Los títulos y los nombres de sector se muestran siempre como texto, nunca como HTML.
 - **Ficha (F8).** Fotos (varias, con miniaturas), video, audio y los datos de la historia. «Abrir en Google Maps» y

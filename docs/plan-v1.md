@@ -146,6 +146,9 @@ Al cerrar cada bloque se compara el resultado con el diseño de referencia (qué
     abren desde la lista de administración) e «Historias del proyecto».
 - «Avisar al narrador si se rechaza» solo guarda la opción: todavía no hay aviso (correo, SMS o WhatsApp) que
   enviar; depende de lo que decida el profesor.
+- **Nombres de los sectores en el mapa** (corregido por segunda vez): solo se escriben con el mapa cerca (nivel 13 o
+  más) y solo los sectores que están a la vista, como un mapa real. Antes salían con el mapa *alejado* y desaparecían
+  al acercar: estaba al revés.
 - Adiciones y decisiones del bloque 6 (sin conexión, F10; para revisar con el equipo):
   - Vuelven los textos del diseño que habían quedado temporales: «Se guarda en este dispositivo hasta que la
     envíes», la tarjeta «Todo se guarda en el dispositivo mientras la cuentas…», el aviso del último paso («Se
