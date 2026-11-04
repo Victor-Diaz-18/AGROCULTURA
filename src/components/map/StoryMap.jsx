@@ -13,6 +13,7 @@ import FCode from '../ui/FCode.jsx'
  *  - stories: [{ codigo, titulo, origen, lat, lon }]
  *  - selectedCode: the story marked on the map (dark, bigger, with its title)
  *  - focus: { code, nonce }: asks to bring that story into view (the same code can be asked again)
+ *  - fitKey: when it changes (the filters changed), the map goes to show the stories it has now
  *  - onSelect(story): a pin was tapped
  *  - onViewChange(bounds): the visible zone changed: { south, west, north, east }, or null while the map has no size
  *
@@ -105,7 +106,7 @@ function viewOf(map) {
   return { south: bounds.getSouth(), west: bounds.getWest(), north: bounds.getNorth(), east: bounds.getEast() }
 }
 
-export default function StoryMap({ stories, sectors, selectedCode, focus, onSelect, onViewChange }) {
+export default function StoryMap({ stories, sectors, selectedCode, focus, fitKey, onSelect, onViewChange }) {
   const elementRef = useRef(null)
   const mapRef = useRef(null)
   const clusterRef = useRef(null)
@@ -203,6 +204,16 @@ export default function StoryMap({ stories, sectors, selectedCode, focus, onSele
     onViewChangeRef.current?.(viewOf(map))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stories])
+
+  // The filters changed: show what they leave. (Not the first time: the map already fits itself to its stories.)
+  const lastFit = useRef(fitKey)
+  useEffect(() => {
+    if (fitKey === lastFit.current) return
+    lastFit.current = fitKey
+    const map = mapRef.current
+    if (!map || stories.length === 0 || map.getSize().x === 0) return
+    map.fitBounds(L.latLngBounds(pointsOf(stories)), { padding: [40, 40], maxZoom: 13 })
+  }, [fitKey, stories])
 
   // The marked story: dark, bigger, with its title above.
   useEffect(() => {

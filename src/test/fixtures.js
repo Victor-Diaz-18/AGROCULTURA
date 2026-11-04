@@ -53,6 +53,7 @@ export const mapStory = (overrides = {}) => ({
   lat: 11.14,
   lon: -74.118,
   foto_url: null,
+  etiquetas: ['#café', '#finca'],
   publicada_en: '2026-09-14T12:00:00Z',
   ...overrides,
 })

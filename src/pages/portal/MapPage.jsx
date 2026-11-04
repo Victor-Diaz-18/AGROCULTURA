@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import MapFilters from '../../components/map/MapFilters.jsx'
 import StoryList from '../../components/map/StoryList.jsx'
 import StoryMap from '../../components/map/StoryMap.jsx'
 import PageHeader from '../../components/layout/PageHeader.jsx'
@@ -11,6 +12,7 @@ import { SHOW_CODES } from '../../config/flags.js'
 import { usePortalData } from '../../context/PortalDataContext.jsx'
 import usePublishedStories from '../../hooks/usePublishedStories.js'
 import { plural } from '../../utils/plural.js'
+import { NO_FILTERS, applyFilters, isFiltering } from '../../utils/filters.js'
 import { inBounds, placeLine } from '../../utils/geo.js'
 
 /** Map of published stories (F1) with the list of the ones in the visible zone, and their cards (F8). */
@@ -23,6 +25,8 @@ export default function MapPage() {
   const [selected, setSelected] = useState(null) // the story marked on the map
   const [openCode, setOpenCode] = useState(null) // the card that is open
   const [focus, setFocus] = useState(null)
+  const [filters, setFilters] = useState(NO_FILTERS)
+  const [fitKey, setFitKey] = useState(0) // changes with the filters: the map goes to what they show
   const proyecto = stats.por_origen.proyecto
   const percent = Math.round((stats.sectores_con_historias / Math.max(stats.total_sectores, 1)) * 100)
   const target = params.get('historia')
@@ -35,10 +39,23 @@ export default function MapPage() {
     }
   }, [target, stories])
 
+  const filtered = useMemo(() => applyFilters(stories, filters, config.sectores), [stories, filters, config.sectores])
   const visible = useMemo(
-    () => stories.filter((story) => inBounds(view, story)).sort((a, b) => (a.codigo < b.codigo ? 1 : -1)),
-    [stories, view],
+    () => filtered.filter((story) => inBounds(view, story)).sort((a, b) => (a.codigo < b.codigo ? 1 : -1)),
+    [filtered, view],
   )
+  const filtering = isFiltering(filters)
+
+  const changeFilters = useCallback((patch) => {
+    setFilters((current) => ({ ...current, ...patch }))
+    setFitKey((key) => key + 1)
+  }, [])
+  const clearFilters = () => changeFilters(NO_FILTERS)
+
+  // A marked story that the filters now hide is no longer marked.
+  useEffect(() => {
+    setSelected((current) => (current && !filtered.some((story) => story.codigo === current) ? null : current))
+  }, [filtered])
   const placeOf = (story) => placeLine(story, config.sectores)
 
   const open = (story) => {
@@ -66,9 +83,11 @@ export default function MapPage() {
     ready:
       stories.length === 0
         ? ['Todavía no hay historias publicadas', 'Cuando un administrador apruebe la primera, aparece aquí.']
-        : visible.length === 0
-          ? ['No hay historias en esta zona del mapa', 'Mueve o aleja el mapa para ver más.']
-          : null,
+        : filtered.length === 0
+          ? ['No hay historias con estos filtros', 'Prueba con otro sector, otra época o borra la búsqueda.']
+          : visible.length === 0
+            ? ['No hay historias en esta zona del mapa', 'Mueve o aleja el mapa para ver más.']
+            : null,
   }[state]
 
   return (
@@ -126,9 +145,11 @@ export default function MapPage() {
       </div>
 
       <div className="ag-mapcard">
+        <MapFilters filters={filters} onChange={changeFilters} stories={stories} sectors={config.sectores} epocas={config.epocas} />
         <div className="ag-mapcard__body">
           <StoryMap
-            stories={stories}
+            stories={filtered}
+            fitKey={fitKey}
             sectors={config.sectores}
             selectedCode={selected}
             focus={focus}
@@ -143,6 +164,11 @@ export default function MapPage() {
                 {status === 'error' && (
                   <button type="button" className="ag-linkbutton" onClick={reload}>
                     Intentar de nuevo
+                  </button>
+                )}
+                {state === 'ready' && filtering && filtered.length === 0 && (
+                  <button type="button" className="ag-linkbutton" onClick={clearFilters}>
+                    Quitar los filtros
                   </button>
                 )}
               </div>

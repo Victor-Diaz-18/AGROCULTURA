@@ -66,6 +66,65 @@
   border-radius: 16px;
   background: #fff;
 }
+/* Filter bar (F11) */
+.ag-mapfilters {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--linea);
+}
+.ag-mapfilters__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.ag-mapfilters__row:last-child {
+  justify-content: flex-start;
+  gap: 10px;
+}
+.ag-mapfilters__search {
+  box-sizing: border-box;
+  display: flex;
+  flex: 1 1 280px;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--texto-4);
+}
+.ag-mapfilters__search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--texto);
+  font-size: 14px;
+}
+.ag-mapfilters__select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--texto-2);
+}
+.ag-mapfilters__select select {
+  height: 40px;
+  padding: 0 10px;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--texto);
+  font-size: 14px;
+}
 .ag-mapcard__body {
   display: flex;
   flex-wrap: wrap;

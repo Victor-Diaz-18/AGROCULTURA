@@ -170,3 +170,154 @@ describe('Mapa de historias (F1)', () => {
     expect(window.speechSynthesis.speak.mock.calls.map(([u]) => u.text).join(' ')).toContain('En la zona que ves hay 3 historias.')
   })
 })
+
+describe('Mapa de historias: filtros y búsqueda (F11)', () => {
+  const STORIES = [
+    mapStory({ codigo: 'HIS-2026-001', titulo: 'El camino de mulas', lat: 11.14, lon: -74.118, formatos: ['Audio', 'Foto'], etiquetas: ['#arriería'] }),
+    mapStory({ codigo: 'HIS-2026-002', titulo: 'La primera cosecha', narrador_nombre: 'Rosa Elena Pérez', sector_id: 'la-tagua', epoca: '1960 a 1979', formatos: ['Foto', 'Audio'], lat: 11.13, lon: -74.087, etiquetas: ['#cosecha'] }),
+    mapStory({ codigo: 'HIS-2026-004', titulo: 'El patio donde se secaba el café', narrador_nombre: 'Equipo AGROCULTURA', sector_id: 'tijereras', epoca: '1960 a 1979', formatos: ['Video', 'Foto'], origen: 'proyecto', lat: 11.109, lon: -74.111, etiquetas: ['#familia'] }),
+    mapStory({ codigo: 'HIS-2026-005', titulo: 'Un secadero junto al río', narrador_nombre: 'Luz Marina Ospina', sector_id: null, epoca: '1980 a 1999', formatos: ['Texto'], lat: 11.2, lon: -74.2, etiquetas: [] }),
+  ]
+  const bar = () => within(screen.getByRole('group', { name: 'Filtrar por sector' }))
+  const titles = () => within(listOf()).queryAllByRole('button').map((button) => button.querySelector('.ag-storyitem__title').textContent)
+  const openFiltered = async () => {
+    open(STORIES)
+    await screen.findByRole('list', { name: 'Historias en esta zona del mapa' })
+  }
+  const pins = () => screen.queryAllByRole('button', { name: /^Ver / }).length
+
+  it('has the bar of the design: sectors with counts, origin, search, period and format', async () => {
+    await openFiltered()
+
+    const sectorsBar = bar()
+    expect(sectorsBar.getByRole('button', { name: /^Todos\s*4$/ })).toHaveAttribute('aria-pressed', 'true')
+    for (const [name, count] of [['Minca', 1], ['La Tagua', 1], ['San Lorenzo', 0], ['Tijereras', 1], ['Otro lugar', 1]]) {
+      expect(sectorsBar.getByRole('button', { name: new RegExp(`^${name}\\s*${count}$`) })).toBeInTheDocument()
+    }
+    const origins = within(screen.getByRole('group', { name: 'Filtrar por origen' }))
+    expect(origins.getAllByRole('button').map((button) => button.textContent)).toEqual(['Todas', 'Comunidad', 'Proyecto'])
+    expect(screen.getByRole('searchbox', { name: 'Buscar historias' })).toHaveAttribute('placeholder', 'Buscar por título, narrador o etiqueta…')
+    expect(screen.getByRole('combobox', { name: 'Época' })).toHaveValue('todas')
+    expect(screen.getByRole('combobox', { name: 'Formato' })).toHaveValue('todos')
+  })
+
+  it('"Otro lugar" is only offered when some story is in no sector', async () => {
+    open(STORIES.filter((story) => story.sector_id))
+    await screen.findByRole('list', { name: 'Historias en esta zona del mapa' })
+
+    expect(bar().queryByRole('button', { name: /Otro lugar/ })).not.toBeInTheDocument()
+  })
+
+  it('a sector tab leaves only that sector, on the map and in the list', async () => {
+    const user = userEvent.setup()
+    await openFiltered()
+    expect(pins()).toBe(4)
+
+    await user.click(bar().getByRole('button', { name: /^La Tagua/ }))
+
+    expect(titles()).toEqual(['La primera cosecha'])
+    expect(pins()).toBe(1)
+    expect(bar().getByRole('button', { name: /^La Tagua/ })).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  it('"Otro lugar" shows the stories that are in no sector', async () => {
+    const user = userEvent.setup()
+    await openFiltered()
+
+    await user.click(bar().getByRole('button', { name: /^Otro lugar/ }))
+
+    expect(titles()).toEqual(['Un secadero junto al río'])
+  })
+
+  it('the origin tabs show only the community or only the project', async () => {
+    const user = userEvent.setup()
+    await openFiltered()
+    const origins = within(screen.getByRole('group', { name: 'Filtrar por origen' }))
+
+    await user.click(origins.getByRole('button', { name: 'Proyecto' }))
+    expect(titles()).toEqual(['El patio donde se secaba el café'])
+
+    await user.click(origins.getByRole('button', { name: 'Comunidad' }))
+    expect(titles()).toHaveLength(3)
+    expect(titles()).not.toContain('El patio donde se secaba el café')
+  })
+
+  it('the search looks in the title, the narrator and the tags, with no care for accents, and waits for the typing to stop', async () => {
+    const user = userEvent.setup()
+    await openFiltered()
+    const search = screen.getByRole('searchbox', { name: 'Buscar historias' })
+
+    await user.type(search, 'cafe') // the title says "café"
+    await waitFor(() => expect(titles()).toEqual(['El patio donde se secaba el café']))
+
+    await user.clear(search)
+    await user.type(search, 'perez')
+    await waitFor(() => expect(titles()).toEqual(['La primera cosecha']))
+
+    await user.clear(search)
+    await user.type(search, '#arrieria')
+    await waitFor(() => expect(titles()).toEqual(['El camino de mulas']))
+  })
+
+  it('the period and the format menus filter too', async () => {
+    const user = userEvent.setup()
+    await openFiltered()
+
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Época' }), '1960 a 1979')
+    expect(titles().sort()).toEqual(['El patio donde se secaba el café', 'La primera cosecha'])
+
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Formato' }), 'Video')
+    expect(titles()).toEqual(['El patio donde se secaba el café'])
+  })
+
+  it('the numbers of the sector tabs follow the other filters', async () => {
+    const user = userEvent.setup()
+    await openFiltered()
+
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Formato' }), 'Video')
+
+    expect(bar().getByRole('button', { name: /^Todos\s*1$/ })).toBeInTheDocument()
+    expect(bar().getByRole('button', { name: /^Tijereras\s*1$/ })).toBeInTheDocument()
+    expect(bar().getByRole('button', { name: /^Minca\s*0$/ })).toBeInTheDocument()
+  })
+
+  it('says so when nothing matches, and "Quitar los filtros" brings everything back', async () => {
+    const user = userEvent.setup()
+    await openFiltered()
+    await user.type(screen.getByRole('searchbox', { name: 'Buscar historias' }), 'zzz')
+    await user.click(bar().getByRole('button', { name: /^Minca/ }))
+
+    expect(await screen.findByText('No hay historias con estos filtros')).toBeInTheDocument()
+    expect(screen.getByText('Prueba con otro sector, otra época o borra la búsqueda.')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Quitar los filtros' }))
+
+    expect(titles()).toHaveLength(4)
+    expect(screen.getByRole('searchbox', { name: 'Buscar historias' })).toHaveValue('')
+    expect(bar().getByRole('button', { name: /^Todos/ })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.queryByRole('button', { name: 'Quitar los filtros' })).not.toBeInTheDocument()
+  })
+
+  it('a story that is marked and then filtered out is not marked any more', async () => {
+    const user = userEvent.setup()
+    await openFiltered()
+    await user.click(within(listOf()).getByRole('button', { name: /El camino de mulas/ }))
+    await user.click(await screen.findByRole('button', { name: 'Cerrar' }))
+    expect(within(listOf()).getByRole('button', { name: /El camino de mulas/ })).toHaveAttribute('aria-current', 'true')
+
+    await user.click(bar().getByRole('button', { name: /^La Tagua/ }))
+    await user.click(bar().getByRole('button', { name: /^Todos/ }))
+
+    expect(within(listOf()).getByRole('button', { name: /El camino de mulas/ })).not.toHaveAttribute('aria-current')
+  })
+
+  it('works without signal, over the stories the phone kept', async () => {
+    const user = userEvent.setup()
+    await openFiltered()
+    act(() => toggleSimulatedOffline())
+
+    await user.click(bar().getByRole('button', { name: /^Tijereras/ }))
+
+    expect(titles()).toEqual(['El patio donde se secaba el café'])
+  })
+})

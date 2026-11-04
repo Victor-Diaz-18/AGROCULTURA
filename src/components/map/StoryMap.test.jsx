@@ -185,6 +185,48 @@ describe('StoryMap (F1)', () => {
     })
   })
 
+  describe('when the filters change (fitKey)', () => {
+    const west = mapStory({ codigo: 'HIS-2026-001', titulo: 'Oeste', lat: 11.15, lon: -74.3 })
+    const east = mapStory({ codigo: 'HIS-2026-002', titulo: 'Este', lat: 11.05, lon: -73.9 })
+    const render2 = (props) => <StoryMap stories={[west, east]} sectors={sectors} selectedCode={null} focus={null} onSelect={vi.fn()} onViewChange={vi.fn()} {...props} />
+
+    it('goes to show the stories that are left', () => {
+      const onViewChange = vi.fn()
+      const { rerender } = render(render2({ onViewChange, fitKey: 0 }))
+      const wide = onViewChange.mock.calls.at(-1)[0]
+      expect(wide.west).toBeLessThan(-74.3) // both stories are in view
+
+      rerender(render2({ onViewChange, stories: [east], fitKey: 1 }))
+
+      const close = onViewChange.mock.calls.at(-1)[0]
+      expect(close.north - close.south).toBeLessThan(wide.north - wide.south)
+      expect(east.lat).toBeGreaterThan(close.south)
+      expect(east.lat).toBeLessThan(close.north)
+      expect(east.lon).toBeGreaterThan(close.west)
+      expect(east.lon).toBeLessThan(close.east)
+    })
+
+    it('leaves the view alone when the stories change but the key does not', () => {
+      const onViewChange = vi.fn()
+      const { rerender } = render(render2({ onViewChange, fitKey: 0 }))
+      const before = onViewChange.mock.calls.at(-1)[0]
+
+      rerender(render2({ onViewChange, stories: [east], fitKey: 0 })) // a reload of the stories, not a filter
+
+      expect(onViewChange.mock.calls.at(-1)[0]).toEqual(before)
+    })
+
+    it('stays where it is when the filters leave nothing', () => {
+      const onViewChange = vi.fn()
+      const { rerender } = render(render2({ onViewChange, fitKey: 0 }))
+      const before = onViewChange.mock.calls.at(-1)[0]
+
+      rerender(render2({ onViewChange, stories: [], fitKey: 1 }))
+
+      expect(onViewChange.mock.calls.at(-1)[0]).toEqual(before)
+    })
+  })
+
   it('tells the page which zone is visible', () => {
     const { onViewChange } = setup()
 

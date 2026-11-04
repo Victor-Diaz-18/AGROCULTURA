@@ -177,6 +177,7 @@ class HistoriaMapa(BaseModel):
     lon: float
     aproximada: bool = False  # the point is rounded (about 500 m) to care for the privacy of whoever told it
     foto_url: str | None = None  # the first photo, for the thumbnail
+    etiquetas: list[str] = []  # for the search box of the map
     publicada_en: str
 
 
@@ -184,7 +185,6 @@ class HistoriaPublica(HistoriaMapa):
     """The card (ficha) of a published story."""
 
     texto: str
-    etiquetas: list[str]
     medios: list[MedioPublico]
 
 

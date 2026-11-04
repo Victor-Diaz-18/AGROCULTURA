@@ -88,6 +88,15 @@ def test_an_example_story_without_files_has_no_thumbnail(client, db):
     assert listing(client).json()[0]["foto_url"] is None
 
 
+def test_the_list_carries_the_tags_for_the_search_box(client, db):
+    published(db, "HIS-2026-001", etiquetas=["#café", "#familia"])
+    published(db, "HIS-2026-002", etiquetas=[])
+
+    tags = {story["codigo"]: story["etiquetas"] for story in listing(client).json()}
+
+    assert tags == {"HIS-2026-001": ["#café", "#familia"], "HIS-2026-002": []}
+
+
 def test_the_list_never_carries_the_text_or_anything_private(client, db):
     published(db, "HIS-2026-001", autor_id=ObjectId(), client_id="borrador-123456")
 

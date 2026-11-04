@@ -202,6 +202,7 @@ def story_for_map(story: dict) -> dict:
         "lon": lon,
         "aproximada": approximate,
         "foto_url": first_photo,
+        "etiquetas": story.get("etiquetas", []),
         "publicada_en": _iso(story.get("publicada_en")),
     }
 
@@ -211,7 +212,6 @@ def story_public(story: dict) -> dict:
     return {
         **story_for_map(story),
         "texto": story.get("texto", ""),
-        "etiquetas": story.get("etiquetas", []),
         "medios": [
             {key: medio.get(key) for key in ("tipo", "url", "mime", "duracion_s")} for medio in story.get("medios", [])
         ],
