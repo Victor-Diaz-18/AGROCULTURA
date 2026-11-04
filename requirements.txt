@@ -5,3 +5,5 @@ pymongo==4.19.0
 python-dotenv==1.2.2
 bcrypt==5.0.0
 PyJWT==2.15.1
+vercel-blob==0.5.1
+python-multipart==0.0.33

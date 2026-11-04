@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pymongo import ASCENDING, DESCENDING, GEOSPHERE
+from pymongo import ASCENDING, DESCENDING, GEOSPHERE, ReturnDocument
 from pymongo.database import Database
 
 COLLECTION = "historias"
@@ -21,6 +21,13 @@ def ensure_indexes(db: Database) -> None:
         name="estado_origen_publicada",
     )
     stories.create_index([("autor_id", ASCENDING), ("creada_en", DESCENDING)], name="autor_creada")
+    # One story per (author, client_id): a resend of the same draft never duplicates it.
+    stories.create_index(
+        [("autor_id", ASCENDING), ("client_id", ASCENDING)],
+        unique=True,
+        partialFilterExpression={"client_id": {"$type": "string"}},
+        name="autor_client_id_unico",
+    )
 
 
 def count(db: Database, *, estado: str | None = None, origen: str | None = None, medio: str | None = None) -> int:
@@ -37,3 +44,31 @@ def count(db: Database, *, estado: str | None = None, origen: str | None = None,
 
 def distinct_sector_ids(db: Database, *, estado: str) -> list[str]:
     return collection(db).distinct("sector_id", {"estado": estado})
+
+
+COUNTERS = "contadores"
+
+
+def next_code_number(db: Database, year: int) -> int:
+    """The next story number of the year (atomic, so two stories never get the same code)."""
+    counter = db[COUNTERS].find_one_and_update(
+        {"_id": f"historias-{year}"},
+        {"$inc": {"seq": 1}},
+        upsert=True,
+        return_document=ReturnDocument.AFTER,
+    )
+    return counter["seq"]
+
+
+def insert(db: Database, document: dict) -> dict:
+    """Inserts a story; raises DuplicateKeyError on a repeated code or (author, client_id)."""
+    collection(db).insert_one(document)
+    return document
+
+
+def find_by_client_id(db: Database, author_id, client_id: str) -> dict | None:
+    return collection(db).find_one({"autor_id": author_id, "client_id": client_id})
+
+
+def list_by_author(db: Database, author_id) -> list[dict]:
+    return list(collection(db).find({"autor_id": author_id}).sort("creada_en", DESCENDING))

@@ -31,6 +31,7 @@ from lib.auth.service import ensure_admin  # noqa: E402
 from lib.core.db import get_db  # noqa: E402
 from lib.core.indexes import ensure_indexes  # noqa: E402
 from lib.core.settings import get_settings  # noqa: E402
+from lib.media.storage import get_storage  # noqa: E402
 from lib.seed.catalog import seed_catalog  # noqa: E402
 
 HAS_REAL_MONGO = bool(os.environ.get("TEST_MONGODB_URI"))
@@ -71,10 +72,28 @@ def db(mongo_client):
     return database
 
 
+class FakeStorage:
+    """Stands in for Vercel Blob: remembers what was saved and answers a URL shaped like a real one."""
+
+    def __init__(self):
+        self.saved = []
+
+    def save(self, pathname, content, content_type):
+        self.saved.append({"pathname": pathname, "bytes": len(content), "content_type": content_type})
+        stem, dot, extension = pathname.rpartition(".")
+        return f"https://store123.public.blob.vercel-storage.com/{stem}-Zx81Qa{dot}{extension}"
+
+
 @pytest.fixture
-def app(db):
+def storage():
+    return FakeStorage()
+
+
+@pytest.fixture
+def app(db, storage):
     application = create_app()
     application.dependency_overrides[get_db] = lambda: db
+    application.dependency_overrides[get_storage] = lambda: storage
     return application
 
 

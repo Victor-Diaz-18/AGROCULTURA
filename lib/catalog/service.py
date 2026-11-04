@@ -18,3 +18,8 @@ def list_sectors(db: Database) -> list[dict]:
 
 def list_tag_names(db: Database) -> list[str]:
     return [doc["nombre"] for doc in repository.list_tags(db)]
+
+
+def get_sector(db: Database, sector_id: str) -> dict | None:
+    """The sector as stored (GeoJSON center included), or None if it does not exist."""
+    return repository.get_sector(db, sector_id)

@@ -31,3 +31,27 @@ def make_story(**overrides) -> dict:
     }
     story.update(overrides)
     return story
+
+
+# ---- what a narrator's phone sends --------------------------------------------
+
+JPEG = b"\xff\xd8\xff\xe0" + b"\x00" * 200  # starts like a JPEG
+WEBM_AUDIO = b"\x1a\x45\xdf\xa3" + b"\x00" * 200  # starts like what MediaRecorder writes
+
+
+def story_payload(**overrides) -> dict:
+    """A valid POST /api/historias body. Override any field."""
+    _counter["n"] += 1
+    payload = {
+        "client_id": f"borrador-{_counter['n']:06d}",
+        "titulo": "El camino de mulas",
+        "texto": "Antes de que hubiera carretera, el café bajaba en mula.",
+        "epoca": "Antes de 1960",
+        "sector_id": "minca",
+        "etiquetas": ["#café"],
+        "ubicacion": {"lat": 11.14, "lon": -74.118},
+        "ubicacion_origen": "sector",
+        "medios": [],
+    }
+    payload.update(overrides)
+    return payload

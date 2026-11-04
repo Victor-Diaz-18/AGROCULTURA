@@ -56,3 +56,15 @@ class ConfigurationError(DomainError):
 
     status_code = 503
     code = "configuracion_incompleta"
+
+
+class PayloadTooLargeError(DomainError):
+    status_code = 413
+    code = "archivo_muy_grande"
+
+
+class StorageUnavailableError(DomainError):
+    """The file store (Vercel Blob) is not configured or did not answer."""
+
+    status_code = 503
+    code = "almacen_no_disponible"

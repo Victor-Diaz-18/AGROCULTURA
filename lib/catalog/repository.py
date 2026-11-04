@@ -19,3 +19,7 @@ def list_sectors(db: Database) -> list[dict]:
 
 def list_tags(db: Database) -> list[dict]:
     return list(db[ETIQUETAS].find().sort("orden", 1))
+
+
+def get_sector(db: Database, sector_id: str) -> dict | None:
+    return db[SECTORES].find_one({"_id": sector_id})
