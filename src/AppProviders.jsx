@@ -1,3 +1,4 @@
+import LoginModal from './components/auth/LoginModal.jsx'
 import ConnectivityToasts from './components/layout/ConnectivityToasts.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
 import { PortalDataProvider } from './context/PortalDataContext.jsx'
@@ -11,7 +12,10 @@ export default function AppProviders({ children }) {
       <ConnectivityToasts />
       <SpeechProvider>
         <AuthProvider>
-          <PortalDataProvider>{children}</PortalDataProvider>
+          <PortalDataProvider>
+            {children}
+            <LoginModal />
+          </PortalDataProvider>
         </AuthProvider>
       </SpeechProvider>
     </ToastProvider>

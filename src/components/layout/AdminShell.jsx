@@ -1,4 +1,5 @@
 import { Link, Outlet } from 'react-router-dom'
+import AdminLogin from '../auth/AdminLogin.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { usePortalData } from '../../context/PortalDataContext.jsx'
 import Icon from '../ui/Icon.jsx'
@@ -7,7 +8,8 @@ import NavMenu from './NavMenu.jsx'
 /** Frame of the administration panel (F6, F7, F12). Meant mostly for desktop. */
 export default function AdminShell() {
   const { config, stats } = usePortalData()
-  const { user, logout } = useAuth()
+  const { user, role, logout } = useAuth()
+  const isAdmin = role === 'administrador'
 
   const groups = [
     {
@@ -45,7 +47,7 @@ export default function AdminShell() {
             <Icon name="enlace-externo" size={15} />
             Ver portal público
           </Link>
-          {user && (
+          {isAdmin && (
             <div className="ag-user">
               <div className="ag-user__avatar">AD</div>
               <div className="ag-user__text">
@@ -60,22 +62,26 @@ export default function AdminShell() {
         </div>
       </header>
 
-      <div className="ag-body">
-        <NavMenu
-          groups={groups}
-          variant="admin"
-          ariaLabel="Secciones de administración"
-          top={
-            <Link to="/admin/historias" className="ag-nav__create">
-              <Icon name="mas" size={18} strokeWidth={2.4} />
-              <span>Crear historia</span>
-            </Link>
-          }
-        />
-        <main className="ag-main">
-          <Outlet />
-        </main>
-      </div>
+      {isAdmin ? (
+        <div className="ag-body">
+          <NavMenu
+            groups={groups}
+            variant="admin"
+            ariaLabel="Secciones de administración"
+            top={
+              <Link to="/admin/historias" className="ag-nav__create">
+                <Icon name="mas" size={18} strokeWidth={2.4} />
+                <span>Crear historia</span>
+              </Link>
+            }
+          />
+          <main className="ag-main">
+            <Outlet />
+          </main>
+        </div>
+      ) : (
+        <AdminLogin />
+      )}
     </div>
   )
 }

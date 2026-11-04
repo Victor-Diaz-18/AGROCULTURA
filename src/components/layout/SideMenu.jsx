@@ -7,8 +7,18 @@ import NavMenu from './NavMenu.jsx'
 /** Portal side menu. Administration entries show a lock until an administrator signs in. */
 export default function SideMenu() {
   const { stats } = usePortalData()
-  const { role } = useAuth()
+  const { role, openLogin } = useAuth()
   const locked = role !== 'administrador'
+
+  // Pages that need a role: without it, ask for sign-in instead of navigating (as the design does).
+  const needs = (item, needed) => ({
+    ...item,
+    onNavigate: (event) => {
+      if (role === needed) return
+      event.preventDefault()
+      openLogin({ tab: needed, destino: item.to })
+    },
+  })
 
   const groups = [
     {
@@ -18,16 +28,16 @@ export default function SideMenu() {
     {
       title: 'NARRADOR',
       items: [
-        { to: '/contar', label: 'Contar una historia', icon: 'mic', code: 'F3' },
-        { to: '/mis-historias', label: 'Mis historias', icon: 'lista', code: 'F10' },
+        needs({ to: '/contar', label: 'Contar una historia', icon: 'mic', code: 'F3' }, 'narrador'),
+        needs({ to: '/mis-historias', label: 'Mis historias', icon: 'lista', code: 'F10' }, 'narrador'),
       ],
     },
     {
       title: 'ADMINISTRACIÓN',
       items: [
-        { to: '/revision', label: 'Revisión', icon: 'bandeja', code: 'F6', count: stats.en_revision, alert: true, locked },
-        { to: '/historias-propias', label: 'Historias propias', icon: 'bandera', code: 'F12', locked },
-        { to: '/configuracion', label: 'Configuración', icon: 'engranaje', code: 'F7', locked },
+        needs({ to: '/revision', label: 'Revisión', icon: 'bandeja', code: 'F6', count: stats.en_revision, alert: true, locked }, 'administrador'),
+        needs({ to: '/historias-propias', label: 'Historias propias', icon: 'bandera', code: 'F12', locked }, 'administrador'),
+        needs({ to: '/configuracion', label: 'Configuración', icon: 'engranaje', code: 'F7', locked }, 'administrador'),
       ],
     },
     {

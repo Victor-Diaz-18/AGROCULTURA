@@ -34,7 +34,7 @@ describe('voice guide (F9)', () => {
     renderApp()
     await user.click(screen.getByRole('button', { name: 'Escuchar' }))
 
-    await user.click(screen.getByRole('link', { name: /Mis historias/ }))
+    await user.click(screen.getByRole('link', { name: /Recorridos 360°/ }))
 
     expect(screen.queryByText(/Leyendo en voz alta/)).not.toBeInTheDocument()
   })

@@ -1,4 +1,5 @@
 import { Route, Routes } from 'react-router-dom'
+import RequireRole from './components/auth/RequireRole.jsx'
 import AdminShell from './components/layout/AdminShell.jsx'
 import PortalShell from './components/layout/PortalShell.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
@@ -12,6 +13,8 @@ import MyStoriesPage from './pages/portal/MyStoriesPage.jsx'
 import TellPage from './pages/portal/TellPage.jsx'
 
 /**
+ * Pages that need a role are wrapped in RequireRole; /admin shows its own sign-in card.
+ *
  * Two shells, one set of views:
  *  - the portal ("/") for visitors and narrators; its administration entries open
  *    the same views inside the portal frame, as in the portal design;
@@ -22,11 +25,11 @@ export default function AppRoutes() {
     <Routes>
       <Route element={<PortalShell />}>
         <Route index element={<MapPage />} />
-        <Route path="contar" element={<TellPage />} />
-        <Route path="mis-historias" element={<MyStoriesPage />} />
-        <Route path="revision" element={<ReviewPage variant="portal" />} />
-        <Route path="historias-propias" element={<ProjectStoriesPage variant="portal" />} />
-        <Route path="configuracion" element={<SettingsPage variant="portal" />} />
+        <Route path="contar" element={<RequireRole role="narrador"><TellPage /></RequireRole>} />
+        <Route path="mis-historias" element={<RequireRole role="narrador"><MyStoriesPage /></RequireRole>} />
+        <Route path="revision" element={<RequireRole role="administrador"><ReviewPage variant="portal" /></RequireRole>} />
+        <Route path="historias-propias" element={<RequireRole role="administrador"><ProjectStoriesPage variant="portal" /></RequireRole>} />
+        <Route path="configuracion" element={<RequireRole role="administrador"><SettingsPage variant="portal" /></RequireRole>} />
         <Route path="proximamente/:id" element={<FuturePage variant="portal" />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>

@@ -22,10 +22,10 @@ describe('SideMenu', () => {
   })
 
   it('marks the current page', () => {
-    renderApp({ route: '/mis-historias' })
+    renderApp({ route: '/proximamente/ra' })
     const nav = screen.getByRole('navigation', { name: 'Secciones' })
 
-    expect(within(nav).getByRole('link', { name: /Mis historias/ })).toHaveAttribute('aria-current', 'page')
+    expect(within(nav).getByRole('link', { name: /Avatares en RA/ })).toHaveAttribute('aria-current', 'page')
     expect(within(nav).getByRole('link', { name: /Mapa de historias/ })).not.toHaveAttribute('aria-current')
   })
 

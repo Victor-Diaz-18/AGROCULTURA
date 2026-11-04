@@ -1,0 +1,93 @@
+/* ---------- Sign-in dialog (portal) ---------- */
+.ag-modal.ag-login {
+  gap: 16px;
+  padding: 24px;
+}
+.ag-login__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.ag-login__title {
+  font-family: var(--font-title);
+  font-size: 24px;
+  font-weight: 700;
+}
+.ag-login__notice {
+  display: block;
+  margin-top: 4px;
+  font-size: 13.5px;
+  color: var(--texto-3);
+}
+.ag-login__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.ag-close {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: 9px;
+  background: #fff;
+  color: var(--texto);
+}
+.ag-tabs--wide {
+  display: flex;
+}
+.ag-tabs--wide .ag-tab {
+  flex: 1;
+  justify-content: center;
+  height: 36px;
+  padding: 0 6px; /* the design used the default button padding here, which keeps "Administrador · F7" on one line */
+  font-size: 14px;
+  font-weight: 800;
+}
+
+/* ---------- "Acceso del equipo" card (admin panel) ---------- */
+.ag-adminlogin-wrap {
+  display: flex;
+  flex: 1;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 72px 20px;
+}
+.ag-adminlogin {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 420px;
+  padding: 28px;
+  border: 1px solid var(--borde);
+  border-radius: 18px;
+  background: #fff;
+}
+.ag-adminlogin__head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ag-adminlogin__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ag-adminlogin__title h1 {
+  font-family: var(--font-title);
+  font-size: 26px;
+  font-weight: 700;
+}
+.ag-adminlogin__text {
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--texto-3);
+}
+.ag-adminlogin .ag-submit {
+  background: var(--adm-cab-fondo);
+}

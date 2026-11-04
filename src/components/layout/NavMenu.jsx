@@ -4,7 +4,8 @@ import Icon from '../ui/Icon.jsx'
 
 /**
  * Side menu shared by the portal and the admin panel.
- * group: { title, items: [{ to, end?, label, icon, code, count?, alert?, locked?, future? }] }
+ * group: { title, items: [{ to, end?, label, icon, code, count?, alert?, locked?, future?, onNavigate? }] }
+ * `onNavigate(event)` runs on click; calling `event.preventDefault()` there cancels the navigation.
  */
 export default function NavMenu({ groups, variant = 'portal', ariaLabel, top, children }) {
   return (
@@ -14,7 +15,7 @@ export default function NavMenu({ groups, variant = 'portal', ariaLabel, top, ch
         <div key={group.title} className="ag-nav__group">
           <div className="ag-nav__title">{group.title}</div>
           {group.items.map((item) => (
-            <NavLink key={item.to} to={item.to} end={item.end} className="ag-nav__item">
+            <NavLink key={item.to} to={item.to} end={item.end} className="ag-nav__item" onClick={item.onNavigate}>
               <Icon name={item.icon} size={18} />
               <span className="ag-nav__label">{item.label}</span>
               {item.count > 0 && !item.locked && (

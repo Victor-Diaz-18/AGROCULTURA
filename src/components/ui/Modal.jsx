@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
  * Dialog over a dimmed backdrop (story card, review, login...).
  * Closes with Escape or a click on the backdrop; focus returns to the opener.
  */
-export default function Modal({ open, onClose, label, maxWidth = 520, level = 50, top = 40, children }) {
+export default function Modal({ open, onClose, label, maxWidth = 520, level = 50, top = 40, className = '', children }) {
   const dialogRef = useRef(null)
 
   useEffect(() => {
@@ -37,7 +37,7 @@ export default function Modal({ open, onClose, label, maxWidth = 520, level = 50
         aria-modal="true"
         aria-label={label}
         tabIndex={-1}
-        className="ag-modal"
+        className={`ag-modal ${className}`.trim()}
         style={{ maxWidth }}
       >
         {children}
