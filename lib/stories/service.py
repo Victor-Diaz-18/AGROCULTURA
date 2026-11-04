@@ -10,11 +10,11 @@ from pymongo.errors import DuplicateKeyError
 
 from lib.catalog import service as catalog
 from lib.core.clock import utcnow
-from lib.core.errors import InvalidDataError, NotFoundError
-from lib.media.validation import check_media_url
+from lib.core.errors import ConflictError, InvalidDataError, NotFoundError
+from lib.media.validation import check_media_url, check_video
 from lib.stories import privacy, repository
 from lib.stories.constants import ORIGENES, TIPOS_MEDIO
-from lib.stories.schemas import HistoriaIn
+from lib.stories.schemas import HistoriaIn, VideoIn
 
 
 def get_stats(db: Database) -> dict:
@@ -95,6 +95,8 @@ def insert_story(
             raise InvalidDataError(f"La etiqueta {tag} ya no está disponible. Elige otra.")
     for medio in data.medios:
         check_media_url(medio.url, str(author_id))
+        if medio.tipo == "video":
+            check_video(medio.mime, medio.bytes, medio.url)
 
     # The story can be anywhere in the zone: its point is what matters. The sector is only a reference, found from
     # the point (never taken from the client), and there may be none.
@@ -228,3 +230,30 @@ def get_published(db: Database, code: str) -> dict:
     if story is None:
         raise NotFoundError("No encontramos esa historia.")
     return story_public(story)
+
+
+def attach_video(db: Database, *, user: dict, code: str, data: VideoIn) -> dict:
+    """Adds the video to a story of this narrator that is still waiting for review.
+
+    The phone sends the story first and the video after (a video can take long over a bad connection), so the
+    story never waits for it. Sending the same video again is fine and changes nothing.
+    """
+    story = repository.find_by_code(db, code)
+    if story is None or story.get("autor_id") != user["_id"]:
+        raise NotFoundError("No encontramos esa historia.")  # also for somebody else's story: no hint that it exists
+    if story["estado"] != "revision":
+        raise ConflictError("Esta historia ya fue revisada: ya no se le puede agregar un video.")
+
+    check_media_url(data.url, str(user["_id"]))
+    check_video(data.mime, data.bytes, data.url)
+    current = next((medio for medio in story.get("medios", []) if medio.get("tipo") == "video"), None)
+    if current:
+        if current.get("url") == data.url:
+            return story
+        raise ConflictError("Esta historia ya tiene un video.")
+
+    medio = {"tipo": "video", **data.model_dump(exclude_none=True)}
+    updated = repository.add_video(db, story["_id"], medio)
+    if updated is None:  # somebody else added one, or the story was reviewed, between the read and the write
+        raise ConflictError("Esta historia ya tiene un video o ya fue revisada.")
+    return updated

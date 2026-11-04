@@ -103,6 +103,18 @@ def decide(db: Database, code: str, changes: dict) -> dict | None:
     )
 
 
+def add_video(db: Database, story_id, medio: dict) -> dict | None:
+    """Adds the video to a story that is in review and has none. None when it did not apply (it has one, or was reviewed).
+
+    Both conditions are part of the filter, so two sends of different videos cannot both succeed.
+    """
+    return collection(db).find_one_and_update(
+        {"_id": story_id, "estado": "revision", "medios.tipo": {"$ne": "video"}},
+        {"$push": {"medios": medio}},
+        return_document=ReturnDocument.AFTER,
+    )
+
+
 def media_urls(db: Database) -> list[str]:
     """Every file the stories point to (used when all of them are deleted)."""
     urls: list[str] = []

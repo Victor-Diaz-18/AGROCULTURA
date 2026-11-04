@@ -5,7 +5,7 @@ from lib.auth.constants import ROL_NARRADOR
 from lib.auth.deps import require_roles
 from lib.core.db import get_db
 from lib.stories import service
-from lib.stories.schemas import Estadisticas, HistoriaIn, HistoriaMapa, HistoriaMia, HistoriaOut, HistoriaPublica
+from lib.stories.schemas import Estadisticas, HistoriaIn, HistoriaMapa, HistoriaMia, HistoriaOut, HistoriaPublica, VideoIn
 
 router = APIRouter(tags=["historias"])
 
@@ -39,6 +39,20 @@ def create_story(
     if not created:
         response.status_code = 200
     return service.story_out(story)
+
+
+@router.post("/historias/{codigo}/video", response_model=HistoriaOut)
+def attach_video(
+    codigo: str,
+    body: VideoIn,
+    user: dict = Depends(require_roles(ROL_NARRADOR)),
+    db: Database = Depends(get_db),
+):
+    """Adds the video (already uploaded straight to Blob) to the narrator's own story while it waits for review.
+
+    The video goes after the story because it can take long over a bad connection. Sending it again changes nothing.
+    """
+    return service.story_out(service.attach_video(db, user=user, code=codigo, data=body))
 
 
 @router.get("/historias", response_model=list[HistoriaMapa])

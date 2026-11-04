@@ -70,9 +70,15 @@ export default defineConfig(({ mode }) => ({
   server: { port: 5173, proxy: api },
   preview: { port: 4173, proxy: api }, // `npm run preview` serves the built app (with its service worker) against the local API
   test: {
-    environment: 'jsdom',
-    setupFiles: ['./src/test/setup.js'],
-    include: ['src/**/*.test.{js,jsx}'],
     css: false,
+    projects: [
+      // The app, in a browser-like environment.
+      {
+        extends: true,
+        test: { name: 'app', environment: 'jsdom', setupFiles: ['./src/test/setup.js'], include: ['src/**/*.test.{js,jsx}'] },
+      },
+      // The Vercel functions written in Node (api/*.js), run in Node as Vercel runs them.
+      { extends: true, test: { name: 'functions', environment: 'node', include: ['api/**/*.test.js'] } },
+    ],
   },
 }))

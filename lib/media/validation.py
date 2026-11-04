@@ -10,6 +10,11 @@ from lib.core.errors import InvalidDataError, PayloadTooLargeError
 # The phone compresses before uploading (photos under 1 MB, audio at a low bitrate), so this is generous.
 MAX_MEDIA_BYTES = 3_500_000
 
+# A video goes straight from the phone to Blob (api/blob-token.js): the 25 MB limit is the one the token enforces.
+MAX_VIDEO_BYTES = 25 * 1024 * 1024
+VIDEO_MIMES = {"video/mp4", "video/quicktime", "video/webm"}
+VIDEO_EXTENSIONS = (".mp4", ".mov", ".webm")
+
 EXTENSION = {
     "image/jpeg": "jpg",
     "image/png": "png",
@@ -71,4 +76,14 @@ def check_media_url(url: str, user_id: str) -> None:
         and host.endswith(".public.blob.vercel-storage.com")
         and parts.path.startswith(f"/historias/{user_id}/")
     ):
+        raise InvalidDataError("Uno de los archivos adjuntos no es válido. Vuelve a subirlo.")
+
+
+def check_video(mime: str | None, size: int | None, url: str) -> None:
+    """What a story may say about its video: a video type, at most 25 MB (the token enforced it too) and a video name."""
+    if mime not in VIDEO_MIMES:
+        raise InvalidDataError("El video debe ser MP4, MOV o WebM.")
+    if size is not None and size > MAX_VIDEO_BYTES:
+        raise InvalidDataError("El video pesa más de 25 MB.")
+    if not urlsplit(url).path.lower().endswith(VIDEO_EXTENSIONS):
         raise InvalidDataError("Uno de los archivos adjuntos no es válido. Vuelve a subirlo.")

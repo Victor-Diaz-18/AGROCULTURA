@@ -58,6 +58,15 @@ class MedioIn(BaseModel):
     duracion_s: int | None = Field(None, ge=0, le=3600)
 
 
+class VideoIn(BaseModel):
+    """The video of a story, already uploaded by the phone straight to Blob (see api/blob-token.js)."""
+
+    url: str = Field(max_length=500)
+    mime: str = Field(max_length=60)
+    bytes: int | None = Field(None, ge=0)
+    duracion_s: int | None = Field(None, ge=0, le=3600)
+
+
 class HistoriaIn(BaseModel):
     """What a narrator sends. Anything else (state, origin, author, code) is ignored: the server decides."""
 
