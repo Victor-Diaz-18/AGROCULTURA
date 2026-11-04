@@ -44,3 +44,15 @@ class InvalidDataError(DomainError):
 class DatabaseUnavailableError(DomainError):
     status_code = 503
     code = "base_de_datos_no_disponible"
+
+
+class TooManyRequestsError(DomainError):
+    status_code = 429
+    code = "demasiados_intentos"
+
+
+class ConfigurationError(DomainError):
+    """The server is missing a setting it needs (for example JWT_SECRET)."""
+
+    status_code = 503
+    code = "configuracion_incompleta"

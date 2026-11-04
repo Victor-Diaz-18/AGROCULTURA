@@ -15,11 +15,13 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 from fastapi import FastAPI, Request  # noqa: E402
+from fastapi.exceptions import RequestValidationError  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from fastapi.responses import JSONResponse  # noqa: E402
 from pymongo.errors import ConnectionFailure  # noqa: E402
 
 from lib import __version__  # noqa: E402
+from lib.auth import router as auth_router  # noqa: E402
 from lib.config import router as config_router  # noqa: E402
 from lib.core import health  # noqa: E402
 from lib.core.errors import DomainError  # noqa: E402
@@ -52,6 +54,22 @@ def create_app() -> FastAPI:
             content={"detail": error.message, "code": error.code},
         )
 
+    @app.exception_handler(RequestValidationError)
+    async def handle_invalid_request(_: Request, error: RequestValidationError) -> JSONResponse:
+        first = error.errors()[0]
+        message = str(first.get("msg", ""))
+        if message.startswith("Value error, "):
+            detail = message.removeprefix("Value error, ")  # a message we wrote, in Spanish
+        elif first.get("type") == "missing":
+            detail = "Falta completar un dato obligatorio."
+        else:
+            detail = "Revisa los datos enviados."
+        # Only the names of the offending fields: the input itself may be a PIN or a password.
+        fields = [str(part) for item in error.errors() for part in item["loc"][1:2]]
+        return JSONResponse(
+            status_code=422, content={"detail": detail, "code": "datos_invalidos", "campos": fields}
+        )
+
     @app.exception_handler(ConnectionFailure)
     async def handle_connection_failure(_: Request, __: ConnectionFailure) -> JSONResponse:
         return JSONResponse(
@@ -63,6 +81,7 @@ def create_app() -> FastAPI:
         )
 
     app.include_router(health.router, prefix="/api")
+    app.include_router(auth_router.router, prefix="/api")
     app.include_router(config_router.router, prefix="/api")
     app.include_router(stories_router.router, prefix="/api")
     return app

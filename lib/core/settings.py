@@ -33,6 +33,23 @@ class Settings:
     mongodb_db: str
     cors_origins: tuple[str, ...] = ()
 
+    # Sessions
+    jwt_secret: str | None = None
+    jwt_narrator_days: int = 30  # narrators may be offline for long: long sessions
+    jwt_admin_hours: int = 8
+
+    # Initial users created by the app (never written in the code)
+    admin_user: str | None = None
+    admin_password: str | None = None
+    demo_narrator_name: str = "Ana Beltrán"
+    demo_narrator_phone: str | None = None
+    demo_narrator_pin: str | None = None
+
+    # Password hashing and failed sign-in attempts
+    bcrypt_rounds: int = 12
+    login_max_attempts: int = 5
+    login_window_minutes: int = 15
+
     @property
     def is_test(self) -> bool:
         return self.env == "test"
@@ -46,11 +63,27 @@ def _split_csv(value: str | None) -> tuple[str, ...]:
     return tuple(item.strip() for item in (value or "").split(",") if item.strip())
 
 
+def _text(environ: Mapping[str, str], name: str) -> str | None:
+    value = (environ.get(name) or "").strip()
+    return value or None
+
+
 def load_settings(environ: Mapping[str, str]) -> Settings:
     """Build settings from a mapping of environment variables."""
     # Vercel sets VERCEL=1; treat it as production unless APP_ENV says otherwise.
     env = environ.get("APP_ENV") or ("production" if environ.get("VERCEL") else "development")
-    cors_origins = _split_csv(environ.get("CORS_ORIGINS"))
+
+    common = {
+        "env": env,
+        "cors_origins": _split_csv(environ.get("CORS_ORIGINS")),
+        "jwt_secret": _text(environ, "JWT_SECRET"),
+        "admin_user": _text(environ, "ADMIN_USER"),
+        # Not stripped: a password may legitimately start or end with a space.
+        "admin_password": environ.get("ADMIN_PASSWORD") or None,
+        "demo_narrator_name": _text(environ, "SEED_DEMO_NARRATOR_NAME") or "Ana Beltrán",
+        "demo_narrator_phone": _text(environ, "SEED_DEMO_NARRATOR_PHONE"),
+        "demo_narrator_pin": _text(environ, "SEED_DEMO_NARRATOR_PIN"),
+    }
 
     if env == "test":
         uri = environ.get("TEST_MONGODB_URI") or None
@@ -62,13 +95,13 @@ def load_settings(environ: Mapping[str, str]) -> Settings:
         real_uri = environ.get("MONGODB_URI")
         if uri and real_uri and uri == real_uri:
             raise UnsafeTestDatabaseError("TEST_MONGODB_URI must not equal MONGODB_URI.")
-        return Settings(env=env, mongodb_uri=uri, mongodb_db=db_name, cors_origins=cors_origins)
+        # Cheap hashing keeps the test suite fast.
+        return Settings(mongodb_uri=uri, mongodb_db=db_name, bcrypt_rounds=4, **common)
 
     return Settings(
-        env=env,
         mongodb_uri=environ.get("MONGODB_URI") or None,
         mongodb_db=environ.get("MONGODB_DB") or DEFAULT_DB_NAME,
-        cors_origins=cors_origins,
+        **common,
     )
 
 

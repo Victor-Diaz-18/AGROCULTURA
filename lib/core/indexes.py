@@ -15,9 +15,11 @@ _ready: set[tuple[int, str]] = set()
 
 
 def ensure_indexes(db: Database) -> None:
+    from lib.auth import repository as auth
     from lib.catalog import repository as catalog
     from lib.stories import repository as stories
 
+    auth.ensure_indexes(db)
     catalog.ensure_indexes(db)
     stories.ensure_indexes(db)
 

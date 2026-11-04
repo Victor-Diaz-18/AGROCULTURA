@@ -14,6 +14,12 @@ import os
 
 # Must happen before anything imports the application settings.
 os.environ["APP_ENV"] = "test"
+# Fixed test credentials: never depend on (or leak) whatever the developer has exported.
+os.environ["JWT_SECRET"] = "test-only-jwt-secret-with-more-than-32-characters"
+os.environ["ADMIN_USER"] = "admin-prueba"
+os.environ["ADMIN_PASSWORD"] = "clave-de-prueba-1234"
+os.environ.pop("SEED_DEMO_NARRATOR_PHONE", None)
+os.environ.pop("SEED_DEMO_NARRATOR_PIN", None)
 
 import mongomock  # noqa: E402
 import pymongo  # noqa: E402
@@ -21,6 +27,7 @@ import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
 from api.index import create_app  # noqa: E402
+from lib.auth.service import ensure_admin  # noqa: E402
 from lib.core.db import get_db  # noqa: E402
 from lib.core.indexes import ensure_indexes  # noqa: E402
 from lib.core.settings import get_settings  # noqa: E402
@@ -74,3 +81,40 @@ def app(db):
 @pytest.fixture
 def client(app):
     return TestClient(app)
+
+
+@pytest.fixture
+def settings():
+    return get_settings()
+
+
+# ---- people ---------------------------------------------------------------
+
+NARRATOR = {"nombre": "Ana Beltrán", "celular": "300 555 0192", "pin": "4821"}
+
+
+def register(client, **overrides):
+    return client.post("/api/auth/registro", json={**NARRATOR, **overrides})
+
+
+def bearer(token: str) -> dict:
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+def narrator(client):
+    """A registered narrator: {"token", "usuario", "headers"}."""
+    session = register(client).json()
+    return {**session, "headers": bearer(session["token"])}
+
+
+@pytest.fixture
+def admin(client, db, settings):
+    """The initial administrator, signed in: {"token", "usuario", "headers"}."""
+    ensure_admin(db, settings)
+    response = client.post(
+        "/api/auth/ingreso",
+        json={"rol": "administrador", "usuario": settings.admin_user, "clave": settings.admin_password},
+    )
+    session = response.json()
+    return {**session, "headers": bearer(session["token"])}
