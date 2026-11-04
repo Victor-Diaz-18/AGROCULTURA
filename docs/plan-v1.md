@@ -179,10 +179,11 @@ Al cerrar cada bloque se compara el resultado con el diseño de referencia (qué
     solo lo hacía con el interruptor).
   - Diferencia menor con el diseño: el aviso del último paso usa el ícono de «sin señal» cuando no hay señal (el
     prototipo dejaba el de wifi).
+- Comprobado en producción tras el despliegue: Vercel sirve `sw.js` (`application/javascript`, sin caché larga, así
+  que las versiones nuevas se detectan) y `manifest.webmanifest` (`application/manifest+json`); `/api/salud` responde ok.
 - No se pudo comprobar aquí: el comportamiento en un iPhone (Safari), el aviso de instalación de Chrome en un
-  teléfono real, el servicio de teselas de OpenStreetMap con CORS desde la red real (se comprobó con un servidor
-  de teselas de mentira), y que Vercel sirva `sw.js` y el manifiesto con los encabezados correctos (se revisa al
-  desplegar).
+  teléfono real, y el servicio de teselas de OpenStreetMap con CORS desde la red real (se comprobó con un servidor
+  de teselas de mentira: las teselas se piden con CORS, se guardan y se dibujan sin conexión).
 - Temporal hasta el bloque 7: el paso 1 dice «Fotos» y no «Fotos y video», y no tiene el botón «Agregar video».
 - Convención de CSS: todo en `border-box`, salvo donde el diseño depende del `content-box` por defecto
   (por ejemplo la tarjeta «Depende de», los pasos del indicador, las etiquetas de fotos y formatos, la tarjeta del formulario y el mapa del paso 2). Al reproducir cada pantalla hay que revisar ese detalle.
