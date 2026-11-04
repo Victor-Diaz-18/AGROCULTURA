@@ -75,3 +75,27 @@ Ubicación de cada historia: GeoJSON Point con índice `2dsphere`.
 | 8 | Cierre: accesibilidad, README completo, despliegue verificado, recorrido e2e opcional | e2e opcional |
 
 Al cerrar cada bloque se compara el resultado con el diseño de referencia (qué se parece, qué cambió).
+
+## Estado de avance
+
+| Bloque | Estado |
+|---|---|
+| 0 Andamiaje | Hecho. Pruebas: 9 de backend |
+| 1 Base | Hecho. Pruebas: 18 de backend (+2 que solo corren con Mongo real) y 36 de frontend. Comparación en `docs/comparacion/bloque-1/` |
+| 2 a 8 | Pendientes |
+
+## Notas de construcción
+
+- Pequeñas adiciones al diseño, anotadas para que el equipo las conozca:
+  - El botón «Escuchar» está en todas las páginas del portal (la tarjeta «Voz e íconos» del diseño dice
+    que cada página lo tiene; el prototipo solo lo cableaba en algunas).
+  - Al perder o recuperar la señal (real o simulada) sale un aviso, como en el diseño.
+  - Si el dispositivo no puede leer en voz alta, se avisa en lugar de no hacer nada.
+  - El texto «datos de ejemplo» del encabezado se controla con la opción `datos_de_ejemplo` de la
+    configuración (el seed la activa; se apaga antes de usar la plataforma con familias reales).
+- Convención de CSS: todo en `border-box`, salvo donde el diseño depende del `content-box` por defecto
+  (por ejemplo la tarjeta «Depende de»). Al reproducir cada pantalla hay que revisar ese detalle.
+- Los centros de La Tagua, San Lorenzo y Tijereras conservan la disposición relativa del mapa ilustrado
+  del diseño; no son geografía real y hay que confirmarlos con las familias.
+- Starlette recomienda `httpx2` para su `TestClient`; se mantiene `httpx` como se acordó y se silencia
+  solo ese aviso en `pytest.ini`. Migrar es cambiar una línea de `requirements-dev.txt`.

@@ -123,6 +123,28 @@ pytest                 # backend: pytest + httpx (con el entorno virtual activad
 - Cada prueba del frontend vive junto al componente que prueba (por ejemplo
   `src/offline/connectivity.test.js`).
 
+## Cargar los datos iniciales (seed)
+
+Con `MONGODB_URI` definido en tu `.env` y el entorno virtual activado:
+
+```bash
+python -m scripts.seed
+```
+
+Carga los sectores, las etiquetas y la configuración del portal. **Solo llena colecciones vacías**:
+si la base ya tiene datos, no los sobrescribe. (Los centros de los sectores son provisionales hasta
+confirmarlos con las familias de la zona.)
+
+## API
+
+La documentación interactiva está en `/api/docs` cuando la API corre. Rutas disponibles por ahora:
+
+| Ruta | Qué devuelve |
+|---|---|
+| `GET /api/salud` | Estado de la API y de la conexión a MongoDB |
+| `GET /api/config` | Nombre del portal, sectores, etiquetas, épocas y motivos de rechazo |
+| `GET /api/estadisticas` | Contadores: historias publicadas, en revisión, formatos |
+
 ## MongoDB Atlas
 
 1. Crea una cuenta en [MongoDB Atlas](https://www.mongodb.com/atlas) y un cluster gratuito (**M0**).
@@ -149,5 +171,12 @@ tests/          pruebas del backend
 
 ## Estado
 
-La versión 1 se construye por bloques (ver `docs/plan-v1.md`). Los pasos para desplegar en Vercel se
-documentan al cerrar el bloque 8.
+La versión 1 se construye por bloques (ver `docs/plan-v1.md`).
+
+- [x] Bloque 0: andamiaje, pruebas y CI
+- [x] Bloque 1: base visual, encabezado, menú, conexión simulada, voz, `/api/config` y `/api/estadisticas`
+- [ ] Bloque 2: registro e ingreso (F2)
+- [ ] Bloques 3 a 8: contar historias, moderación, mapa, sin conexión, filtros, video y cierre
+
+En `docs/comparacion/` hay capturas de cada bloque frente al diseño aprobado. Los pasos para
+desplegar en Vercel se documentan al cerrar el bloque 8.
