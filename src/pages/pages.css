@@ -473,6 +473,12 @@
   font-size: 13.5px;
   font-weight: 700;
 }
+.ag-sectorchip__note {
+  margin-left: 4px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #8a5a00;
+}
 .ag-tagchip {
   box-sizing: content-box; /* prototype: 32px plus the border */
   display: flex;

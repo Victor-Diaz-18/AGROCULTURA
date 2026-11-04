@@ -3,10 +3,10 @@ import { EMPTY_STATS } from '../config/constants.js'
 export const CONFIG = {
   portal: { nombre: 'AGROCULTURA', avisar_rechazo: false, datos_de_ejemplo: true, reinicio_disponible: false },
   sectores: [
-    { id: 'minca', nombre: 'Minca', centro: { lat: 11.14, lon: -74.118 } },
-    { id: 'la-tagua', nombre: 'La Tagua', centro: { lat: 11.13, lon: -74.087 } },
-    { id: 'san-lorenzo', nombre: 'San Lorenzo', centro: { lat: 11.1245, lon: -74.154 } },
-    { id: 'tijereras', nombre: 'Tijereras', centro: { lat: 11.109, lon: -74.111 } },
+    { id: 'minca', nombre: 'Minca', centro: { lat: 11.14, lon: -74.118 }, provisional: false },
+    { id: 'la-tagua', nombre: 'La Tagua', centro: { lat: 11.13, lon: -74.087 }, provisional: false },
+    { id: 'san-lorenzo', nombre: 'San Lorenzo', centro: { lat: 11.1245, lon: -74.154 }, provisional: false },
+    { id: 'tijereras', nombre: 'Tijereras', centro: { lat: 11.109, lon: -74.111 }, provisional: false },
   ],
   etiquetas: ['#café', '#finca', '#familia', '#cosecha', '#cocina', '#oficios'],
   epocas: ['Antes de 1960', '1960 a 1979', '1980 a 1999', '2000 en adelante'],
@@ -33,6 +33,8 @@ export const adminStory = (overrides = {}) => ({
   origen: 'comunidad',
   ejemplo: false,
   motivo_rechazo: null,
+  lat: 11.1,
+  lon: -74.05,
   enviada_en: '2026-10-18T12:00:00Z',
   revisada_en: '',
   publicada_en: '',

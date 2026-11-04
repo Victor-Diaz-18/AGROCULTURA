@@ -34,6 +34,8 @@ def story_for_admin(story: dict) -> dict:
         "origen": story["origen"],
         "ejemplo": bool(story.get("ejemplo")),
         "motivo_rechazo": story.get("motivo_rechazo"),
+        "lat": service._coordinates(story)[0],
+        "lon": service._coordinates(story)[1],
         "enviada_en": service._iso(story.get("enviada_en") or story.get("creada_en")),
         "revisada_en": service._iso(story.get("revisada_en")),
         "publicada_en": service._iso(story.get("publicada_en")),

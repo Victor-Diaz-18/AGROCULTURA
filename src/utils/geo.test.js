@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { CONFIG } from '../test/fixtures.js'
-import { distanceKm, inBounds, nearestSector, pointsOf } from './geo.js'
+import { appleMapsUrl, distanceKm, googleMapsUrl, inBounds, nearestSector, pointsOf } from './geo.js'
 
 describe('distanceKm', () => {
   it('is zero for the same point and about 111 km per degree of latitude', () => {
@@ -46,5 +46,19 @@ describe('inBounds', () => {
 describe('pointsOf', () => {
   it('gives [lat, lon] pairs', () => {
     expect(pointsOf([{ lat: 1, lon: 2 }, { lat: 3, lon: 4 }])).toEqual([[1, 2], [3, 4]])
+  })
+})
+
+describe('links to other maps', () => {
+  it('opens a point in Google Maps with the official URL', () => {
+    expect(googleMapsUrl({ lat: 11.0829, lon: -74.045 })).toBe('https://www.google.com/maps/search/?api=1&query=11.0829,-74.045')
+  })
+
+  it('opens a point in Apple Maps, with the name of the story written safely', () => {
+    expect(appleMapsUrl({ lat: 11.1, lon: -74.2 }, 'Café & trilla #1')).toBe('https://maps.apple.com/?ll=11.1,-74.2&q=Caf%C3%A9%20%26%20trilla%20%231')
+  })
+
+  it('has a name for a story that has none', () => {
+    expect(appleMapsUrl({ lat: 1, lon: 2 })).toBe('https://maps.apple.com/?ll=1,2&q=Historia')
   })
 })

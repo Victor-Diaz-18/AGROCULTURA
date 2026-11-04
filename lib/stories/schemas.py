@@ -198,6 +198,8 @@ class HistoriaAdmin(BaseModel):
     origen: str
     ejemplo: bool
     motivo_rechazo: str | None = None
+    lat: float
+    lon: float
     enviada_en: str
     revisada_en: str = ""
     publicada_en: str = ""

@@ -19,17 +19,19 @@ def _point(lon: float, lat: float) -> dict:
 
 # Bump this number whenever the centers below are corrected: the next start of the app moves the sectors that
 # were saved with an older number (and the stories that sit "at the center of their sector") to the new points.
-SECTORES_VERSION = 1
+#   1: first (provisional) positions, copied from the layout of the illustrative map of the design.
+#   2: La Tagua and San Lorenzo from Google Maps, given by the team; Minca was already right.
+SECTORES_VERSION = 2
 
-# PROVISIONAL centers. Minca is the village center; the other three keep the
-# relative layout of the illustrative map in the approved design (La Tagua east,
-# San Lorenzo west, Tijereras south). They must be confirmed with the families
-# of the area before real stories are published (the design says so too).
+# `centro_provisional`: the point has not been confirmed. The map does not write the name of such a sector on
+# it, and the administration screen says so. Tijereras is still waiting for its real position.
 SECTORES_SEED = [
-    {"_id": "minca", "nombre": "Minca", "orden": 1, "centro": _point(-74.1180, 11.1400), "centro_version": SECTORES_VERSION},
-    {"_id": "la-tagua", "nombre": "La Tagua", "orden": 2, "centro": _point(-74.0868, 11.1301), "centro_version": SECTORES_VERSION},
-    {"_id": "san-lorenzo", "nombre": "San Lorenzo", "orden": 3, "centro": _point(-74.1540, 11.1245), "centro_version": SECTORES_VERSION},
-    {"_id": "tijereras", "nombre": "Tijereras", "orden": 4, "centro": _point(-74.1108, 11.1090), "centro_version": SECTORES_VERSION},
+    {"_id": "minca", "nombre": "Minca", "orden": 1, "centro": _point(-74.1180, 11.1400), "centro_provisional": False, "centro_version": SECTORES_VERSION},
+    {"_id": "la-tagua", "nombre": "La Tagua", "orden": 2, "centro": _point(-74.044951, 11.082986), "centro_provisional": False, "centro_version": SECTORES_VERSION},
+    # In Google Maps this point is named "Cuchillas San Lorenzo": a mountain ridge. To be confirmed with the families
+    # whether their San Lorenzo is the settlement somewhere near it.
+    {"_id": "san-lorenzo", "nombre": "San Lorenzo", "orden": 3, "centro": _point(-74.034676, 11.116315), "centro_provisional": False, "centro_version": SECTORES_VERSION},
+    {"_id": "tijereras", "nombre": "Tijereras", "orden": 4, "centro": _point(-74.1108, 11.1090), "centro_provisional": True, "centro_version": SECTORES_VERSION},
 ]
 
 ETIQUETAS_SEED = ["#café", "#finca", "#familia", "#cosecha", "#cocina", "#oficios"]
@@ -85,7 +87,7 @@ def sync_sector_centers(db: Database) -> dict[str, int]:
         new_lon, new_lat = seed["centro"]["coordinates"]
         claimed = db[SECTORES].update_one(
             {"_id": seed["_id"], "$or": [{"centro_version": {"$exists": False}}, {"centro_version": {"$lt": SECTORES_VERSION}}]},
-            {"$set": {"centro": seed["centro"], "centro_version": SECTORES_VERSION}},
+            {"$set": {"centro": seed["centro"], "centro_provisional": seed["centro_provisional"], "centro_version": SECTORES_VERSION}},
         )
         if claimed.modified_count == 0:
             continue  # another instance did it

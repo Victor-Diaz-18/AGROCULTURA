@@ -29,3 +29,9 @@ export function inBounds(bounds, story) {
 
 /** The points of a list of stories as [lat, lon] pairs (what Leaflet wants). */
 export const pointsOf = (stories) => stories.map((story) => [story.lat, story.lon])
+
+/** Opens a point in Google Maps (the official "Maps URLs", no key needed). */
+export const googleMapsUrl = ({ lat, lon }) => `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`
+
+/** Opens a point in Apple Maps (it opens the app on an iPhone or a Mac, and the web map elsewhere). */
+export const appleMapsUrl = ({ lat, lon }, name = '') => `https://maps.apple.com/?ll=${lat},${lon}&q=${encodeURIComponent(name || 'Historia')}`

@@ -191,8 +191,10 @@ sectores son provisionales hasta confirmarlos con las familias de la zona.
   [normas de uso](https://operations.osmfoundation.org/policies/tiles/) para poco tráfico; si el proyecto crece
   habrá que pasar a un proveedor propio.
 - **Dónde están los sectores.** Cada sector tiene un punto central (en `lib/seed/catalog.py`) que usan las
-  historias que se ubican «en el sector». **Hoy solo el de Minca está comprobado**; los otros tres son
-  provisionales. Para corregirlos: cambia las coordenadas y **sube `SECTORES_VERSION`**. En el siguiente arranque
+  historias que se ubican «en el sector». **Minca, La Tagua y San Lorenzo están confirmados** (los dos últimos
+  con puntos de Google Maps que pasó el equipo; el de San Lorenzo cae en «Cuchillas San Lorenzo», una cresta de
+  montaña: hay que confirmar con las familias si su San Lorenzo es otro punto cercano). **Tijereras sigue
+  provisional** (`centro_provisional`): el mapa no escribe su nombre y la pantalla de configuración lo avisa. Para corregirlos: cambia las coordenadas y **sube `SECTORES_VERSION`**. En el siguiente arranque
   la aplicación mueve los sectores guardados y también las historias ubicadas «en el sector» (con la misma
   distancia); las historias con punto propio (GPS o un toque en el mapa) no se mueven.
 - **Nombres de los sectores en el mapa.** Se comportan como las etiquetas de un mapa: salen en un rango de
@@ -200,8 +202,9 @@ sectores son provisionales hasta confirmarlos con las familias de la zona.
   con el mapa muy alejado, un nombre que quedaría escrito sobre otro no se pone.
 - **Pines.** Rojo: comunidad. Verde azulado: proyecto. Un pin marcado se ve oscuro, más grande y con su título.
   Los títulos y los nombres de sector se muestran siempre como texto, nunca como HTML.
-- **Ficha (F8).** Fotos (varias, con miniaturas), video, audio y los datos de la historia. «Ver en el mapa» la
-  marca en el mapa (`/?historia=HIS-2026-001`: ese enlace también se puede compartir). Las historias de ejemplo
+- **Ficha (F8).** Fotos (varias, con miniaturas), video, audio y los datos de la historia. «Abrir en Google Maps» y
+  «Abrir en Apple Maps» abren el punto de la historia en esas aplicaciones (son enlaces normales: no usan llaves ni
+  tienen costo). «Ver en el mapa» la marca en el mapa (`/?historia=HIS-2026-001`: ese enlace también se puede compartir). Las historias de ejemplo
   no tienen archivos: la ficha muestra los marcadores de posición del diseño y dice que no hay audio.
 
 ## Administración (revisión, historias del proyecto y ajustes)

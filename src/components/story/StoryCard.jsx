@@ -5,6 +5,7 @@ import { usePortalData } from '../../context/PortalDataContext.jsx'
 import { fetchStory } from '../../services/stories.js'
 import { ApiError, OfflineError } from '../../services/http.js'
 import { formatDate } from '../../utils/format.js'
+import { appleMapsUrl, googleMapsUrl } from '../../utils/geo.js'
 import FCode from '../ui/FCode.jsx'
 import Icon from '../ui/Icon.jsx'
 import ListenButton from '../ui/ListenButton.jsx'
@@ -120,10 +121,24 @@ export default function StoryCard({ story, onClose }) {
             </div>
           )}
           {published && (
-            <button type="button" className="ag-card-story__map" onClick={showOnMap}>
-              <Icon name="pin" size={18} />
-              Ver en el mapa
-            </button>
+            <div className="ag-card-story__where">
+              <button type="button" className="ag-card-story__map" onClick={showOnMap}>
+                <Icon name="pin" size={18} />
+                Ver en el mapa
+              </button>
+              {Number.isFinite(story.lat) && Number.isFinite(story.lon) && (
+                <>
+                  <a className="ag-card-story__map" href={googleMapsUrl(story)} target="_blank" rel="noopener noreferrer">
+                    <Icon name="enlace-externo" size={16} />
+                    Abrir en Google Maps
+                  </a>
+                  <a className="ag-card-story__map" href={appleMapsUrl(story, story.titulo)} target="_blank" rel="noopener noreferrer">
+                    <Icon name="enlace-externo" size={16} />
+                    Abrir en Apple Maps
+                  </a>
+                </>
+              )}
+            </div>
           )}
         </div>
       </div>

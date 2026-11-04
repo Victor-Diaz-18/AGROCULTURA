@@ -164,7 +164,8 @@ export default function StoryMap({ stories, sectors, selectedCode, focus, onSele
     const layer = sectorLayerRef.current
     if (!layer) return
     layer.clearLayers()
-    sectorLabels.current = sectors.map(sectorLabel)
+    // A sector whose point has not been confirmed gets no name on the map: it would point at the wrong place.
+    sectorLabels.current = sectors.filter((sector) => !sector.provisional).map(sectorLabel)
     sectorLabels.current.forEach(({ marker }) => layer.addLayer(marker))
     syncSectorLabels(mapRef.current, sectorLabels.current)
   }, [sectors])

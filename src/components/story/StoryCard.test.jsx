@@ -39,6 +39,19 @@ describe('Ficha de la historia (F8)', () => {
     expect(within(dialog).getByText('Comunidad')).toBeInTheDocument()
   })
 
+  it('opens the point of the story in Google Maps and in Apple Maps, in another tab', async () => {
+    const { dialog } = await openCard(storyCard({ titulo: 'La trilla del café', lat: 11.0829, lon: -74.045 }))
+
+    const google = await within(dialog).findByRole('link', { name: 'Abrir en Google Maps' })
+    const apple = within(dialog).getByRole('link', { name: 'Abrir en Apple Maps' })
+    expect(google).toHaveAttribute('href', 'https://www.google.com/maps/search/?api=1&query=11.0829,-74.045')
+    expect(apple).toHaveAttribute('href', 'https://maps.apple.com/?ll=11.0829,-74.045&q=La%20trilla%20del%20caf%C3%A9')
+    for (const link of [google, apple]) {
+      expect(link).toHaveAttribute('target', '_blank')
+      expect(link).toHaveAttribute('rel', 'noopener noreferrer')
+    }
+  })
+
   it('says "zona de Minca" for the other sectors, as the design does', async () => {
     const { dialog } = await openCard(storyCard({ sector_id: 'la-tagua' }))
 
@@ -157,6 +170,17 @@ describe('Ficha de la historia (F8)', () => {
 describe('Ficha en el panel de administración', () => {
   const rejected = adminStory({ codigo: 'HIS-2026-012', titulo: 'Un viaje a la ciudad', estado: 'rechazada', motivo_rechazo: 'Fuera del tema: no trata de la cultura cafetera', medios: [] })
 
+  it('a story that is on the map has its map buttons here too', async () => {
+    const user = userEvent.setup()
+    renderApp({ route: '/admin/revision', user: ADMIN, api: { '/estadisticas': STATS, '/admin/historias': (_i, url) => (url.includes('estado=publicada') ? [adminStory({ codigo: 'HIS-2026-020', titulo: 'Publicada', estado: 'publicada', lat: 11.1, lon: -74.05 })] : []) } })
+    await user.click(await screen.findByRole('button', { name: /Aprobadas/ }))
+
+    await user.click(await screen.findByRole('button', { name: 'Ver ficha' }))
+
+    const dialog = await screen.findByRole('dialog', { name: 'Ficha de la historia' })
+    expect(within(dialog).getByRole('link', { name: 'Abrir en Google Maps' })).toHaveAttribute('href', expect.stringContaining('11.1,-74.05'))
+  })
+
   it('shows a story that was not published without a map button and with "Sin publicar"', async () => {
     const user = userEvent.setup()
     renderApp({ route: '/admin/revision', user: ADMIN, api: { '/estadisticas': STATS, '/admin/historias': (_i, url) => (url.includes('estado=rechazada') ? [rejected] : []) } })
@@ -168,5 +192,6 @@ describe('Ficha en el panel de administración', () => {
     expect(within(dialog).getByRole('heading', { name: 'Un viaje a la ciudad' })).toBeInTheDocument()
     expect(within(dialog).getByText('Sin publicar')).toBeInTheDocument()
     expect(within(dialog).queryByRole('button', { name: 'Ver en el mapa' })).not.toBeInTheDocument()
+    expect(within(dialog).queryByRole('link', { name: /Abrir en/ })).not.toBeInTheDocument()
   })
 })

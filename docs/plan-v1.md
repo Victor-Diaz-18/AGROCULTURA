@@ -130,6 +130,7 @@ Al cerrar cada bloque se compara el resultado con el diseño de referencia (qué
   - La **barra de filtros** del diseño (sectores, origen, búsqueda, época, formato) llega con el bloque 7 (F11);
     ya hay datos para todos esos filtros en cada historia.
   - La miniatura de la lista es la primera foto de la historia (si no tiene, la imagen a rayas del diseño).
+  - La ficha trae «Abrir en Google Maps» y «Abrir en Apple Maps» (enlaces, sin llaves ni costo).
   - Como en el diseño, la ficha escribe «La Tagua, zona de Minca» para los sectores que no son Minca.
   - El reproductor de audio de la ficha es real; en las historias de ejemplo (sin archivo) está apagado y lo dice.
   - «Ver ficha» en las tablas: «Mis historias» (solo publicadas), «Revisión» (aprobadas y rechazadas, que se
@@ -142,9 +143,10 @@ Al cerrar cada bloque se compara el resultado con el diseño de referencia (qué
 - Temporal hasta el bloque 7: el paso 1 dice «Fotos» y no «Fotos y video», y no tiene el botón «Agregar video».
 - Convención de CSS: todo en `border-box`, salvo donde el diseño depende del `content-box` por defecto
   (por ejemplo la tarjeta «Depende de», los pasos del indicador, las etiquetas de fotos y formatos, la tarjeta del formulario y el mapa del paso 2). Al reproducir cada pantalla hay que revisar ese detalle.
-- **Pendiente:** los centros de La Tagua, San Lorenzo y Tijereras conservan la disposición relativa del mapa
-  ilustrado del diseño; no son geografía real (con el mapa real se vio que no coinciden). Solo Minca está
-  comprobado. Hay que reemplazarlos por coordenadas reales (ver «Mapa y ficha» del README).
+- **Posiciones de los sectores** (versión 2): Minca ya era correcta; La Tagua y San Lorenzo salen de puntos de
+  Google Maps que pasó el equipo (el de San Lorenzo es «Cuchillas San Lorenzo», una cresta: confirmar con las
+  familias). **Pendiente: Tijereras**, que sigue con un punto provisional y sin nombre en el mapa. Al corregirlo se
+  sube `SECTORES_VERSION` y las historias ubicadas «en el sector» se mueven solas.
 - Starlette recomienda `httpx2` para su `TestClient`; se mantiene `httpx` como se acordó y se silencia
   solo ese aviso en `pytest.ini`. Migrar es cambiar una línea de `requirements-dev.txt`.
 - Versiones fijadas tras el primer despliegue: Node 22.x (`engines`) y Python 3.12 (`.python-version`).

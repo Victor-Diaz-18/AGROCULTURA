@@ -108,6 +108,21 @@ describe('StoryMap (F1)', () => {
       for (let step = 0; step < 12 && zoom(direction).getAttribute('aria-disabled') !== 'true'; step++) zoom(direction).click()
     }
 
+    it('are not written for a sector whose point has not been confirmed', () => {
+      const unsure = sectors.map((sector) => ({ ...sector, provisional: sector.id === 'tijereras' }))
+      const { container } = setup({ stories: spread, sectors: unsure })
+      zoomAll('out')
+      const names = new Set()
+
+      for (let step = 0; step < 8 && zoom('in').getAttribute('aria-disabled') !== 'true'; step++) {
+        zoom('in').click()
+        shown(container).forEach((name) => names.add(name))
+      }
+
+      expect(names.has('MINCA')).toBe(true)
+      expect(names.has('TIJERERAS')).toBe(false)
+    })
+
     it('are not written when the map starts close up', () => {
       const { container } = setup() // the stories are a few hundred meters apart: the map starts zoomed in
 

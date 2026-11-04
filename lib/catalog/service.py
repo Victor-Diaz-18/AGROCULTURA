@@ -18,7 +18,14 @@ def list_sectors(db: Database) -> list[dict]:
     sectors = []
     for doc in repository.list_sectors(db):
         lon, lat = doc["centro"]["coordinates"]
-        sectors.append({"id": doc["_id"], "nombre": doc["nombre"], "centro": {"lat": lat, "lon": lon}})
+        sectors.append(
+            {
+                "id": doc["_id"],
+                "nombre": doc["nombre"],
+                "centro": {"lat": lat, "lon": lon},
+                "provisional": bool(doc.get("centro_provisional")),
+            }
+        )
     return sectors
 
 

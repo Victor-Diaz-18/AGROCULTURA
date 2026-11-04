@@ -59,6 +59,14 @@ def test_the_queue_shows_what_waits_for_review_oldest_first_with_all_its_content
     assert first["narrador_nombre"] and first["estado"] == "revision" and first["origen"] == "comunidad"
 
 
+def test_the_administrators_get_the_point_of_each_story(client, db, admin):
+    waiting(db, ubicacion={"type": "Point", "coordinates": [-74.1, 11.12]})
+
+    story = client.get("/api/admin/historias?estado=revision", headers=admin["headers"]).json()[0]
+
+    assert (story["lat"], story["lon"]) == (11.12, -74.1)
+
+
 def test_the_list_can_be_filtered_by_state_and_origin(client, db, admin):
     waiting(db)
     db.historias.insert_one(make_story(codigo="HIS-2026-002", estado="publicada", origen="proyecto"))

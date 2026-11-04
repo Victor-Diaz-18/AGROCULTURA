@@ -128,6 +128,7 @@ export default function SettingsPage({ variant = 'portal' }) {
             {config.sectores.map((sector) => (
               <li key={sector.id} className="ag-sectorchip">
                 {sector.nombre}
+                {sector.provisional && <small className="ag-sectorchip__note"> · punto por confirmar</small>}
               </li>
             ))}
           </ul>

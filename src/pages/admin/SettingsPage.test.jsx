@@ -135,6 +135,16 @@ describe('Configuración: portal y moderación (F7)', () => {
     expect(within(card).queryByRole('textbox')).not.toBeInTheDocument()
   })
 
+  it('says which sector point has not been confirmed yet', async () => {
+    const settings = settingsApi()
+    settings.config.sectores[3].provisional = true
+    renderApp({ route: '/admin/configuracion', user: ADMIN, api: settings.api })
+
+    const card = await screen.findByRole('region', { name: 'Sectores del mapa' })
+    expect(within(card).getByText('Tijereras').closest('li')).toHaveTextContent('Tijereras · punto por confirmar')
+    expect(within(card).getByText('Minca').closest('li')).not.toHaveTextContent('por confirmar')
+  })
+
   it('works the same way inside the portal', async () => {
     open('portal')
 

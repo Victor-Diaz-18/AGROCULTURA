@@ -17,6 +17,7 @@ class SectorPublico(BaseModel):
     id: str
     nombre: str
     centro: Centro
+    provisional: bool = False  # the point has not been confirmed with the families
 
 
 class MotivoRechazo(BaseModel):
