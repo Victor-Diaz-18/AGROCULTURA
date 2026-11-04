@@ -71,7 +71,7 @@ Ubicación de cada historia: GeoJSON Point con índice `2dsphere`.
 | 4 | F6 + F7: administración, revisión, historias del proyecto, configuración, reinicio | Casos 1 (rutas `/api/admin/*`), 2 (aprobar) y 3 |
 | 5 | F1 + F8: mapa Leaflet, agrupación, ficha de historia | Mapa, zona visible (solo con Mongo real) |
 | 6 | F10: PWA, borradores en IndexedDB, sincronización | Caso 4 completo |
-| 7 | F11, F12, F13: búsqueda, filtros, distintivos, video | — |
+| 7 | F11, F13: búsqueda, filtros, distintivos, video | Filtros, función de token, video pendiente |
 | 8 | Cierre: accesibilidad, README completo, despliegue verificado, recorrido e2e opcional | e2e opcional |
 
 Al cerrar cada bloque se compara el resultado con el diseño de referencia (qué se parece, qué cambió).
@@ -87,7 +87,8 @@ Al cerrar cada bloque se compara el resultado con el diseño de referencia (qué
 | 4 Administración (F6, F7, F12) | Hecho. Pruebas: 205 de backend (+4 con Mongo real) y 226 de frontend. Comparación en `docs/comparacion/bloque-4/` |
 | 5 Mapa y ficha (F1, F8) | Hecho. Pruebas: 218 de backend (+4 con Mongo real) y 276 de frontend. Comparación en `docs/comparacion/bloque-5/` |
 | 6 Sin conexión (F10) | Hecho. Pruebas: 262 de backend (+4 con Mongo real; sin cambios en este bloque) y 376 de frontend. Comparación en `docs/comparacion/bloque-6/` |
-| 7 y 8 | Pendientes |
+| 7 Filtros y video (F11, F13) | Hecho. Pruebas: 290 de backend (+4 con Mongo real) y 521 de frontend (incluye las de la función de Node). Comparación en `docs/comparacion/bloque-7/` |
+| 8 | Pendiente |
 
 ## Notas de construcción
 
@@ -113,7 +114,7 @@ Al cerrar cada bloque se compara el resultado con el diseño de referencia (qué
     las fotos y el video. Sin verlos, la revisión no sirve para decidir.
   - «Nueva historia del proyecto» sube **archivos reales**: el selector «Formatos que vas a subir» (tres botones
     de ejemplo) pasó a ser «Agregar foto» y «Agregar audio». El audio es un archivo que el equipo ya tiene
-    (máximo 3,5 MB por ahora; el bloque 7 puede pasar el audio a subida directa si hacen falta archivos más grandes).
+    (máximo 3,5 MB por ahora; si hacen falta audios más grandes se puede pasar a subida directa como el video).
   - La **época no tiene valor por defecto** en ese formulario (el prototipo traía «1960 a 1979» puesto): un valor
     puesto de antemano pasa desapercibido.
   - En la tarjeta «Portal»: un interruptor para **apagar «datos de ejemplo»** del encabezado antes de usar la
@@ -137,8 +138,7 @@ Al cerrar cada bloque se compara el resultado con el diseño de referencia (qué
   - Los nombres de los sectores se dibujan sobre el mapa como en el diseño (en mayúsculas separadas).
   - **Cambio respecto a lo planeado:** no hay consulta por zona (`bbox`) en el servidor. El mapa carga todas las
     publicadas y la lista se reduce en el navegador; es más simple y es lo que necesita el modo sin conexión (bloque 6).
-  - La **barra de filtros** del diseño (sectores, origen, búsqueda, época, formato) llega con el bloque 7 (F11);
-    ya hay datos para todos esos filtros en cada historia.
+  - La **barra de filtros** del diseño (sectores, origen, búsqueda, época, formato) llegó con el bloque 7 (F11).
   - La miniatura de la lista es la primera foto de la historia (si no tiene, la imagen a rayas del diseño).
   - La ficha trae «Abrir en Google Maps» y «Abrir en Apple Maps» (enlaces, sin llaves ni costo).
   - Como en el diseño, la ficha escribe «La Tagua, zona de Minca» para los sectores que no son Minca.
@@ -189,7 +189,27 @@ Al cerrar cada bloque se compara el resultado con el diseño de referencia (qué
 - No se pudo comprobar aquí: el comportamiento en un iPhone (Safari), el aviso de instalación de Chrome en un
   teléfono real, y el servicio de teselas de OpenStreetMap con CORS desde la red real (se comprobó con un servidor
   de teselas de mentira: las teselas se piden con CORS, se guardan y se dibujan sin conexión).
-- Temporal hasta el bloque 7: el paso 1 dice «Fotos» y no «Fotos y video», y no tiene el botón «Agregar video».
+- Adiciones y decisiones del bloque 7 (filtros y video; para revisar con el equipo):
+  - **Filtros (F11):** la barra del diseño, con estas diferencias: la búsqueda **no distingue tildes ni mayúsculas** y pide
+    todas las palabras (el prototipo buscaba el texto entero tal cual); hay una pestaña **«Otro lugar»** (solo si hay
+    historias fuera de los sectores, que el prototipo no tenía porque todas estaban en un sector); al cambiar un filtro
+    el mapa **se acerca a lo que queda** (si no, la lista, que muestra solo la zona visible, parecería vacía); y el
+    «sin resultados» ofrece «Quitar los filtros». La lista pública del mapa trae ahora las etiquetas.
+  - **Video (F13):** «Fotos y video» y «Agregar video» como en el diseño (hasta 25 MB; MP4, MOV o WebM), con subida directa
+    a Blob y la función `api/blob-token.js` (ver README). El tope son **25 000 000 bytes** (como los cuenta el teléfono y
+    `formatBytes`), igual en la función, la API y la pantalla.
+  - **La historia no espera al video** (decidido con el equipo: «si el video falla por mala conexión, no bloquea el envío del
+    resto»). Para que el video no se pierda en ese caso se agregó, **sin que estuviera en el plan**, una ruta
+    `POST /api/historias/{codigo}/video` (solo el autor, solo en revisión, un video, idempotente) y el video pendiente:
+    queda en el teléfono, se reintenta solo (5 veces) y «Mis historias» lo muestra con Reintentar y Quitar. Si el equipo
+    prefiere que un video que falla simplemente se descarte, es quitar esa ruta y la fase «video» de `offline/outbox.js`.
+  - La función de Node solo ve el JWT (no consulta la base): un usuario borrado con sesión vigente podría subir un video de
+    hasta 25 MB, pero ninguna historia lo aceptaría (la API sí consulta). Los videos que no llegan a una historia quedan
+    huérfanos en Blob, como las fotos.
+  - **Videos de las historias del equipo:** suben antes de publicar y, si fallan, la historia no se publica sin ellos.
+  - En `npm run dev` + `uvicorn` (forma 2) no hay `/api/blob-token`: el video avisa que no está disponible. Hace falta `vercel dev`.
+  - **Nombres de los sectores** corregidos (segunda vez): solo con el mapa cerca, ver más arriba. **Puntos de las historias del
+    equipo:** también aproximados al público; el exacto solo lo ve el administrador (decidido tras el bloque 6).
 - Convención de CSS: todo en `border-box`, salvo donde el diseño depende del `content-box` por defecto
   (por ejemplo la tarjeta «Depende de», los pasos del indicador, las etiquetas de fotos y formatos, la tarjeta del formulario y el mapa del paso 2). Al reproducir cada pantalla hay que revisar ese detalle.
 - **Posiciones de los sectores** (versión 2): Minca ya era correcta; La Tagua y San Lorenzo salen de puntos de

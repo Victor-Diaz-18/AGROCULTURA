@@ -59,10 +59,10 @@ Están descritas en [`.env.example`](.env.example). Las principales:
 |---|---|
 | `MONGODB_URI` | Cadena de conexión de MongoDB Atlas |
 | `MONGODB_DB` | Nombre de la base (por defecto `agrocultura`) |
-| `JWT_SECRET` | Firma de las sesiones. Cadena aleatoria de **32 caracteres o más**; sin ella el ingreso responde 503 |
+| `JWT_SECRET` | Firma de las sesiones (la API de Python la firma y la función de video `api/blob-token.js` la verifica con el mismo secreto). Cadena aleatoria de **32 caracteres o más**; sin ella el ingreso y la subida de videos responden 503 |
 | `ADMIN_USER`, `ADMIN_PASSWORD` | Administrador inicial. La contraseña tiene **10 caracteres o más** |
 | `SEED_DEMO_NARRATOR_*` | Narradora de ejemplo (opcional) |
-| `BLOB_READ_WRITE_TOKEN` | Token de Vercel Blob, donde se guardan las fotos y los audios. Aparece solo al conectar un *Blob store* al proyecto (Storage → Create → Blob, con acceso **Public**) |
+| `BLOB_READ_WRITE_TOKEN` | Token de Vercel Blob, donde se guardan las fotos, los audios y los videos. Aparece solo al conectar un *Blob store* al proyecto (Storage → Create → Blob, con acceso **Public**) |
 | `ALLOW_DEMO_RESET` | Muestra y permite el botón «Reiniciar datos de ejemplo» (**borra todas las historias**). Sin esta variable (o con `false`) el botón no existe. Se quita antes de usar la plataforma con familias reales |
 | `VITE_SHOW_CODES` | Muestra los códigos F1, F2… del diseño |
 
@@ -124,6 +124,8 @@ pytest                 # backend: pytest + httpx (con el entorno virtual activad
 - Cada prueba del frontend vive junto al componente que prueba (por ejemplo
   `src/offline/connectivity.test.js`). Lo que usa IndexedDB se prueba con `fake-indexeddb` (ya viene instalado) y
   entre una prueba y otra el teléfono «se vacía» solo (`src/test/setup.js`).
+- `npm test` corre dos proyectos de Vitest: `app` (la interfaz, en jsdom) y `functions` (las funciones de Node de
+  `api/`, en Node; las pruebas de `api/blob-token.js` incluyen un token firmado por la API de Python).
 - El service worker no se prueba con Vitest (no corre en jsdom): se comprueba en un navegador real con
   `npm run build && npm run preview` (ver «Sin conexión»).
 
@@ -169,8 +171,7 @@ sectores son provisionales hasta confirmarlos con las familias de la zona.
   (unos 180 KB por minuto). Así se sube rápido con poca señal.
 - Las fotos y el audio pasan por `POST /api/medios` (máximo **3,5 MB** cada uno: una función de Vercel
   acepta unos 4,5 MB por petición). El servidor **decide el tipo de archivo por su contenido**, no por el
-  nombre ni por lo que diga el navegador, y lo guarda en Vercel Blob. El video (bloque 7) se subirá directo
-  desde el navegador a Blob, sin pasar por la API.
+  nombre ni por lo que diga el navegador, y lo guarda en Vercel Blob. El video va aparte (ver «Video»).
 - La historia se envía con `POST /api/historias`. **Siempre** queda «en revisión» (aunque alguien intente
   mandar otro estado) y no aparece en el mapa hasta que un administrador la aprueba. El servidor decide el
   autor y el código (`HIS-AAAA-NNN`, consecutivo).
@@ -178,10 +179,47 @@ sectores son provisionales hasta confirmarlos con las familias de la zona.
   al responder, o se envió desde el teléfono y otra vez al volver la señal), el servidor reconoce la historia y no
   la duplica; y las fotos que ya subieron no se suben otra vez.
 - Si no hay `BLOB_READ_WRITE_TOKEN`, subir un archivo responde 503 con el mensaje «Falta configurar…».
+
+### Video (F13)
+
+- «Agregar video» (MP4, MOV de iPhone o WebM, **hasta 25 MB**: 25 000 000 bytes, como los cuenta el teléfono) está en
+  «Fotos y video» del paso 1 y en «Nueva historia del proyecto». Un video por historia. No se reduce en el teléfono:
+  la pantalla avisa si pesa más o no es un video.
+- **El video no pasa por la API** (una función de Vercel acepta unos 4,5 MB por petición): sube **directo del
+  navegador a Vercel Blob**. La función de Node **`api/blob-token.js`** solo contesta una pregunta: «¿esta persona
+  puede subir este archivo?». Verifica la sesión (el JWT que firmó la API, con `node:crypto`: algoritmo HS256,
+  firma, vencimiento) y entrega un permiso corto para **una ruta en la carpeta de esa persona**
+  (`historias/<su id>/…`), solo tipos de video y hasta 25 MB. Las reglas están en `api/_lib/video.js`. La API
+  de Python vuelve a comprobar al guardar la historia (tipo, tamaño, que la dirección sea de la carpeta de quien la
+  envía).
+- **La historia no espera al video.** Primero se envía la historia (con sus fotos y su audio) y el video sube
+  después y se agrega con `POST /api/historias/{codigo}/video`, mientras la historia siga «en revisión» (después de
+  la revisión ya no se le pueden agregar archivos). Repetir ese envío no cambia nada.
+- **Si el video falla o no hay señal**, la historia ya está enviada y el video **queda en el teléfono** y se
+  reintenta solo (al volver la señal y cada minuto; tras 5 intentos fallidos espera a la persona). «Mis historias»
+  dice en «Qué sigue»: *«Lo revisa un administrador. Falta subir el video: se sube cuando haya señal.»*, el avance
+  (*«Subiendo el video… 40 %»*) o el motivo, con **Reintentar** y **Quitar** (pregunta antes).
+- En «Nueva historia del proyecto» el video sube antes de publicar: si falla, la historia **no** se publica sin él
+  y se puede intentar otra vez (el equipo está mirando la pantalla).
+- **Para probarlo en el computador hace falta `vercel dev`** (forma 1): `uvicorn` solo sirve la API de Python, que no
+  tiene `/api/blob-token`; con la forma 2 el video responde «La subida de videos no está disponible en este
+  momento» y el resto de la aplicación funciona igual. En producción no hay que configurar nada más que el Blob store
+  y `JWT_SECRET`, que ya existen.
+- Un video que se sube y nunca llega a una historia (la persona cierra todo a mitad) queda en Blob sin usar, como
+  una foto. Se puede limpiar desde el panel de Vercel.
 - El lugar se elige tocando un sector, tocando el mapa o con el botón «Usar mi ubicación» (el GPS del
   teléfono funciona sin señal). Se guarda como un punto GeoJSON `[longitud, latitud]` con un índice `2dsphere`.
 
 ## Mapa y ficha de la historia
+
+- **Filtros y búsqueda (F11).** Sobre el mapa está la barra del diseño: pestañas de **sector** (con cuántas historias
+  muestra cada una con los otros filtros; aparece «Otro lugar» si hay historias fuera de los sectores), de
+  **origen** (Todas, Comunidad, Proyecto), una **búsqueda** y los menús de **época** y **formato**. Filtran el mapa y
+  la lista a la vez y funcionan sin conexión (se hacen en el teléfono con las historias que ya tiene). La búsqueda
+  mira el título, quién la cuenta, el nombre del lugar, el sector, la época y las etiquetas, **sin importar tildes ni
+  mayúsculas** («cafe» encuentra «café») y exige todas las palabras, en cualquier orden. Al cambiar un filtro el mapa
+  se acerca a lo que queda (la búsqueda espera a que se deje de escribir). Sin resultados dice «No hay historias con
+  estos filtros» y ofrece «Quitar los filtros». Por eso `GET /api/historias` ahora trae también las `etiquetas`.
 
 - **Qué se ve en el mapa.** `GET /api/historias` es público y devuelve **solo** las historias publicadas (más
   nuevas primero, hasta 1000), con lo que necesita el mapa: código, título, quién la cuenta, sector, época,
@@ -326,7 +364,8 @@ visitante recibe 401 y un narrador 403.
   siguen «en revisión», así que dos administradores no pueden decidir la misma a la vez (el segundo recibe 409).
   Las historias del proyecto no pasan por revisión.
 - **Historias del proyecto (F12).** Se publican de una vez y quedan marcadas «del proyecto». Los archivos los sube
-  el propio administrador (`POST /api/medios`) y una historia solo puede apuntar a archivos que subió quien la crea.
+  el propio administrador (las fotos y el audio por `POST /api/medios`; el video directo a Blob, ver «Video») y una
+  historia solo puede apuntar a archivos que subió quien la crea.
   Sin punto en el mapa, queda en el centro de su sector.
 - **Configuración (F7).** Nombre del portal, «avisar al narrador si se rechaza» (se guarda, pero todavía no envía
   ningún aviso: está por definir con el profesor), la etiqueta «datos de ejemplo» del encabezado y las etiquetas
@@ -357,6 +396,8 @@ La documentación interactiva está en `/api/docs` cuando la API corre. Rutas di
 | `GET /api/historias` | Las historias publicadas que dibuja el mapa (público) |
 | `GET /api/historias/{codigo}` | La ficha de una historia publicada (público; 404 si no está publicada) |
 | `GET /api/historias/mias` | Las historias del narrador que ingresó, con su estado y el motivo si no se publicó |
+| `POST /api/historias/{codigo}/video` | Agrega a una historia propia, todavía en revisión, el video ya subido a Blob (solo narradores) |
+| `POST /api/blob-token` | **Función de Node** (`api/blob-token.js`, no está en la API de Python): entrega el permiso para subir un video directo a Blob (narradores y administradores) |
 | `GET /api/admin/historias` | Historias con todo su contenido, filtradas por `estado` y `origen` (administrador) |
 | `POST /api/admin/historias/{codigo}/aprobar` | Publica una historia en revisión; exige las tres comprobaciones |
 | `POST /api/admin/historias/{codigo}/rechazar` | Rechaza una historia en revisión; exige un motivo de la lista |
@@ -397,7 +438,7 @@ docs/diseno/    diseños de referencia aprobados (no se despliegan)
 docs/plan-v1.md plan y decisiones acordadas
 src/            frontend React + Vite (components, pages, hooks, services)
 public/         recursos estáticos de la PWA
-api/            punto de entrada del backend (api/index.py)
+api/            punto de entrada del backend (api/index.py) y la función de Node del video (api/blob-token.js)
 lib/            código compartido del backend, un paquete por tema
 tests/          pruebas del backend
 ```
@@ -413,7 +454,8 @@ La versión 1 se construye por bloques (ver `docs/plan-v1.md`).
 - [x] Bloque 4: revisión, historias del proyecto, configuración y reinicio de ejemplo (F6, F7, F12)
 - [x] Bloque 5: mapa de historias y ficha (F1, F8)
 - [x] Bloque 6: funciona sin conexión: aplicación instalable, borradores en el teléfono y envío al volver la señal (F10)
-- [ ] Bloques 7 y 8: filtros, video y cierre
+- [x] Bloque 7: filtros y búsqueda en el mapa (F11) y video con subida directa a Blob (F13)
+- [ ] Bloque 8: accesibilidad, cierre y despliegue verificado
 
 En `docs/comparacion/` hay capturas de cada bloque frente al diseño aprobado. Los pasos para
 desplegar en Vercel se documentan al cerrar el bloque 8.
