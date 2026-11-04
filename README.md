@@ -59,17 +59,17 @@ Están descritas en [`.env.example`](.env.example). Las principales:
 |---|---|
 | `MONGODB_URI` | Cadena de conexión de MongoDB Atlas |
 | `MONGODB_DB` | Nombre de la base (por defecto `agrocultura`) |
-| `JWT_SECRET` | Firma de las sesiones. Cadena larga y aleatoria |
-| `ADMIN_USER`, `ADMIN_PASSWORD` | Administrador inicial que crea el seed |
+| `JWT_SECRET` | Firma de las sesiones. Cadena aleatoria de **32 caracteres o más**; sin ella el ingreso responde 503 |
+| `ADMIN_USER`, `ADMIN_PASSWORD` | Administrador inicial. La contraseña tiene **10 caracteres o más** |
 | `SEED_DEMO_NARRATOR_*` | Narradora de ejemplo (opcional) |
 | `BLOB_READ_WRITE_TOKEN` | Token de Vercel Blob |
 | `ALLOW_DEMO_RESET` | Permite el botón "Reiniciar datos de ejemplo" |
 | `VITE_SHOW_CODES` | Muestra los códigos F1, F2… del diseño |
 
-Para generar un `JWT_SECRET`:
+Para generar un `JWT_SECRET` (con Node, que ya tienes instalado):
 
 ```bash
-python -c "import secrets; print(secrets.token_urlsafe(48))"
+node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
 ```
 
 ## Cómo correr el proyecto en tu computador
@@ -138,6 +138,23 @@ python -m scripts.seed
 El seed **solo llena colecciones vacías**: nunca sobrescribe lo que ya existe. Los centros de los
 sectores son provisionales hasta confirmarlos con las familias de la zona.
 
+## Ingreso y sesiones
+
+- **Narrador:** se registra con su nombre, su celular (10 dígitos, empieza por 3; se acepta con `+57`, espacios
+  o guiones) y una clave corta (**PIN de 4 a 6 números**). No usa correo. El PIN se guarda solo con hash
+  (bcrypt), nunca en texto plano. La sesión dura **30 días**, para que pueda usar la aplicación sin señal.
+- **Administrador:** entra con usuario y contraseña. Los define `ADMIN_USER` y `ADMIN_PASSWORD`; la aplicación
+  crea al administrador sola en la primera petición. **La variable manda:** para cambiar la contraseña, cambia
+  `ADMIN_PASSWORD` en Vercel y haz un Redeploy. La sesión dura **8 horas**.
+- **Intentos fallidos:** como máximo **5 intentos cada 15 minutos por celular (o usuario)**. Pasado el límite
+  se bloquea aunque se escriba la clave correcta, hasta que termine la ventana de 15 minutos.
+- **Narradora de ejemplo (opcional):** si defines `SEED_DEMO_NARRATOR_PHONE` y `SEED_DEMO_NARRATOR_PIN`
+  (y opcionalmente `SEED_DEMO_NARRATOR_NAME`), se crea una cuenta de ejemplo. Nunca se modifica después.
+- **Clave olvidada:** en la versión 1 no hay recuperación. Un administrador puede borrar la cuenta en Atlas
+  (colección `usuarios`) para que la persona se registre de nuevo.
+- Si el ingreso responde *«Falta configurar JWT_SECRET en el servidor»*, falta esa variable (o es muy corta):
+  agrégala en Vercel y haz un Redeploy.
+
 ## API
 
 La documentación interactiva está en `/api/docs` cuando la API corre. Rutas disponibles por ahora:
@@ -147,6 +164,9 @@ La documentación interactiva está en `/api/docs` cuando la API corre. Rutas di
 | `GET /api/salud` | Estado de la API y de la conexión a MongoDB |
 | `GET /api/config` | Nombre del portal, sectores, etiquetas, épocas y motivos de rechazo |
 | `GET /api/estadisticas` | Contadores: historias publicadas, en revisión, formatos |
+| `POST /api/auth/registro` | Crea una cuenta de narrador (nombre, celular, PIN) y devuelve la sesión |
+| `POST /api/auth/ingreso` | Ingreso de narrador (celular + PIN) o de administrador (usuario + contraseña) |
+| `GET /api/auth/yo` | El usuario de la sesión actual (requiere sesión) |
 
 ## MongoDB Atlas
 
@@ -191,7 +211,7 @@ La versión 1 se construye por bloques (ver `docs/plan-v1.md`).
 
 - [x] Bloque 0: andamiaje, pruebas y CI
 - [x] Bloque 1: base visual, encabezado, menú, conexión simulada, voz, `/api/config` y `/api/estadisticas`
-- [ ] Bloque 2: registro e ingreso (F2)
+- [x] Bloque 2: registro e ingreso (F2)
 - [ ] Bloques 3 a 8: contar historias, moderación, mapa, sin conexión, filtros, video y cierre
 
 En `docs/comparacion/` hay capturas de cada bloque frente al diseño aprobado. Los pasos para

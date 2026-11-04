@@ -82,7 +82,8 @@ Al cerrar cada bloque se compara el resultado con el diseño de referencia (qué
 |---|---|
 | 0 Andamiaje | Hecho. Pruebas: 9 de backend |
 | 1 Base | Hecho. Pruebas: 18 de backend (+2 que solo corren con Mongo real) y 36 de frontend. Comparación en `docs/comparacion/bloque-1/` |
-| 2 a 8 | Pendientes |
+| 2 Ingreso (F2) | Hecho. Pruebas: 77 de backend (+2 con Mongo real) y 74 de frontend. Comparación en `docs/comparacion/bloque-2/` |
+| 3 a 8 | Pendientes |
 
 ## Notas de construcción
 
@@ -102,3 +103,19 @@ Al cerrar cada bloque se compara el resultado con el diseño de referencia (qué
 - Versiones fijadas tras el primer despliegue: Node 22.x (`engines`) y Python 3.12 (`.python-version`).
 - El catálogo (sectores, etiquetas, configuración) se carga solo la primera vez que la API ve una base
   vacía (`lib/core/bootstrap.py`); el administrador inicial se creará igual desde el bloque 2.
+
+### Cambios al modal «Ingresar» respecto al diseño aprobado (para el profesor)
+
+El prototipo pedía «Tu nombre» y «Número de celular», sin contraseña y con la nota «los datos no se guardan».
+Para que el ingreso sea real y seguro se agregó:
+
+1. Un campo de **clave corta (PIN) de 4 a 6 números**. Al crear la cuenta se ve en pantalla (para no
+   equivocarse al escribirla); al ingresar queda oculto.
+2. Un selector **«Primera vez / Ya tengo cuenta»**. Con «Ya tengo cuenta» se pide solo celular y clave.
+3. El botón dice **«Crear cuenta»** la primera vez y **«Ingresar»** después.
+4. El texto de ayuda cambió: de «Sin correo ni contraseña… no se guardan» a «Sin correo: solo tu celular y
+   una clave corta…».
+5. Un recuadro rojo con el mensaje del servidor si algo falla (clave incorrecta, demasiados intentos, sin señal).
+
+Se quitó el texto «Prototipo: cualquier usuario y contraseña sirven» de las pantallas de administrador, y los
+valores de ejemplo que venían escritos de antemano. El correo no se pide en la versión 1.
