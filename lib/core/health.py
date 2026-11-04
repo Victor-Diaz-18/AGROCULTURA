@@ -24,8 +24,14 @@ def health(db: Database = Depends(get_db)):
     }
     try:
         db.command("ping")
-    except Exception:  # any failure here means the database is not usable
+    except Exception as exc:  # any failure here means the database is not usable
         body["estado"] = "degradado"
         body["base_de_datos"] = "error"
+        # Only the kind of error (e.g. OperationFailure, ServerSelectionTimeoutError) and
+        # MongoDB's numeric code (18 = bad credentials, 13 = not authorized). Never the message.
+        body["causa"] = type(exc).__name__
+        code = getattr(exc, "code", None)
+        if isinstance(code, int):
+            body["codigo"] = code
         return JSONResponse(status_code=503, content=body)
     return body

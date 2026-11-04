@@ -160,6 +160,19 @@ La documentación interactiva está en `/api/docs` cuando la API corre. Rutas di
    contraseña real y guárdala en `MONGODB_URI` (en tu `.env` para trabajo local y en las variables
    de entorno de Vercel para producción).
 
+### Si `/api/salud` no dice `ok`
+
+Abre `/api/salud`: cuando falla, indica el tipo de error en `causa` (y el código de MongoDB en `codigo`),
+sin mostrar mensajes ni claves. También queda escrito, al inicio, en los registros de Vercel.
+
+| `causa` | `codigo` | Qué significa | Qué revisar |
+|---|---|---|---|
+| `OperationFailure` | 18 | Usuario o contraseña incorrectos | La contraseña en `MONGODB_URI`: que no quede `<db_password>`, que no tenga espacios y que sus símbolos especiales estén codificados (una contraseña solo con letras y números evita el problema). Que el usuario exista en Atlas |
+| `OperationFailure` | 13 | El usuario no tiene permiso | En Atlas → Database Access, el usuario debe tener `readWrite` sobre la base `agrocultura` (escrita igual que `MONGODB_DB`) |
+| `ServerSelectionTimeoutError` | — | No se llega al cluster | Network Access con `0.0.0.0/0`; que el cluster no esté pausado |
+| `ConfigurationError` o `InvalidURI` | — | La cadena de conexión está mal formada | Volver a copiarla desde Atlas (Connect → Drivers) |
+| *(503 con "Falta la variable MONGODB_URI")* | — | La función no ve la variable | Que exista en el entorno **Production** y que se hiciera un Redeploy después de crearla |
+
 ## Estructura
 
 ```

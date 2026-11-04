@@ -42,7 +42,12 @@ def ensure_initialized_once(db: Database) -> None:
         return
     try:
         ensure_initialized(db)
-    except Exception:
-        logger.exception("Could not initialize the catalog; will retry on the next request")
+    except Exception as exc:
+        logger.error(
+            "Could not initialize the catalog (%s: %s); will retry on the next request",
+            type(exc).__name__,
+            exc,
+            exc_info=True,
+        )
         return
     _ready.add(key)

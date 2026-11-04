@@ -28,7 +28,13 @@ def ensure_indexes_once(db: Database) -> None:
         return
     try:
         ensure_indexes(db)
-    except Exception:  # never take the API down because of an index problem
-        logger.exception("Could not create indexes; will retry on the next request")
+    except Exception as exc:  # never take the API down because of an index problem
+        # The one-line summary goes first: platform logs truncate the end of long tracebacks.
+        logger.error(
+            "Could not create indexes (%s: %s); will retry on the next request",
+            type(exc).__name__,
+            exc,
+            exc_info=True,
+        )
         return
     _ready.add(key)
