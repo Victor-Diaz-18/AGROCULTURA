@@ -2,7 +2,9 @@ import '@testing-library/jest-dom/vitest'
 import 'fake-indexeddb/auto'
 import { afterEach, beforeEach, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'
+import { setRetryDelayForTests } from '../context/OutboxContext.jsx'
 import { resetConnectivityForTests } from '../offline/connectivity.js'
+import { resetStoreForTests } from '../offline/store.js'
 
 // Browser speech synthesis does not exist in jsdom: a controllable fake.
 class FakeUtterance {
@@ -27,12 +29,14 @@ beforeEach(() => {
   speechSynthesisMock.getVoices.mockReset().mockReturnValue([])
 })
 
-// Each test starts from a clean DOM, clean browser storage and a working connection.
-afterEach(() => {
+// Each test starts from a clean DOM, clean browser storage (localStorage and IndexedDB) and a working connection.
+afterEach(async () => {
   cleanup()
+  await resetStoreForTests()
   localStorage.clear()
   sessionStorage.clear()
   resetConnectivityForTests()
+  setRetryDelayForTests()
   vi.unstubAllGlobals()
   delete navigator.mediaDevices // set by tests that fake a microphone
 })

@@ -114,6 +114,26 @@ describe('sendStory', () => {
     expect(uploads).toHaveLength(1) // the photo went up once
   })
 
+  it('tells which file just went up (so a story kept on the phone can remember it), and only the ones that really did', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url) =>
+        url === '/api/medios'
+          ? jsonResponse({ tipo: 'foto', url: 'https://x/new.jpg', mime: 'image/jpeg', bytes: 3 }, 201)
+          : jsonResponse({ codigo: 'HIS-2026-001', estado: 'revision' }, 201),
+      ),
+    )
+    const known = photo(1)
+    const fresh = photo(2)
+    const uploaded = new WeakMap([[known.blob, { tipo: 'foto', url: 'https://x/old.jpg', mime: 'image/jpeg', bytes: 3 }]])
+    const onUploaded = vi.fn()
+
+    await sendStory(draft({ audio: { blob: new Blob(['a']), seconds: 30 }, fotos: [known, fresh] }), { uploaded, onUploaded })
+
+    expect(onUploaded.mock.calls.map(([file]) => file.key)).toEqual(['audio', 2]) // the known photo was not uploaded again
+    expect(onUploaded.mock.calls[1][1].url).toBe('https://x/new.jpg')
+  })
+
   it('stops at the first failed upload and does not create the story', async () => {
     const calls = []
     vi.stubGlobal(

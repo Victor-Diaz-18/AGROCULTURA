@@ -156,7 +156,7 @@ describe('Mapa de historias (F1)', () => {
     open()
 
     expect(await screen.findByText('Historias publicadas')).toBeInTheDocument()
-    expect(screen.getByText('5 de la comunidad · 2 del proyecto')).toBeInTheDocument()
+    expect(await screen.findByText('5 de la comunidad · 2 del proyecto')).toBeInTheDocument()
   })
 
   it('reads aloud how many stories are in the zone', async () => {

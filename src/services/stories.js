@@ -47,12 +47,13 @@ export function buildStoryPayload(draft, medios) {
  * Uploads the audio and the photos, then creates the story.
  * `uploaded` remembers files that already went up (keyed by their Blob), so if a later
  * step fails and the person taps "Enviar" again, nothing is uploaded twice.
- * `onProgress(done, total)` is called after each file.
+ * `onProgress(done, total)` is called after each file; `onUploaded(file, medio)` after each file that really went up
+ * (`file.key` is "audio" or the photo's id), so a story kept on the phone can remember it across page loads.
  */
-export async function sendStory(draft, { uploaded = new WeakMap(), onProgress } = {}) {
+export async function sendStory(draft, { uploaded = new WeakMap(), onProgress, onUploaded } = {}) {
   const files = []
-  if (draft.audio) files.push({ blob: draft.audio.blob, tipo: 'audio', name: 'audio.webm', duracion: draft.audio.seconds })
-  for (const photo of draft.fotos) files.push({ blob: photo.blob, tipo: 'foto', name: photo.name })
+  if (draft.audio) files.push({ key: 'audio', blob: draft.audio.blob, tipo: 'audio', name: 'audio.webm', duracion: draft.audio.seconds })
+  for (const photo of draft.fotos) files.push({ key: photo.id, blob: photo.blob, tipo: 'foto', name: photo.name })
 
   const medios = []
   let done = 0
@@ -61,6 +62,7 @@ export async function sendStory(draft, { uploaded = new WeakMap(), onProgress } 
     if (!medio) {
       medio = await uploadMedia(file)
       uploaded.set(file.blob, medio)
+      await onUploaded?.(file, medio)
     }
     medios.push(medio)
     done += 1

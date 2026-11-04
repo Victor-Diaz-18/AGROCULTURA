@@ -65,3 +65,23 @@ export const storyCard = (overrides = {}) => ({
   medios: [],
   ...overrides,
 })
+
+/** A story kept on the phone for the signal to return (what offline/store.js keeps in the queue). */
+export const queuedDraft = (overrides = {}) => ({
+  clientId: 'queued-0001',
+  narratorId: 'u1',
+  guardadoEn: '2026-11-04T10:00:00.000Z',
+  titulo: 'El camino de mulas',
+  texto: 'Antes de que hubiera carretera, el café bajaba en mula.',
+  epoca: 'Antes de 1960',
+  location: { lat: 11.14, lon: -74.118, origen: 'sector', sectorId: 'minca' },
+  lugar: '',
+  lugarTexto: 'Minca',
+  etiquetas: ['#café'],
+  formatos: ['Texto'],
+  audio: null,
+  fotos: [],
+  subidos: {},
+  fallo: null,
+  ...overrides,
+})

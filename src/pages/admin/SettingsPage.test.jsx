@@ -118,7 +118,7 @@ describe('Configuración: portal y moderación (F7)', () => {
     const user = userEvent.setup()
     const { fetchMock } = open()
     const toggle = await screen.findByRole('switch', { name: /Mostrar «datos de ejemplo»/ })
-    expect(toggle).toBeChecked()
+    await waitFor(() => expect(toggle).toBeChecked()) // once the configuration has loaded
 
     await user.click(toggle)
 
@@ -129,7 +129,8 @@ describe('Configuración: portal y moderación (F7)', () => {
   it('shows the sectors but there is nothing to edit in them', async () => {
     open()
 
-    const card = (await screen.findByRole('region', { name: 'Sectores del mapa' }))
+    const card = await screen.findByRole('region', { name: 'Sectores del mapa' })
+    await within(card).findByText('Tijereras')
     expect(within(card).getAllByRole('listitem').map((item) => item.textContent.replace(' · punto por confirmar', ''))).toEqual(['Minca', 'La Tagua', 'San Lorenzo', 'Tijereras'])
     expect(within(card).queryByRole('button')).not.toBeInTheDocument()
     expect(within(card).queryByRole('textbox')).not.toBeInTheDocument()
@@ -141,7 +142,7 @@ describe('Configuración: portal y moderación (F7)', () => {
     renderApp({ route: '/admin/configuracion', user: ADMIN, api: settings.api })
 
     const card = await screen.findByRole('region', { name: 'Sectores del mapa' })
-    expect(within(card).getByText('Tijereras').closest('li')).toHaveTextContent('Tijereras · punto por confirmar')
+    expect((await within(card).findByText('Tijereras')).closest('li')).toHaveTextContent('Tijereras · punto por confirmar')
     expect(within(card).getByText('Minca').closest('li')).not.toHaveTextContent('por confirmar')
   })
 
@@ -164,7 +165,7 @@ describe('Configuración: etiquetas', () => {
     const user = userEvent.setup()
     const { fetchMock } = open()
     const card = await screen.findByRole('region', { name: 'Etiquetas' })
-    expect(within(card).getByText('#café')).toBeInTheDocument()
+    expect(await within(card).findByText('#café')).toBeInTheDocument()
 
     await user.type(within(card).getByLabelText('Nueva etiqueta'), 'arriería')
     await user.click(within(card).getByRole('button', { name: 'Agregar' }))
@@ -203,7 +204,7 @@ describe('Configuración: etiquetas', () => {
     const { fetchMock } = open()
     const card = await screen.findByRole('region', { name: 'Etiquetas' })
 
-    await user.click(within(card).getByRole('button', { name: 'Quitar #cocina' }))
+    await user.click(await within(card).findByRole('button', { name: 'Quitar #cocina' }))
 
     await waitFor(() => expect(within(card).queryByText('#cocina')).not.toBeInTheDocument())
     expect(callsTo(fetchMock, '/admin/etiquetas')[0][0]).toContain('nombre=%23cocina')

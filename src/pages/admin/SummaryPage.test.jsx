@@ -31,7 +31,7 @@ describe('Resumen del administrador', () => {
     open()
 
     const list = await screen.findByRole('list', { name: 'Historias esperando revisión' })
-    const items = within(list).getAllByRole('listitem')
+    const items = await within(list).findAllByRole('listitem')
     expect(items).toHaveLength(5)
     expect(items[0]).toHaveTextContent('Historia 1')
     expect(items[0]).toHaveTextContent('Jorge Iván Castro · La Tagua · Audio · Foto · enviada 18 oct 2026')
