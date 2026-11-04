@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import L from 'leaflet'
 import 'leaflet.markercluster'
 import 'leaflet.markercluster/dist/MarkerCluster.css'
-import { DEFAULT_CENTER, DEFAULT_ZOOM, TILE_PROVIDER, ZOOM_LIMITS } from '../../config/map.js'
+import { DEFAULT_CENTER, DEFAULT_ZOOM, SECTOR_LABELS_MAX_ZOOM, TILE_PROVIDER, ZOOM_LIMITS } from '../../config/map.js'
 import { pointsOf } from '../../utils/geo.js'
 import FCode from '../ui/FCode.jsx'
 
@@ -70,6 +70,14 @@ function sectorLabel(sector) {
   })
 }
 
+/** The sector names are shown only while the map is far enough; they leave as one zooms in, like a map's own labels. */
+function syncSectorLabels(map, layer) {
+  if (!map || !layer) return
+  const show = map.getZoom() <= SECTOR_LABELS_MAX_ZOOM
+  if (show && !map.hasLayer(layer)) map.addLayer(layer)
+  else if (!show && map.hasLayer(layer)) map.removeLayer(layer)
+}
+
 function viewOf(map) {
   const size = map.getSize()
   if (size.x === 0 || size.y === 0) return null // not laid out (nothing to measure)
@@ -100,7 +108,7 @@ export default function StoryMap({ stories, sectors, selectedCode, focus, onSele
     })
     map.setView(DEFAULT_CENTER, DEFAULT_ZOOM)
     L.tileLayer(TILE_PROVIDER.url, { attribution: TILE_PROVIDER.attribution, maxZoom: TILE_PROVIDER.maxZoom }).addTo(map)
-    sectorLayerRef.current = L.layerGroup().addTo(map)
+    sectorLayerRef.current = L.layerGroup() // added to the map only while the zoom allows it
     clusterRef.current = L.markerClusterGroup({
       showCoverageOnHover: false,
       maxClusterRadius: 45,
@@ -108,6 +116,7 @@ export default function StoryMap({ stories, sectors, selectedCode, focus, onSele
     }).addTo(map)
     const emit = () => onViewChangeRef.current?.(viewOf(map))
     map.on('moveend', emit)
+    map.on('zoomend', () => syncSectorLabels(map, sectorLayerRef.current))
     mapRef.current = map
 
     let observer
@@ -135,6 +144,7 @@ export default function StoryMap({ stories, sectors, selectedCode, focus, onSele
     if (!layer) return
     layer.clearLayers()
     sectors.forEach((sector) => layer.addLayer(sectorLabel(sector)))
+    syncSectorLabels(mapRef.current, layer)
   }, [sectors])
 
   // One pin per story. The tooltip of the selected one is made of text, not HTML.
@@ -161,6 +171,7 @@ export default function StoryMap({ stories, sectors, selectedCode, focus, onSele
         else map.setView(L.latLngBounds(points).getCenter(), DEFAULT_ZOOM)
       }
     }
+    syncSectorLabels(map, sectorLayerRef.current)
     onViewChangeRef.current?.(viewOf(map))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stories])

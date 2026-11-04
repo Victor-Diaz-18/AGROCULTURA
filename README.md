@@ -190,6 +190,13 @@ sectores son provisionales hasta confirmarlos con las familias de la zona.
   mapa de relieve sin tocar componentes. El servicio gratuito de OpenStreetMap tiene
   [normas de uso](https://operations.osmfoundation.org/policies/tiles/) para poco tráfico; si el proyecto crece
   habrá que pasar a un proveedor propio.
+- **Dónde están los sectores.** Cada sector tiene un punto central (en `lib/seed/catalog.py`) que usan las
+  historias que se ubican «en el sector». **Hoy solo el de Minca está comprobado**; los otros tres son
+  provisionales. Para corregirlos: cambia las coordenadas y **sube `SECTORES_VERSION`**. En el siguiente arranque
+  la aplicación mueve los sectores guardados y también las historias ubicadas «en el sector» (con la misma
+  distancia); las historias con punto propio (GPS o un toque en el mapa) no se mueven.
+- **Nombres de los sectores en el mapa.** Se ven solo con el mapa alejado (hasta el nivel 12) y desaparecen al
+  acercar, como las etiquetas de un mapa; `SECTOR_LABELS_MAX_ZOOM` en `src/config/map.js`.
 - **Pines.** Rojo: comunidad. Verde azulado: proyecto. Un pin marcado se ve oscuro, más grande y con su título.
   Los títulos y los nombres de sector se muestran siempre como texto, nunca como HTML.
 - **Ficha (F8).** Fotos (varias, con miniaturas), video, audio y los datos de la historia. «Ver en el mapa» la

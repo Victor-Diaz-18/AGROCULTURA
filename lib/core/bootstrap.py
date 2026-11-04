@@ -21,13 +21,14 @@ from pymongo.errors import BulkWriteError, DuplicateKeyError
 from lib.auth import service as auth_service
 from lib.config.repository import COLLECTION as CONFIG
 from lib.core.settings import get_settings
-from lib.seed.catalog import seed_catalog
+from lib.seed.catalog import seed_catalog, sync_sector_centers
 
 logger = logging.getLogger(__name__)
 
 SYSTEM_ID = "sistema"
 _ready: set[tuple[int, str]] = set()  # catalog initialized in this process
 _users_ready: set[tuple[int, str]] = set()  # initial users checked in this process
+_centers_ready: set[tuple[int, str]] = set()  # sector centers checked in this process
 
 
 def ensure_initialized(db: Database) -> bool:
@@ -70,3 +71,4 @@ def ensure_initialized_once(db: Database) -> None:
         lambda database: auth_service.ensure_initial_users(database, get_settings()),
         "the initial users",
     )
+    _run_once(_centers_ready, db, lambda database: sync_sector_centers(database), "the sector centers")

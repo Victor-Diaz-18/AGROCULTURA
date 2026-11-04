@@ -142,8 +142,9 @@ Al cerrar cada bloque se compara el resultado con el diseño de referencia (qué
 - Temporal hasta el bloque 7: el paso 1 dice «Fotos» y no «Fotos y video», y no tiene el botón «Agregar video».
 - Convención de CSS: todo en `border-box`, salvo donde el diseño depende del `content-box` por defecto
   (por ejemplo la tarjeta «Depende de», los pasos del indicador, las etiquetas de fotos y formatos, la tarjeta del formulario y el mapa del paso 2). Al reproducir cada pantalla hay que revisar ese detalle.
-- Los centros de La Tagua, San Lorenzo y Tijereras conservan la disposición relativa del mapa ilustrado
-  del diseño; no son geografía real y hay que confirmarlos con las familias.
+- **Pendiente:** los centros de La Tagua, San Lorenzo y Tijereras conservan la disposición relativa del mapa
+  ilustrado del diseño; no son geografía real (con el mapa real se vio que no coinciden). Solo Minca está
+  comprobado. Hay que reemplazarlos por coordenadas reales (ver «Mapa y ficha» del README).
 - Starlette recomienda `httpx2` para su `TestClient`; se mantiene `httpx` como se acordó y se silencia
   solo ese aviso en `pytest.ini`. Migrar es cambiar una línea de `requirements-dev.txt`.
 - Versiones fijadas tras el primer despliegue: Node 22.x (`engines`) y Python 3.12 (`.python-version`).

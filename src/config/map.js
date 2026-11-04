@@ -16,3 +16,6 @@ export const DEFAULT_ZOOM = 12
 
 /** How far people can zoom: the area of interest is small. */
 export const ZOOM_LIMITS = { min: 9, max: 17 }
+
+/** The names of the sectors help to find one's way when the map is far; zoomed in, the map's own place names take over. */
+export const SECTOR_LABELS_MAX_ZOOM = 12

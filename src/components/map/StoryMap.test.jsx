@@ -97,11 +97,35 @@ describe('StoryMap (F1)', () => {
     expect(screen.queryByRole('button', { name: 'Ver Uno' })).not.toBeInTheDocument()
   })
 
-  it('names the sectors on the map', () => {
-    const { container } = setup()
+  describe('the names of the sectors', () => {
+    const spread = [
+      mapStory({ codigo: 'HIS-2026-001', titulo: 'Oeste', lat: 11.15, lon: -74.3 }),
+      mapStory({ codigo: 'HIS-2026-002', titulo: 'Este', lat: 11.05, lon: -73.9 }),
+    ]
+    const labels = (container) => [...container.querySelectorAll('.ag-sector-label')].map((label) => label.textContent)
 
-    const labels = [...container.querySelectorAll('.ag-sector-label')].map((label) => label.textContent)
-    expect(labels).toEqual(['MINCA', 'LA TAGUA', 'SAN LORENZO', 'TIJERERAS'])
+    it('are written on the map while it is far away', () => {
+      const { container } = setup({ stories: spread })
+
+      expect(labels(container)).toEqual(['MINCA', 'LA TAGUA', 'SAN LORENZO', 'TIJERERAS'])
+    })
+
+    it('are not there when the map starts close up', () => {
+      const { container } = setup() // the stories are a few hundred meters apart: the map starts zoomed in
+
+      expect(labels(container)).toEqual([])
+    })
+
+    it('go away as the map is zoomed in and come back when it is zoomed out', () => {
+      const { container } = setup({ stories: spread })
+      expect(labels(container)).toHaveLength(4)
+
+      for (let step = 0; step < 3; step++) screen.getByRole('button', { name: 'Zoom in' }).click()
+      expect(labels(container)).toEqual([])
+
+      for (let step = 0; step < 3; step++) screen.getByRole('button', { name: 'Zoom out' }).click()
+      expect(labels(container)).toHaveLength(4)
+    })
   })
 
   it('tells the page which zone is visible', () => {
