@@ -195,8 +195,9 @@ sectores son provisionales hasta confirmarlos con las familias de la zona.
   provisionales. Para corregirlos: cambia las coordenadas y **sube `SECTORES_VERSION`**. En el siguiente arranque
   la aplicación mueve los sectores guardados y también las historias ubicadas «en el sector» (con la misma
   distancia); las historias con punto propio (GPS o un toque en el mapa) no se mueven.
-- **Nombres de los sectores en el mapa.** Se ven solo con el mapa alejado (hasta el nivel 12) y desaparecen al
-  acercar, como las etiquetas de un mapa; `SECTOR_LABELS_MAX_ZOOM` en `src/config/map.js`.
+- **Nombres de los sectores en el mapa.** Se comportan como las etiquetas de un mapa: salen en un rango de
+  acercamiento (hasta el nivel 12, `SECTOR_LABELS_MAX_ZOOM` en `src/config/map.js`), desaparecen al acercar más y,
+  con el mapa muy alejado, un nombre que quedaría escrito sobre otro no se pone.
 - **Pines.** Rojo: comunidad. Verde azulado: proyecto. Un pin marcado se ve oscuro, más grande y con su título.
   Los títulos y los nombres de sector se muestran siempre como texto, nunca como HTML.
 - **Ficha (F8).** Fotos (varias, con miniaturas), video, audio y los datos de la historia. «Ver en el mapa» la

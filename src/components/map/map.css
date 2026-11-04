@@ -187,6 +187,9 @@
   font-weight: 700;
   box-shadow: 0 3px 10px rgba(23, 38, 31, 0.3);
 }
+.ag-sector-label[hidden] {
+  display: none;
+}
 .ag-sector-label {
   position: absolute;
   left: 0;

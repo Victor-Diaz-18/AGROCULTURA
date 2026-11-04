@@ -62,20 +62,39 @@ function sectorLabel(sector) {
   const label = document.createElement('span')
   label.className = 'ag-sector-label'
   label.textContent = sector.nombre.toUpperCase()
-  return L.marker([sector.centro.lat, sector.centro.lon], {
+  const marker = L.marker([sector.centro.lat, sector.centro.lon], {
     icon: L.divIcon({ className: 'ag-sector-label-icon', html: label, iconSize: [0, 0] }),
     interactive: false,
     keyboard: false,
     zIndexOffset: -1000,
   })
+  return { marker, label, name: sector.nombre, point: [sector.centro.lat, sector.centro.lon] }
 }
 
-/** The sector names are shown only while the map is far enough; they leave as one zooms in, like a map's own labels. */
-function syncSectorLabels(map, layer) {
-  if (!map || !layer) return
-  const show = map.getZoom() <= SECTOR_LABELS_MAX_ZOOM
-  if (show && !map.hasLayer(layer)) map.addLayer(layer)
-  else if (!show && map.hasLayer(layer)) map.removeLayer(layer)
+// Where a name sits relative to its point, and roughly how big it is (11 px letters, spaced out).
+const LABEL = { below: 34, height: 16, perLetter: 9, padding: 8 }
+
+function labelBox(map, entry) {
+  const { x, y } = map.latLngToContainerPoint(entry.point)
+  const width = entry.name.length * LABEL.perLetter + LABEL.padding
+  return { left: x - width / 2, right: x + width / 2, top: y + LABEL.below - LABEL.height / 2, bottom: y + LABEL.below + LABEL.height / 2 }
+}
+
+const overlap = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom
+
+/**
+ * The sector names behave like a map's own labels: they show only while the map is far enough (they leave when
+ * one zooms in, where the base map names things itself) and a name that would be written over another one is
+ * left out (zoomed far out, the four sectors are almost the same point).
+ */
+function syncSectorLabels(map, entries) {
+  if (!map) return
+  const far = map.getZoom() <= SECTOR_LABELS_MAX_ZOOM
+  const boxes = entries.map((entry) => labelBox(map, entry))
+  entries.forEach((entry, index) => {
+    const clash = boxes.some((other, otherIndex) => otherIndex !== index && overlap(boxes[index], other))
+    entry.label.hidden = !far || clash
+  })
 }
 
 function viewOf(map) {
@@ -90,6 +109,7 @@ export default function StoryMap({ stories, sectors, selectedCode, focus, onSele
   const mapRef = useRef(null)
   const clusterRef = useRef(null)
   const sectorLayerRef = useRef(null)
+  const sectorLabels = useRef([])
   const markers = useRef(new Map()) // story code -> { marker, story }
   const selectedRef = useRef(selectedCode)
   const fitted = useRef(false)
@@ -108,7 +128,7 @@ export default function StoryMap({ stories, sectors, selectedCode, focus, onSele
     })
     map.setView(DEFAULT_CENTER, DEFAULT_ZOOM)
     L.tileLayer(TILE_PROVIDER.url, { attribution: TILE_PROVIDER.attribution, maxZoom: TILE_PROVIDER.maxZoom }).addTo(map)
-    sectorLayerRef.current = L.layerGroup() // added to the map only while the zoom allows it
+    sectorLayerRef.current = L.layerGroup().addTo(map)
     clusterRef.current = L.markerClusterGroup({
       showCoverageOnHover: false,
       maxClusterRadius: 45,
@@ -116,7 +136,7 @@ export default function StoryMap({ stories, sectors, selectedCode, focus, onSele
     }).addTo(map)
     const emit = () => onViewChangeRef.current?.(viewOf(map))
     map.on('moveend', emit)
-    map.on('zoomend', () => syncSectorLabels(map, sectorLayerRef.current))
+    map.on('zoomend', () => syncSectorLabels(map, sectorLabels.current))
     mapRef.current = map
 
     let observer
@@ -133,6 +153,7 @@ export default function StoryMap({ stories, sectors, selectedCode, focus, onSele
       mapRef.current = null
       clusterRef.current = null
       sectorLayerRef.current = null
+      sectorLabels.current = []
       markers.current = new Map()
       fitted.current = false
     }
@@ -143,8 +164,9 @@ export default function StoryMap({ stories, sectors, selectedCode, focus, onSele
     const layer = sectorLayerRef.current
     if (!layer) return
     layer.clearLayers()
-    sectors.forEach((sector) => layer.addLayer(sectorLabel(sector)))
-    syncSectorLabels(mapRef.current, layer)
+    sectorLabels.current = sectors.map(sectorLabel)
+    sectorLabels.current.forEach(({ marker }) => layer.addLayer(marker))
+    syncSectorLabels(mapRef.current, sectorLabels.current)
   }, [sectors])
 
   // One pin per story. The tooltip of the selected one is made of text, not HTML.
@@ -171,7 +193,7 @@ export default function StoryMap({ stories, sectors, selectedCode, focus, onSele
         else map.setView(L.latLngBounds(points).getCenter(), DEFAULT_ZOOM)
       }
     }
-    syncSectorLabels(map, sectorLayerRef.current)
+    syncSectorLabels(map, sectorLabels.current)
     onViewChangeRef.current?.(viewOf(map))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stories])

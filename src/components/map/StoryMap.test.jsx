@@ -102,29 +102,59 @@ describe('StoryMap (F1)', () => {
       mapStory({ codigo: 'HIS-2026-001', titulo: 'Oeste', lat: 11.15, lon: -74.3 }),
       mapStory({ codigo: 'HIS-2026-002', titulo: 'Este', lat: 11.05, lon: -73.9 }),
     ]
-    const labels = (container) => [...container.querySelectorAll('.ag-sector-label')].map((label) => label.textContent)
+    const shown = (container) => [...container.querySelectorAll('.ag-sector-label')].filter((label) => !label.hidden).map((label) => label.textContent)
+    const zoom = (direction) => screen.getByRole('button', { name: direction === 'in' ? 'Zoom in' : 'Zoom out' })
+    const zoomAll = (direction) => {
+      for (let step = 0; step < 12 && zoom(direction).getAttribute('aria-disabled') !== 'true'; step++) zoom(direction).click()
+    }
 
-    it('are written on the map while it is far away', () => {
-      const { container } = setup({ stories: spread })
-
-      expect(labels(container)).toEqual(['MINCA', 'LA TAGUA', 'SAN LORENZO', 'TIJERERAS'])
-    })
-
-    it('are not there when the map starts close up', () => {
+    it('are not written when the map starts close up', () => {
       const { container } = setup() // the stories are a few hundred meters apart: the map starts zoomed in
 
-      expect(labels(container)).toEqual([])
+      expect(shown(container)).toEqual([])
     })
 
-    it('go away as the map is zoomed in and come back when it is zoomed out', () => {
+    it('are not written when the map is as far as it goes: they would be one over the other', () => {
       const { container } = setup({ stories: spread })
-      expect(labels(container)).toHaveLength(4)
 
-      for (let step = 0; step < 3; step++) screen.getByRole('button', { name: 'Zoom in' }).click()
-      expect(labels(container)).toEqual([])
+      zoomAll('out')
 
-      for (let step = 0; step < 3; step++) screen.getByRole('button', { name: 'Zoom out' }).click()
-      expect(labels(container)).toHaveLength(4)
+      expect(shown(container)).toEqual([])
+    })
+
+    it('appear as the map is zoomed in, once there is room, and then leave when it is close up', () => {
+      const { container } = setup({ stories: spread })
+      zoomAll('out')
+      const seen = []
+
+      for (let step = 0; step < 8 && zoom('in').getAttribute('aria-disabled') !== 'true'; step++) {
+        zoom('in').click()
+        seen.push(shown(container).length)
+      }
+
+      expect(Math.max(...seen)).toBeGreaterThan(0) // at some zoom the names are there...
+      expect(seen.at(-1)).toBe(0) // ...and zoomed in all the way they are gone
+    })
+
+    it('never show two names one over the other', () => {
+      const { container } = setup({ stories: spread })
+      zoomAll('out')
+
+      for (let step = 0; step < 8 && zoom('in').getAttribute('aria-disabled') !== 'true'; step++) {
+        zoom('in').click()
+        const visible = [...container.querySelectorAll('.ag-sector-label')].filter((label) => !label.hidden)
+        const points = visible.map((label) => {
+          const icon = label.closest('.leaflet-marker-icon')
+          const moved = icon.style.transform.match(/-?\d+(\.\d+)?/g)
+          return moved ? moved.slice(0, 2).map(Number) : [parseFloat(icon.style.left), parseFloat(icon.style.top)]
+        })
+        for (let i = 0; i < points.length; i++) {
+          for (let j = i + 1; j < points.length; j++) {
+            const [dx, dy] = [Math.abs(points[i][0] - points[j][0]), Math.abs(points[i][1] - points[j][1])]
+            expect(dx >= 60 || dy >= 16).toBe(true)
+          }
+        }
+      }
     })
   })
 
