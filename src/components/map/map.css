@@ -1,0 +1,58 @@
+/* ---------- Location picker (step 2 of "Contar una historia") ---------- */
+.ag-locpicker {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ag-locpicker__map {
+  box-sizing: content-box; /* prototype: 230px plus the border */
+  position: relative;
+  z-index: 0; /* keeps Leaflet's own layers (z-index up to 1000) below dialogs and the header */
+  height: 230px;
+  overflow: hidden;
+  border: 1px solid #d3ded4;
+  border-radius: 14px;
+  background: #e6ede5;
+  font-family: var(--font-body);
+}
+.ag-locpicker__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+/* The sector buttons that sit on the map, as in the design. */
+.ag-sector-icon {
+  background: transparent;
+  border: 0;
+}
+.ag-sector-pill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 14px;
+  border: 1.5px solid var(--borde-fuerte);
+  border-radius: 19px;
+  background: #fff;
+  color: var(--verde-oscuro);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 0 3px 10px rgba(23, 38, 31, 0.14);
+  transform: translate(-50%, -50%);
+}
+.ag-sector-pill[aria-pressed='true'] {
+  border-color: var(--verde-oscuro);
+  background: var(--verde-oscuro);
+  color: #fff;
+}
+.ag-location-pin {
+  background: transparent;
+  border: 0;
+}

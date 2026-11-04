@@ -16,7 +16,8 @@ export const reply = jsonResponse
 /**
  * Renders the whole app on a route with the API stubbed.
  *  - `api` maps a path (e.g. "/estadisticas") to its JSON answer, or to a function
- *    `(requestInit) => answer` (use `reply(body, status)` to choose the status).
+ *    `(requestInit) => answer` (use `reply(body, status)` to choose the status). A function may return
+ *    a promise, to keep a request pending.
  *  - `user` starts the test signed in as that person (and answers /auth/yo for them).
  */
 export function renderApp({ route = '/', api = {}, user = null } = {}) {
@@ -26,7 +27,7 @@ export function renderApp({ route = '/', api = {}, user = null } = {}) {
     const path = String(url).replace(/^\/api/, '').split('?')[0]
     if (!(path in answers)) return jsonResponse({ detail: 'No encontrado' }, 404)
     const answer = answers[path]
-    const result = typeof answer === 'function' ? answer(init) : answer
+    const result = await (typeof answer === 'function' ? answer(init) : answer) // may be a promise: tests hold a request open
     return result instanceof Response ? result : jsonResponse(result)
   })
   vi.stubGlobal('fetch', fetchMock)

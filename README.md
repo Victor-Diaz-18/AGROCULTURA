@@ -62,7 +62,7 @@ Están descritas en [`.env.example`](.env.example). Las principales:
 | `JWT_SECRET` | Firma de las sesiones. Cadena aleatoria de **32 caracteres o más**; sin ella el ingreso responde 503 |
 | `ADMIN_USER`, `ADMIN_PASSWORD` | Administrador inicial. La contraseña tiene **10 caracteres o más** |
 | `SEED_DEMO_NARRATOR_*` | Narradora de ejemplo (opcional) |
-| `BLOB_READ_WRITE_TOKEN` | Token de Vercel Blob |
+| `BLOB_READ_WRITE_TOKEN` | Token de Vercel Blob, donde se guardan las fotos y los audios. Aparece solo al conectar un *Blob store* al proyecto (Storage → Create → Blob, con acceso **Public**) |
 | `ALLOW_DEMO_RESET` | Permite el botón "Reiniciar datos de ejemplo" |
 | `VITE_SHOW_CODES` | Muestra los códigos F1, F2… del diseño |
 
@@ -155,6 +155,26 @@ sectores son provisionales hasta confirmarlos con las familias de la zona.
 - Si el ingreso responde *«Falta configurar JWT_SECRET en el servidor»*, falta esa variable (o es muy corta):
   agrégala en Vercel y haz un Redeploy.
 
+## Contar una historia (fotos y audio)
+
+- La narradora cuenta su historia en tres pasos: *Cuéntala* (voz, texto, fotos), *Dónde y cuándo* (título,
+  lugar, época, etiquetas) y *Revisar y enviar*. Lo que escribe o graba vive en la página hasta que la envía.
+- **Antes de subir**, el teléfono reduce cada foto (máximo 1280 px por lado y menos de 1 MB, y de paso borra
+  los datos ocultos de la cámara, como la posición GPS) y graba el audio en mono a baja calidad
+  (unos 180 KB por minuto). Así se sube rápido con poca señal.
+- Las fotos y el audio pasan por `POST /api/medios` (máximo **3,5 MB** cada uno: una función de Vercel
+  acepta unos 4,5 MB por petición). El servidor **decide el tipo de archivo por su contenido**, no por el
+  nombre ni por lo que diga el navegador, y lo guarda en Vercel Blob. El video (bloque 7) se subirá directo
+  desde el navegador a Blob, sin pasar por la API.
+- La historia se envía con `POST /api/historias`. **Siempre** queda «en revisión» (aunque alguien intente
+  mandar otro estado) y no aparece en el mapa hasta que un administrador la aprueba. El servidor decide el
+  autor y el código (`HIS-AAAA-NNN`, consecutivo).
+- Cada borrador lleva un identificador propio (`client_id`). Si el envío se repite (se cortó la señal justo
+  al responder), el servidor reconoce la historia y no la duplica; y las fotos que ya subieron no se suben otra vez.
+- Si no hay `BLOB_READ_WRITE_TOKEN`, subir un archivo responde 503 con el mensaje «Falta configurar…».
+- El lugar se elige tocando un sector, tocando el mapa o con el botón «Usar mi ubicación» (el GPS del
+  teléfono funciona sin señal). Se guarda como un punto GeoJSON `[longitud, latitud]` con un índice `2dsphere`.
+
 ## API
 
 La documentación interactiva está en `/api/docs` cuando la API corre. Rutas disponibles por ahora:
@@ -167,6 +187,9 @@ La documentación interactiva está en `/api/docs` cuando la API corre. Rutas di
 | `POST /api/auth/registro` | Crea una cuenta de narrador (nombre, celular, PIN) y devuelve la sesión |
 | `POST /api/auth/ingreso` | Ingreso de narrador (celular + PIN) o de administrador (usuario + contraseña) |
 | `GET /api/auth/yo` | El usuario de la sesión actual (requiere sesión) |
+| `POST /api/medios` | Sube una foto o un audio (narrador o administrador); devuelve su URL en Blob |
+| `POST /api/historias` | Envía una historia (solo narradores); queda siempre «en revisión» |
+| `GET /api/historias/mias` | Las historias del narrador que ingresó, con su estado y el motivo si no se publicó |
 
 ## MongoDB Atlas
 
@@ -212,7 +235,8 @@ La versión 1 se construye por bloques (ver `docs/plan-v1.md`).
 - [x] Bloque 0: andamiaje, pruebas y CI
 - [x] Bloque 1: base visual, encabezado, menú, conexión simulada, voz, `/api/config` y `/api/estadisticas`
 - [x] Bloque 2: registro e ingreso (F2)
-- [ ] Bloques 3 a 8: contar historias, moderación, mapa, sin conexión, filtros, video y cierre
+- [x] Bloque 3: contar una historia con voz, texto y fotos; «Mis historias» (F3, F4, F5)
+- [ ] Bloques 4 a 8: moderación, mapa, sin conexión, filtros, video y cierre
 
 En `docs/comparacion/` hay capturas de cada bloque frente al diseño aprobado. Los pasos para
 desplegar en Vercel se documentan al cerrar el bloque 8.

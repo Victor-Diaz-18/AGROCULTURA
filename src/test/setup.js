@@ -34,4 +34,5 @@ afterEach(() => {
   sessionStorage.clear()
   resetConnectivityForTests()
   vi.unstubAllGlobals()
+  delete navigator.mediaDevices // set by tests that fake a microphone
 })

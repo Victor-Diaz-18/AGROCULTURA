@@ -2,7 +2,7 @@ import Icon from './Icon.jsx'
 
 /**
  * Buttons of the design. `variant`: primary (red), outline, dark, project
- * (teal), danger, ghost. `size`: sm, md (default), lg.
+ * (teal), danger, ghost, line (dark outline). `size`: sm, md (default), lg.
  */
 export default function Button({
   variant = 'outline',

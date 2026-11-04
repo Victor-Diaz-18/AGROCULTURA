@@ -2,6 +2,12 @@
 
 export const EPOCAS = ['Antes de 1960', '1960 a 1979', '1980 a 1999', '2000 en adelante']
 
+/** Applied when the narrator picks no tag, as in the approved design. */
+export const DEFAULT_TAG = '#café'
+
+/** Same limits the server enforces (lib/stories/schemas.py): the form stops the person before the server has to. */
+export const LIMITS = { tituloMin: 3, tituloMax: 120, textoMax: 5000, fotos: 6, etiquetas: 6 }
+
 /** Labels and colors of each story state. The narrator sees "No publicada" for a rejected story. */
 export const ESTADOS = {
   borrador: { label: 'Borrador', labelAdmin: 'Borrador', sigue: 'Se envía cuando haya señal' },

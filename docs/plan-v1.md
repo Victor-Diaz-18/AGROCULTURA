@@ -83,7 +83,8 @@ Al cerrar cada bloque se compara el resultado con el diseño de referencia (qué
 | 0 Andamiaje | Hecho. Pruebas: 9 de backend |
 | 1 Base | Hecho. Pruebas: 18 de backend (+2 que solo corren con Mongo real) y 36 de frontend. Comparación en `docs/comparacion/bloque-1/` |
 | 2 Ingreso (F2) | Hecho. Pruebas: 77 de backend (+2 con Mongo real) y 74 de frontend. Comparación en `docs/comparacion/bloque-2/` |
-| 3 a 8 | Pendientes |
+| 3 Contar (F3, F4, F5) | Hecho. Pruebas: 123 de backend (+3 con Mongo real) y 153 de frontend. Comparación en `docs/comparacion/bloque-3/` |
+| 4 a 8 | Pendientes |
 
 ## Notas de construcción
 
@@ -94,8 +95,22 @@ Al cerrar cada bloque se compara el resultado con el diseño de referencia (qué
   - Si el dispositivo no puede leer en voz alta, se avisa en lugar de no hacer nada.
   - El texto «datos de ejemplo» del encabezado se controla con la opción `datos_de_ejemplo` de la
     configuración (el seed la activa; se apaga antes de usar la plataforma con familias reales).
+- Adiciones del bloque 3 al diseño (para revisar con el equipo):
+  - Botón **«Oír mi audio»** junto a «Grabar de nuevo» y «Quitar»: para comprobar la grabación antes de enviarla.
+  - Las fotos agregadas muestran una **miniatura** además del nombre y el peso.
+  - Botón **«Usar mi ubicación»** (GPS) debajo del mapa del paso 2, además de tocar un sector. El mapa es
+    Leaflet de verdad (el del diseño era un dibujo); si no hay señal ni mapa guardado, los botones de sector y el
+    GPS siguen funcionando.
+  - La lista de «Mis historias» y el contador junto a «Mis historias» en el menú vienen del servidor; el botón
+    «Ver ficha» llega con el mapa (bloque 5).
+  - El título exige al menos 3 letras (lo mismo que valida el servidor).
+  - Si no se elige ninguna etiqueta, se envía `#café` (como hacía el prototipo) y se muestra en el paso 3.
+- Temporal hasta el bloque 6 (sin conexión): el botón de enviar se desactiva sin señal y los textos de
+  «guardado en el dispositivo» se cambian por lo que hoy es cierto (lo escrito vive en la página mientras no se
+  cierre). En el bloque 6 vuelven los textos del diseño y el borrador se guarda de verdad.
+- Temporal hasta el bloque 7: el paso 1 dice «Fotos» y no «Fotos y video», y no tiene el botón «Agregar video».
 - Convención de CSS: todo en `border-box`, salvo donde el diseño depende del `content-box` por defecto
-  (por ejemplo la tarjeta «Depende de»). Al reproducir cada pantalla hay que revisar ese detalle.
+  (por ejemplo la tarjeta «Depende de», los pasos del indicador, las etiquetas de fotos y formatos, la tarjeta del formulario y el mapa del paso 2). Al reproducir cada pantalla hay que revisar ese detalle.
 - Los centros de La Tagua, San Lorenzo y Tijereras conservan la disposición relativa del mapa ilustrado
   del diseño; no son geografía real y hay que confirmarlos con las familias.
 - Starlette recomienda `httpx2` para su `TestClient`; se mantiene `httpx` como se acordó y se silencia

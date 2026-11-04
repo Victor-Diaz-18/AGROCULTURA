@@ -179,3 +179,96 @@
   font: inherit;
   text-align: left;
 }
+
+/* ---------- Notice banner (no signal) ---------- */
+.ag-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border: 1px solid var(--amarillo);
+  border-radius: 14px;
+  background: var(--amarillo-pale);
+  color: var(--amarillo-texto);
+}
+.ag-banner__text {
+  flex: 1;
+  min-width: 220px;
+  font-size: 14.5px;
+  line-height: 1.45;
+}
+.ag-banner .ag-fcode {
+  color: inherit;
+}
+
+/* ---------- Card with filter tabs and a table ---------- */
+.ag-table-card {
+  overflow: hidden;
+  border: 1px solid var(--borde);
+  border-radius: 16px;
+  background: #fff;
+}
+.ag-table-card__bar {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--linea);
+}
+.ag-table-card__scroll {
+  overflow-x: auto;
+}
+
+/* ---------- "Mis historias" table ---------- */
+.ag-mytable {
+  min-width: 860px;
+}
+.ag-mytable__head,
+.ag-mytable__row {
+  display: grid;
+  grid-template-columns: 130px minmax(220px, 2fr) 120px 150px 110px 130px minmax(150px, 1fr);
+  gap: 12px;
+  padding: 10px 18px;
+}
+.ag-mytable__head {
+  border-bottom: 1px solid var(--linea);
+  background: var(--superficie-suave);
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--texto-4);
+}
+.ag-mytable__row {
+  align-items: center;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--linea);
+  font-size: 14px;
+}
+.ag-mytable__code {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--texto-2);
+}
+.ag-mytable__title {
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+.ag-mytable__muted,
+.ag-mytable__next {
+  color: var(--texto-3);
+}
+.ag-mytable__next {
+  font-size: 13px;
+}
+.ag-mytable__empty {
+  padding: 28px 18px;
+  font-size: 14.5px;
+  color: var(--texto-3);
+}
+.ag-linkbutton {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--verde-azulado);
+  font: inherit;
+  font-weight: 800;
+  text-decoration: underline;
+}

@@ -1,5 +1,6 @@
 import { SHOW_CODES } from '../../config/flags.js'
 import { useAuth } from '../../context/AuthContext.jsx'
+import { useMyStories } from '../../context/MyStoriesContext.jsx'
 import { usePortalData } from '../../context/PortalDataContext.jsx'
 import Icon from '../ui/Icon.jsx'
 import NavMenu from './NavMenu.jsx'
@@ -7,6 +8,7 @@ import NavMenu from './NavMenu.jsx'
 /** Portal side menu. Administration entries show a lock until an administrator signs in. */
 export default function SideMenu() {
   const { stats } = usePortalData()
+  const { stories: mine } = useMyStories()
   const { role, openLogin } = useAuth()
   const locked = role !== 'administrador'
 
@@ -29,7 +31,7 @@ export default function SideMenu() {
       title: 'NARRADOR',
       items: [
         needs({ to: '/contar', label: 'Contar una historia', icon: 'mic', code: 'F3' }, 'narrador'),
-        needs({ to: '/mis-historias', label: 'Mis historias', icon: 'lista', code: 'F10' }, 'narrador'),
+        needs({ to: '/mis-historias', label: 'Mis historias', icon: 'lista', code: 'F10', count: mine?.length ?? 0 }, 'narrador'),
       ],
     },
     {

@@ -55,6 +55,13 @@
   border: 1px solid var(--borde-fuerte);
   font-weight: 700;
 }
+.ag-btn--line {
+  padding: 0 16px;
+  background: #fff;
+  color: var(--verde-oscuro);
+  border: 1px solid var(--verde-oscuro);
+  font-size: 14px;
+}
 .ag-btn--sm {
   height: 36px;
   padding: 0 14px;
