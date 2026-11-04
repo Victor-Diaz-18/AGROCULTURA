@@ -1,0 +1,7 @@
+docs
+tests
+e2e
+.github
+.venv
+node_modules
+.pytest_cache
