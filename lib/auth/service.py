@@ -115,18 +115,23 @@ def ensure_admin(db: Database, settings: Settings, now: datetime | None = None) 
     existing = repository.find_by_usuario(db, usuario)
     if existing is None:
         now = now or utcnow()
-        repository.insert_user(
-            db,
-            {
-                "nombre": "Administración",
-                "usuario": usuario,
-                "rol": ROL_ADMIN,
-                "clave_hash": security.hash_secret(password, settings.bcrypt_rounds),
-                "activo": True,
-                "creado_en": now,
-                "ultimo_ingreso": None,
-            },
-        )
+        try:
+            repository.insert_user(
+                db,
+                {
+                    "nombre": "Administración",
+                    "usuario": usuario,
+                    "rol": ROL_ADMIN,
+                    "clave_hash": security.hash_secret(password, settings.bcrypt_rounds),
+                    "activo": True,
+                    "creado_en": now,
+                    "ultimo_ingreso": None,
+                },
+            )
+        except DuplicateKeyError:
+            # Two instances started at the same moment (the home page asks for two
+            # endpoints at once) and the other one created the user first.
+            return "sin_cambios"
         return "creado"
     if existing["rol"] != ROL_ADMIN:
         logger.error("ADMIN_USER matches an existing account that is not an administrator; left untouched")
@@ -148,18 +153,21 @@ def ensure_demo_narrator(db: Database, settings: Settings, now: datetime | None 
     if repository.find_by_usuario(db, phone) is not None:
         return "sin_cambios"
     now = now or utcnow()
-    repository.insert_user(
-        db,
-        {
-            "nombre": settings.demo_narrator_name,
-            "usuario": phone,
-            "rol": ROL_NARRADOR,
-            "clave_hash": security.hash_secret(settings.demo_narrator_pin, settings.bcrypt_rounds),
-            "activo": True,
-            "creado_en": now,
-            "ultimo_ingreso": None,
-        },
-    )
+    try:
+        repository.insert_user(
+            db,
+            {
+                "nombre": settings.demo_narrator_name,
+                "usuario": phone,
+                "rol": ROL_NARRADOR,
+                "clave_hash": security.hash_secret(settings.demo_narrator_pin, settings.bcrypt_rounds),
+                "activo": True,
+                "creado_en": now,
+                "ultimo_ingreso": None,
+            },
+        )
+    except DuplicateKeyError:
+        return "sin_cambios"  # another instance created it at the same moment
     return "creado"
 
 

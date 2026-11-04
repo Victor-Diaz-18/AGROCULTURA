@@ -110,3 +110,25 @@ def test_invalid_demo_narrator_settings_are_ignored(db, settings):
 
 def test_initial_users_reports_each_step(db, settings):
     assert ensure_initial_users(db, settings) == {"administrador": "creado", "narradora_de_ejemplo": "omitido"}
+
+
+def test_two_instances_starting_together_do_not_fail_creating_the_administrator(db, settings, monkeypatch):
+    """The home page asks for two endpoints at once, so two cold instances can race to create the admin."""
+    from lib.auth import service
+
+    ensure_admin(db, settings)  # the other instance got there first...
+    monkeypatch.setattr(service.repository, "find_by_usuario", lambda *_a, **_k: None)  # ...but this one saw nothing
+
+    assert ensure_admin(db, settings) == "sin_cambios"  # no DuplicateKeyError
+    assert db.usuarios.count_documents({"rol": "administrador"}) == 1
+
+
+def test_two_instances_starting_together_do_not_fail_creating_the_demo_narrator(db, settings, monkeypatch):
+    from lib.auth import service
+
+    configured = replace(settings, demo_narrator_phone="3105550101", demo_narrator_pin="2468")
+    ensure_demo_narrator(db, configured)
+    monkeypatch.setattr(service.repository, "find_by_usuario", lambda *_a, **_k: None)
+
+    assert ensure_demo_narrator(db, configured) == "sin_cambios"
+    assert db.usuarios.count_documents({"usuario": "3105550101"}) == 1
