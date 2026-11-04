@@ -8,6 +8,9 @@ export const TILE_PROVIDER = {
   url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
   attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
   maxZoom: 18,
+  // Tiles are requested with CORS so the service worker can keep the ones already seen (F10) without the browser counting
+  // each as several MB of storage (that is what an opaque answer costs). The provider must send Access-Control-Allow-Origin.
+  crossOrigin: true,
 }
 
 /** Minca (Sierra Nevada de Santa Marta). Used until the sectors load. */

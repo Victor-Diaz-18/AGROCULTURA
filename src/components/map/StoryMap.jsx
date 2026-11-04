@@ -127,7 +127,11 @@ export default function StoryMap({ stories, sectors, selectedCode, focus, onSele
       scrollWheelZoom: false, // the page must keep scrolling when the mouse passes over the map
     })
     map.setView(DEFAULT_CENTER, DEFAULT_ZOOM)
-    L.tileLayer(TILE_PROVIDER.url, { attribution: TILE_PROVIDER.attribution, maxZoom: TILE_PROVIDER.maxZoom }).addTo(map)
+    L.tileLayer(TILE_PROVIDER.url, {
+      attribution: TILE_PROVIDER.attribution,
+      maxZoom: TILE_PROVIDER.maxZoom,
+      crossOrigin: TILE_PROVIDER.crossOrigin,
+    }).addTo(map)
     sectorLayerRef.current = L.layerGroup().addTo(map)
     clusterRef.current = L.markerClusterGroup({
       showCoverageOnHover: false,

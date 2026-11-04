@@ -67,7 +67,11 @@ export default function LocationPicker({ sectors, value, onChange }) {
       scrollWheelZoom: false, // the page must keep scrolling when the mouse passes over the map
     })
     map.setView(DEFAULT_CENTER, DEFAULT_ZOOM)
-    L.tileLayer(TILE_PROVIDER.url, { attribution: TILE_PROVIDER.attribution, maxZoom: TILE_PROVIDER.maxZoom }).addTo(map)
+    L.tileLayer(TILE_PROVIDER.url, {
+      attribution: TILE_PROVIDER.attribution,
+      maxZoom: TILE_PROVIDER.maxZoom,
+      crossOrigin: TILE_PROVIDER.crossOrigin,
+    }).addTo(map)
     sectorLayer.current = L.layerGroup().addTo(map)
     map.on('click', (event) => {
       const point = { lat: event.latlng.lat, lon: event.latlng.lng }
