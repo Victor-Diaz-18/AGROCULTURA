@@ -88,7 +88,7 @@ Al cerrar cada bloque se compara el resultado con el diseño de referencia (qué
 | 5 Mapa y ficha (F1, F8) | Hecho. Pruebas: 218 de backend (+4 con Mongo real) y 276 de frontend. Comparación en `docs/comparacion/bloque-5/` |
 | 6 Sin conexión (F10) | Hecho. Pruebas: 262 de backend (+4 con Mongo real; sin cambios en este bloque) y 376 de frontend. Comparación en `docs/comparacion/bloque-6/` |
 | 7 Filtros y video (F11, F13) | Hecho. Pruebas: 290 de backend (+4 con Mongo real) y 521 de frontend (incluye las de la función de Node). Comparación en `docs/comparacion/bloque-7/` |
-| 8 | Pendiente |
+| 8 Cierre | Hecho. Pruebas: 290 de backend (+4 con Mongo real), 535 de frontend (incluye axe sobre cada pantalla) y 13 del recorrido de punta a punta (`npm run e2e`). Comparación: no cambia el aspecto, solo se oscurecen dos grises |
 
 ## Notas de construcción
 
@@ -189,6 +189,17 @@ Al cerrar cada bloque se compara el resultado con el diseño de referencia (qué
 - No se pudo comprobar aquí: el comportamiento en un iPhone (Safari), el aviso de instalación de Chrome en un
   teléfono real, y el servicio de teselas de OpenStreetMap con CORS desde la red real (se comprobó con un servidor
   de teselas de mentira: las teselas se piden con CORS, se guardan y se dibujan sin conexión).
+- Adiciones y decisiones del bloque 8 (accesibilidad y cierre; para revisar con el equipo):
+  - **Dos grises del prototipo se oscurecieron** para cumplir el contraste AA (4,5:1) en los textos pequeños: `--texto-4` de `#6b776f` a
+    `#5f6c64` y `--texto-5` (los códigos F del menú) de `#8a968e` a `#5f6c64`, y el color de los nombres de sector sobre el mapa de `#5e7a66` a
+    `#3f5a49`. A simple vista casi no se nota; es el único cambio visible respecto al diseño en este bloque.
+  - Se agregaron, sin cambiar el aspecto: «Saltar al contenido», título de pestaña por página, foco al título al cambiar de página, Tab
+    contenido dentro de los diálogos, `prefers-reduced-motion`, la tabla que se desplaza de lado enfocable y los grupos de historias del mapa
+    como un solo botón. Resultado en navegador real (axe, WCAG 2.2 AA, escritorio y móvil, todas las pantallas y diálogos): 0 violaciones.
+  - **Recorrido de punta a punta** con Playwright (`npm run e2e`): API real sobre una base en memoria, sin servicios externos. No corre en el CI
+    (necesita un navegador y tarda); se corre a mano.
+  - La lista «Antes de usarla con las familias» del README reúne lo que hay que apagar o cambiar para pasar de demostración a uso real.
+    Ojo: «Reiniciar datos de ejemplo» **vuelve a cargar** los ejemplos; no limpia. Quitarlos es borrar en Atlas las historias con `ejemplo: true`.
 - Adiciones y decisiones del bloque 7 (filtros y video; para revisar con el equipo):
   - **Filtros (F11):** la barra del diseño, con estas diferencias: la búsqueda **no distingue tildes ni mayúsculas** y pide
     todas las palabras (el prototipo buscaba el texto entero tal cual); hay una pestaña **«Otro lugar»** (solo si hay

@@ -11,6 +11,11 @@ Equipo Protopía: Jeison, Victor y Marleidys. Referencia: [La Piragua](https://l
 > desacopladas (frontend, API y acceso a datos). El plan y las decisiones acordadas están en
 > [`docs/plan-v1.md`](docs/plan-v1.md) y los diseños aprobados en [`docs/diseno/`](docs/diseno/).
 
+**Para ir directo a lo que buscas:** [desplegar en Vercel](#desplegar-en-vercel-paso-a-paso) ·
+[antes de usarla con familias](#antes-de-usarla-con-familias-lista-de-pendientes-de-configuración) ·
+[correrla en tu computador](#cómo-correr-el-proyecto-en-tu-computador) · [pruebas](#pruebas) ·
+[accesibilidad](#accesibilidad) · [sin conexión](#sin-conexión-f10) · [qué falta o está por definir](#pendientes-y-por-definir)
+
 ## Stack
 
 | Capa | Tecnología |
@@ -124,6 +129,13 @@ pytest                 # backend: pytest + httpx (con el entorno virtual activad
 - Cada prueba del frontend vive junto al componente que prueba (por ejemplo
   `src/offline/connectivity.test.js`). Lo que usa IndexedDB se prueba con `fake-indexeddb` (ya viene instalado) y
   entre una prueba y otra el teléfono «se vacía» solo (`src/test/setup.js`).
+- **Recorrido de punta a punta (opcional): `npm run e2e`.** Abre un Chromium de verdad contra la API real sobre una
+  base en memoria (`e2e/server.py`, sin MongoDB ni Blob ni cuentas) y repite lo que hacen las familias y el equipo:
+  crear la cuenta, contar una historia, que el equipo la revise y la apruebe, que un visitante la encuentre en el mapa,
+  buscarla y abrir su ficha, guardar un borrador sin señal y que salga al volver, y recuperar lo que quedó a medias.
+  Incluye la auditoría de accesibilidad con colores reales, en escritorio y en móvil. La primera vez hace falta el navegador
+  (`npx playwright install chromium`) y el entorno virtual de Python activado. No corre en el CI (tarda y necesita un
+  navegador): se corre a mano antes de un cambio grande.
 - `npm test` corre dos proyectos de Vitest: `app` (la interfaz, en jsdom) y `functions` (las funciones de Node de
   `api/`, en Node; las pruebas de `api/blob-token.js` incluyen un token firmado por la API de Python).
 - El service worker no se prueba con Vitest (no corre en jsdom): se comprueba en un navegador real con
@@ -431,16 +443,124 @@ sin mostrar mensajes ni claves. También queda escrito, al inicio, en los regist
 | `ConfigurationError` o `InvalidURI` | — | La cadena de conexión está mal formada | Volver a copiarla desde Atlas (Connect → Drivers) |
 | *(503 con "Falta la variable MONGODB_URI")* | — | La función no ve la variable | Que exista en el entorno **Production** y que se hiciera un Redeploy después de crearla |
 
+## Accesibilidad
+
+Pensada para quien no está acostumbrado a las pantallas (ver también la voz de «Escuchar», F9). Se revisó contra **WCAG 2.2
+nivel AA** con axe-core, en **todas las pantallas y diálogos**, en escritorio y en móvil, con colores y diseño reales:
+**0 violaciones** (`npm run e2e` lo repite). Lo que hay:
+
+- **Teclado:** todo se alcanza y se usa sin ratón. El primer Tab es «Saltar al contenido». Los diálogos mantienen el Tab dentro, se
+  cierran con Escape y devuelven el foco a donde estaba. Los grupos de historias del mapa y las tablas que se desplazan de lado se
+  alcanzan con el teclado. Siempre hay un anillo de foco visible.
+- **Lector de pantalla:** cada página pone su título en la pestaña («Mis historias · AGROCULTURA») y, al pasar a otra página, el
+  foco va a su título para que se diga dónde se está. Los avisos (señal, envío, errores) se anuncian solos. Los mapas y las
+  tablas tienen nombre.
+- **Contraste:** los textos pequeños cumplen 4,5:1 (se oscurecieron dos grises del prototipo; ver `docs/plan-v1.md`).
+- **Movimiento:** quien pide «reducir movimiento» en su teléfono no ve transiciones ni vuelos del mapa.
+- **Voz:** cada página tiene «Escuchar», que la lee en voz alta con la voz del dispositivo (sin servicios de pago).
+- Los textos están pensados para leerse con calma y los botones principales son grandes; las fichas y los pasos usan frases cortas.
+
+Lo que **no** se pudo comprobar aquí: lectores de pantalla reales (TalkBack, VoiceOver, NVDA) y personas usándola. Conviene una
+prueba con dos o tres familias, que enseñará más que cualquier herramienta.
+
+## Desplegar en Vercel (paso a paso)
+
+Un solo repositorio y un solo proyecto de Vercel sirven la interfaz, la API de Python y la función de video. **Cada `git push` a
+`main` despliega a producción.** Hace falta una cuenta de Vercel (el plan gratuito sirve) y el repositorio en GitHub.
+
+1. **Atlas listo.** Sigue [MongoDB Atlas](#mongodb-atlas): cluster gratuito, usuario de base de datos con `readWrite` solo sobre
+   `agrocultura`, acceso desde `0.0.0.0/0` y la cadena de conexión.
+2. **Crear el proyecto.** En Vercel: *Add New → Project*, elige el repositorio. Vercel lee `vercel.json` y ya sabe todo (framework
+   Vite, `npm run build`, salida en `dist`, la API de Python en `api/index.py` y la función de Node en `api/blob-token.js`).
+   En *Settings → General*, **Node.js Version: 22.x** (el aviso de que existe 26.x no importa: el proyecto fija 22).
+3. **Crear el almacén de archivos.** *Storage → Create → Blob*, con acceso **Public**, y conéctalo al proyecto. Eso crea solo
+   `BLOB_READ_WRITE_TOKEN`.
+4. **Variables de entorno** (*Settings → Environment Variables*, entorno **Production**). **Escríbelas tú directamente ahí; nunca
+   las pegues en un chat, un correo ni un archivo del repositorio.**
+
+   | Variable | Valor |
+   |---|---|
+   | `MONGODB_URI` | La cadena de Atlas, con la contraseña real |
+   | `JWT_SECRET` | Una cadena aleatoria de 32 caracteres o más (la receta está en [Variables de entorno](#variables-de-entorno)) |
+   | `ADMIN_USER` | El usuario del administrador inicial |
+   | `ADMIN_PASSWORD` | Su contraseña (10 caracteres o más). Para cambiarla después: se cambia aquí y se vuelve a desplegar |
+   | `BLOB_READ_WRITE_TOKEN` | Ya la creó el paso 3 |
+   | `ALLOW_DEMO_RESET` | `true` solo mientras se prueba con datos de ejemplo (ver la lista siguiente) |
+   | `SEED_DEMO_NARRATOR_PHONE` y `SEED_DEMO_NARRATOR_PIN` | Opcionales: una narradora de ejemplo para las demostraciones |
+
+5. **Desplegar** (o *Redeploy* si cambiaste variables: solo se leen al desplegar).
+6. **Comprobar** (en este orden):
+   1. `https://TU-PROYECTO.vercel.app/api/salud` debe decir `"estado":"ok"` y `"base_de_datos":"ok"` (si no, ver [la tabla de
+      causas](#si-apisalud-no-dice-ok)).
+   2. La página principal abre y muestra el mapa; «Contar una historia» pide ingresar.
+   3. `/admin` deja entrar con `ADMIN_USER` y `ADMIN_PASSWORD`.
+   4. Cuenta una historia de prueba con una foto y un audio, apruébala desde `/admin` y mira que salga en el mapa. Eso prueba
+      la base de datos, los archivos (Blob) y la revisión juntos.
+   5. Prueba **un video** de verdad (MP4 de menos de 25 MB): es lo único que no se puede probar fuera de Vercel.
+   6. En un teléfono, abre la página, espera unos segundos y mira que ofrezca instalarla; luego pon el modo avión y mira que abra.
+
+**Dominio propio (opcional).** *Settings → Domains*. No hace falta nada más: la aplicación usa direcciones relativas.
+
+## Antes de usarla con las familias (lista de pendientes de configuración)
+
+La plataforma nace con datos y avisos de **demostración**. Antes de recibir historias reales:
+
+- [ ] **Quitar `ALLOW_DEMO_RESET`** (o ponerlo en `false`) y volver a desplegar. Con la variable puesta, un administrador puede **borrar
+  todas las historias**, también las reales, con el botón «Reiniciar datos de ejemplo» (pide escribir `REINICIAR`, pero conviene
+  que el botón no exista). Desaparece de la pantalla de Configuración.
+- [ ] **Ocultar los códigos F1, F2…** poniendo `VITE_SHOW_CODES=false` en Vercel y desplegando de nuevo. Son anotaciones del diseño
+  para el equipo; las familias no deben verlas. (Es una variable de *compilación*: hace falta volver a desplegar.)
+- [ ] **Quitar «datos de ejemplo»** del encabezado: *Configuración → Portal → «Mostrar “datos de ejemplo”»* en apagado.
+- [ ] **Sin historias de ejemplo.** Si en algún momento se pulsó «Reiniciar datos de ejemplo», hay 12 historias de ejemplo (`HIS-2026-001` a
+  `012`, marcadas `ejemplo: true`) mezcladas con las reales en el mapa. Se quitan en Atlas: *Browse Collections → `agrocultura` → `historias`*,
+  filtro `{ "ejemplo": true }`, seleccionarlas y borrarlas (no tocan ninguna historia real). **El botón de reinicio no sirve para esto**: borra
+  todo y *vuelve a cargar* los ejemplos. Los códigos siguen desde la `013`.
+- [ ] **Sin narradora de ejemplo.** Quita `SEED_DEMO_NARRATOR_*` de Vercel; la cuenta que ya se creó se borra en Atlas (colección `usuarios`, el
+  documento de «Ana Beltrán» o el nombre que le hayas puesto).
+- [ ] **Cambiar la contraseña del administrador** por una que no se haya compartido (variable `ADMIN_PASSWORD` y *Redeploy*).
+- [ ] **Poner el nombre definitivo del portal** (*Configuración → Portal*). Hoy dice «AGROCULTURA».
+- [ ] **Decidir si se avisa al narrador cuando se rechaza su historia.** La opción existe pero todavía **no envía nada** (no hay correo,
+  SMS ni WhatsApp conectado); hoy el narrador lo ve en «Mis historias».
+- [ ] **Confirmar con las familias la posición de los sectores.** Minca, La Tagua y San Lorenzo ya tienen un punto (el de San Lorenzo es
+  «Cuchillas San Lorenzo», una cresta); **Tijereras sigue sin punto confirmado**, por eso no sale su nombre en el mapa ni su botón.
+  Cuando se tenga, se cambia en `lib/seed/catalog.py` y se sube `SECTORES_VERSION`.
+- [ ] **Una prueba con dos o tres familias** en sus teléfonos y con su señal (ver [Accesibilidad](#accesibilidad)).
+- [ ] **Mirar el mapa en producción con señal** una vez: el fondo de OpenStreetMap no se pudo probar desde el entorno donde se construyó.
+
+## Costos y límites
+
+Todo funciona con planes gratuitos, sin tarjeta, mientras el proyecto sea pequeño:
+
+| Servicio | Plan | Lo que conviene saber |
+|---|---|---|
+| Vercel | Hobby (gratis) | Pensado para proyectos personales o académicos; si la plataforma pasa a un uso comercial hay que cambiar de plan. Las funciones tienen límite de tiempo y de tamaño por petición (de ahí la subida directa del video) |
+| MongoDB Atlas | M0 (gratis) | 512 MB. Se pausa por inactividad en algunos planes: si `/api/salud` falla de repente, mira si el cluster está pausado |
+| Vercel Blob | Hobby | Cupo gratuito de almacenamiento y transferencia; las fotos se reducen a menos de 1 MB y el audio es muy liviano, pero los videos (hasta 25 MB cada uno) llenan el cupo mucho más rápido: conviene vigilarlo en el panel de Vercel |
+| OpenStreetMap | Servicio comunitario | Sus [normas](https://operations.osmfoundation.org/policies/tiles/) valen para poco tráfico; si crece hay que usar un proveedor de mapas propio (se cambia en una sola constante, `src/config/map.js`) |
+
+## Pendientes y por definir
+
+Lo que **no** está en la versión 1, para decidir en las mejoras que siguen:
+
+- **Por definir con el profesor:** el nombre definitivo del portal y si se avisa al narrador al rechazar su historia (y por qué medio).
+- **Fases futuras (no se construyeron):** F14 Recorridos 360° y F15 Avatares en realidad aumentada (aparecen como «Próximamente»).
+- **Mejoras que quedaron anotadas:** audio de más de 3,5 MB para el equipo (pasarlo a subida directa como el video); envío de los
+  borradores con la aplicación cerrada (solo existe en Chrome y Edge); recuperación de la clave olvidada de un narrador (hoy un
+  administrador borra la cuenta en Atlas); limpieza de archivos huérfanos en Blob; que el recorrido de punta a punta corra en el CI.
+- **Sin comprobar fuera del entorno de desarrollo:** iPhone (Safari), lectores de pantalla reales, un video subido de verdad a Blob y el
+  fondo del mapa con la red real. Todo lo demás está probado (ver [Pruebas](#pruebas)).
+
 ## Estructura
 
 ```
 docs/diseno/    diseños de referencia aprobados (no se despliegan)
 docs/plan-v1.md plan y decisiones acordadas
-src/            frontend React + Vite (components, pages, hooks, services)
+src/            frontend React + Vite (components, pages, hooks, services, offline)
 public/         recursos estáticos de la PWA
 api/            punto de entrada del backend (api/index.py) y la función de Node del video (api/blob-token.js)
 lib/            código compartido del backend, un paquete por tema
 tests/          pruebas del backend
+e2e/            recorrido de punta a punta y accesibilidad en un navegador real (npm run e2e)
 ```
 
 ## Estado
@@ -455,7 +575,8 @@ La versión 1 se construye por bloques (ver `docs/plan-v1.md`).
 - [x] Bloque 5: mapa de historias y ficha (F1, F8)
 - [x] Bloque 6: funciona sin conexión: aplicación instalable, borradores en el teléfono y envío al volver la señal (F10)
 - [x] Bloque 7: filtros y búsqueda en el mapa (F11) y video con subida directa a Blob (F13)
-- [ ] Bloque 8: accesibilidad, cierre y despliegue verificado
+- [x] Bloque 8: accesibilidad (WCAG 2.2 AA), recorrido de punta a punta, README completo y despliegue verificado
 
-En `docs/comparacion/` hay capturas de cada bloque frente al diseño aprobado. Los pasos para
-desplegar en Vercel se documentan al cerrar el bloque 8.
+**La versión 1 está terminada.** En `docs/comparacion/` hay capturas de cada bloque frente al diseño aprobado. Lo que falta para
+usarla con familias está en [Antes de usarla con las familias](#antes-de-usarla-con-las-familias-lista-de-pendientes-de-configuración)
+y lo que queda por mejorar en [Pendientes y por definir](#pendientes-y-por-definir).
