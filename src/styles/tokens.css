@@ -1,0 +1,72 @@
+/* Design tokens taken from the approved prototypes in docs/diseno/. */
+:root {
+  color-scheme: light;
+
+  /* Brand */
+  --verde-oscuro: #1f3a2e;
+  --rojo: #b8323f;
+  --verde-azulado: #2f6f73;
+  --fondo: #f2f4f0;
+  --fondo-admin: #eef1ec;
+
+  /* Text */
+  --texto: #17261f;
+  --texto-2: #33433a;
+  --texto-3: #4a5b50;
+  --texto-4: #6b776f;
+  --texto-5: #8a968e;
+  --placeholder: #7a867e;
+
+  /* Surfaces and lines */
+  --superficie: #ffffff;
+  --superficie-suave: #f8faf7;
+  --borde: #e1e7e2;
+  --borde-fuerte: #c9d3cb;
+  --linea: #edf1ee;
+  --verde-claro: #e4ece3;
+
+  /* Portal header */
+  --cab-fondo: #1f3a2e;
+  --cab-chip: #2a4a3b;
+  --cab-chip-borde: #3a5e4c;
+  --cab-texto-suave: #a9c4b0;
+
+  /* Admin header */
+  --adm-cab-fondo: #17261f;
+  --adm-cab-borde: #34503f;
+
+  /* Warnings and states */
+  --aviso-fondo: #fff8e6;
+  --aviso-borde: #f0d58c;
+  --aviso-texto: #5c4300;
+  --amarillo: #e0b13a;
+  --amarillo-claro: #ffe9b0;
+  --amarillo-pale: #fff1cc;
+  --amarillo-texto: #4a3a0b;
+  --verde-ok: #6fcf97;
+
+  /* Story states: background, text, dot */
+  --st-borrador-bg: #e4e8e5;
+  --st-borrador-fg: #33433a;
+  --st-borrador-dot: #7a867e;
+  --st-revision-bg: #ffe9b0;
+  --st-revision-fg: #4a3a0b;
+  --st-revision-dot: #d9a92e;
+  --st-publicada-bg: #cfe6d3;
+  --st-publicada-fg: #14301f;
+  --st-publicada-dot: #2e8b57;
+  --st-rechazada-bg: #f6d5d8;
+  --st-rechazada-fg: #6e1520;
+  --st-rechazada-dot: #b8323f;
+
+  /* Story origin */
+  --origen-comunidad-bg: #f6d5d8;
+  --origen-comunidad-fg: #6e1520;
+  --origen-proyecto-bg: #d6e9ea;
+  --origen-proyecto-fg: #1d4a4d;
+
+  /* Typography */
+  --font-title: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-body: 'Nunito Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+}

@@ -1,0 +1,31 @@
+/** Fixed vocabulary of the app. The server serves the same lists in /api/config. */
+
+export const EPOCAS = ['Antes de 1960', '1960 a 1979', '1980 a 1999', '2000 en adelante']
+
+/** Labels and colors of each story state. The narrator sees "No publicada" for a rejected story. */
+export const ESTADOS = {
+  borrador: { label: 'Borrador', labelAdmin: 'Borrador', sigue: 'Se envía cuando haya señal' },
+  revision: { label: 'En revisión', labelAdmin: 'En revisión', sigue: 'Lo revisa un administrador' },
+  publicada: { label: 'Publicada', labelAdmin: 'Publicada', sigue: 'Ya está en el mapa' },
+  rechazada: { label: 'No publicada', labelAdmin: 'Rechazada', sigue: '' },
+}
+
+/** Used until /api/config answers (or when the very first visit has no connection). */
+export const FALLBACK_CONFIG = {
+  portal: { nombre: 'AGROCULTURA', avisar_rechazo: false, datos_de_ejemplo: false },
+  sectores: [],
+  etiquetas: [],
+  epocas: EPOCAS,
+  motivos_rechazo: [],
+}
+
+export const EMPTY_STATS = {
+  publicadas: 0,
+  en_revision: 0,
+  rechazadas: 0,
+  aprobadas_comunidad: 0,
+  por_origen: { comunidad: 0, proyecto: 0 },
+  sectores_con_historias: 0,
+  total_sectores: 4,
+  formatos: { foto: 0, audio: 0, video: 0 },
+}
