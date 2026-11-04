@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { LIMITS, MAX_UPLOAD_BYTES } from '../../config/constants.js'
+import { LIMITS, MAX_PLACE_NAME, MAX_UPLOAD_BYTES } from '../../config/constants.js'
 import { usePortalData } from '../../context/PortalDataContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { ApiError, OfflineError } from '../../services/http.js'
@@ -29,6 +29,7 @@ export default function ProjectStoryModal({ onClose, onPublished }) {
   const toast = useToast()
   const [titulo, setTitulo] = useState('')
   const [location, setLocation] = useState(null) // { lat, lon, origen, sectorId }: anywhere in the zone
+  const [lugar, setLugar] = useState('')
   const [chosenEpoca, setEpoca] = useState('')
   const [narrador, setNarrador] = useState('')
   const [texto, setTexto] = useState('')
@@ -83,7 +84,7 @@ export default function ProjectStoryModal({ onClose, onPublished }) {
     setError('')
     try {
       const story = await publishProjectStory(
-        { clientId, titulo: titulo.trim(), texto: texto.trim(), epoca, location, etiquetas, narrador: narrador.trim(), audio, fotos },
+        { clientId, titulo: titulo.trim(), texto: texto.trim(), epoca, location, lugar: lugar.trim(), etiquetas, narrador: narrador.trim(), audio, fotos },
         { uploaded: uploaded.current },
       )
       const sector = config.sectores.find((item) => item.id === story.sector_id)
@@ -127,6 +128,18 @@ export default function ProjectStoryModal({ onClose, onPublished }) {
         <span>¿Dónde ocurrió? Toca el lugar en el mapa</span>
         <LocationPicker sectors={config.sectores} value={location} onChange={setLocation} />
       </div>
+
+      <label className="ag-project-modal__field">
+        Nombre del lugar (si quieres)
+        <input
+          type="text"
+          className="ag-project-modal__input"
+          value={lugar}
+          maxLength={MAX_PLACE_NAME}
+          onChange={(event) => setLugar(event.target.value)}
+          placeholder="Por ejemplo: Patio de secado de la finca"
+        />
+      </label>
 
       <label className="ag-project-modal__field">
         Época

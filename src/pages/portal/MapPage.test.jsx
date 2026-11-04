@@ -49,6 +49,16 @@ describe('Mapa de historias (F1)', () => {
     expect(await screen.findByRole('button', { name: 'Ver El camino de mulas' })).toBeInTheDocument()
   })
 
+  it('names the place a narrator gave, with its sector, and "Otro lugar de la zona" when there is neither', async () => {
+    open([
+      mapStory({ codigo: 'HIS-2026-001', titulo: 'Con nombre', lugar_nombre: 'Finca La Esperanza', sector_id: 'minca' }),
+      mapStory({ codigo: 'HIS-2026-002', titulo: 'Sin nada', sector_id: null, lat: 11.141, lon: -74.119 }),
+    ])
+
+    expect(await screen.findByRole('button', { name: /Con nombre/ })).toHaveTextContent('Aurelio Martínez · Finca La Esperanza, Minca · Antes de 1960')
+    expect(screen.getByRole('button', { name: /Sin nada/ })).toHaveTextContent('Aurelio Martínez · Otro lugar de la zona · Antes de 1960')
+  })
+
   it('shows the first photo of a story as its thumbnail', async () => {
     open()
 

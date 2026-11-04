@@ -32,6 +32,16 @@ export function sectorAt(point, sectors, { includeProvisional = false } = {}) {
 /** Is the point inside the zone of the project? */
 export const inZone = ({ lat, lon }) => lat >= ZONE.south && lat <= ZONE.north && lon >= ZONE.west && lon <= ZONE.east
 
+/**
+ * Where a story happened, in words: the name its narrator gave to the place plus the sector it is in
+ * ("Finca La Esperanza, La Tagua"), or just one of them, or "Otro lugar de la zona".
+ */
+export function placeLine(story, sectors) {
+  const sector = sectors.find((item) => item.id === story.sector_id)?.nombre
+  if (story.lugar_nombre) return sector ? `${story.lugar_nombre}, ${sector}` : story.lugar_nombre
+  return sector ?? OTHER_PLACE
+}
+
 /** The name to show for a story's sector, or "Otro lugar de la zona" when it has none. */
 export const placeName = (sectorId, sectors) => sectors.find((sector) => sector.id === sectorId)?.nombre ?? OTHER_PLACE
 

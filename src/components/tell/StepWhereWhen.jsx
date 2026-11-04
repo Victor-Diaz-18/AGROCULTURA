@@ -1,10 +1,10 @@
-import { LIMITS } from '../../config/constants.js'
+import { LIMITS, MAX_PLACE_NAME } from '../../config/constants.js'
 import LocationPicker from '../map/LocationPicker.jsx'
 import Chip from '../ui/Chip.jsx'
 import FCode from '../ui/FCode.jsx'
 
 /** Step 2, "Dónde y cuándo": title, place (F1), period and tags. */
-export default function StepWhereWhen({ config, titulo, onTitulo, location, onLocation, epoca, onEpoca, etiquetas, onToggleTag }) {
+export default function StepWhereWhen({ config, titulo, onTitulo, location, onLocation, lugar, onLugar, epoca, onEpoca, etiquetas, onToggleTag }) {
   return (
     <>
       <div className="ag-tell__block">
@@ -28,6 +28,25 @@ export default function StepWhereWhen({ config, titulo, onTitulo, location, onLo
           <FCode>F1</FCode>
         </div>
         <LocationPicker sectors={config.sectores} value={location} onChange={onLocation} />
+        <p className="ag-hint ag-tell__privacy">
+          Para cuidar tu privacidad, en el mapa público se ve un punto aproximado (a unos 500 metros), no el sitio exacto.
+        </p>
+      </div>
+
+      <div className="ag-tell__block">
+        <label htmlFor="ag-lugar" className="ag-tell__label">
+          Nombre del lugar <span className="ag-tell__optional">(si quieres)</span>
+        </label>
+        <input
+          id="ag-lugar"
+          type="text"
+          className="ag-tell__input"
+          value={lugar}
+          maxLength={MAX_PLACE_NAME}
+          onChange={(event) => onLugar(event.target.value)}
+          placeholder="Por ejemplo: Finca La Esperanza, el camino viejo"
+        />
+        <span className="ag-hint">Se verá en la ficha pública de la historia.</span>
       </div>
 
       <div className="ag-tell__fields">

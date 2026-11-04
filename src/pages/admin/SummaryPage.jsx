@@ -5,7 +5,7 @@ import PageHeader from '../../components/layout/PageHeader.jsx'
 import { usePortalData } from '../../context/PortalDataContext.jsx'
 import useAdminStories from '../../hooks/useAdminStories.js'
 import { formatDate } from '../../utils/format.js'
-import { placeName } from '../../utils/geo.js'
+import { placeLine } from '../../utils/geo.js'
 
 const PREVIEW = 5
 
@@ -93,7 +93,7 @@ export default function SummaryPage() {
               <div className="ag-pending-list__text">
                 <span className="ag-pending-list__title">{story.titulo}</span>
                 <span className="ag-pending-list__meta">
-                  {story.narrador_nombre} · {placeName(story.sector_id, config.sectores)} · {story.formatos.join(' · ')} · enviada {formatDate(story.enviada_en)}
+                  {story.narrador_nombre} · {placeLine(story, config.sectores)} · {story.formatos.join(' · ')} · enviada {formatDate(story.enviada_en)}
                 </span>
               </div>
               <button type="button" className="ag-rowbtn ag-rowbtn--dark ag-rowbtn--lg" onClick={() => setOpenCode(story.codigo)}>

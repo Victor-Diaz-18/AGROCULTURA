@@ -137,8 +137,9 @@ describe('Nueva historia del proyecto', () => {
     const dialog = await screen.findByRole('dialog')
 
     await user.type(within(dialog).getByLabelText('Título'), '  El patio de secado ')
-    await user.click(within(dialog).getByRole('button', { name: 'Tijereras' }))
+    await user.click(within(dialog).getByRole('button', { name: 'San Lorenzo' }))
     await user.selectOptions(within(dialog).getByRole('combobox', { name: 'Época' }), '1980 a 1999')
+    await user.type(within(dialog).getByLabelText('Nombre del lugar (si quieres)'), '  Patio  de los Pérez ')
     await user.type(within(dialog).getByLabelText('Quién la cuenta'), 'Doña Rosa')
     await user.type(within(dialog).getByLabelText('Relato'), 'Se secaba al sol.')
     await user.click(within(dialog).getByRole('button', { name: '#finca' }))
@@ -149,10 +150,11 @@ describe('Nueva historia del proyecto', () => {
       titulo: 'El patio de secado',
       texto: 'Se secaba al sol.',
       epoca: '1980 a 1999',
-      ubicacion: { lat: 11.109, lon: -74.1108 },
+      ubicacion: { lat: 11.116315, lon: -74.034676 },
       ubicacion_origen: 'sector',
       etiquetas: ['#finca'],
       narrador_nombre: 'Doña Rosa',
+      lugar_nombre: 'Patio  de los Pérez',
       medios: [],
     })
     expect(sentBody(fetchMock).client_id).toMatch(/^[A-Za-z0-9_-]{8,64}$/)

@@ -36,6 +36,12 @@ describe('buildStoryPayload', () => {
     })
   })
 
+  it('sends the name of the place only when there is one', () => {
+    expect(buildStoryPayload(draft({ lugar: 'Finca La Esperanza' }), []).lugar_nombre).toBe('Finca La Esperanza')
+    expect(buildStoryPayload(draft({ lugar: '' }), [])).not.toHaveProperty('lugar_nombre')
+    expect(buildStoryPayload(draft(), [])).not.toHaveProperty('lugar_nombre')
+  })
+
   it('does not send a duration for a photo', () => {
     const payload = buildStoryPayload(draft(), [{ tipo: 'foto', url: 'https://x/f.jpg', mime: 'image/jpeg', bytes: 5, duracion_s: null }])
 

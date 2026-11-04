@@ -6,7 +6,7 @@ import OriginBadge from '../ui/OriginBadge.jsx'
  * The stories in the visible zone of the map, as in the design: a thumbnail, code, origin, title,
  * who tells it, where, when, and its formats. Tapping one opens its card.
  */
-export default function StoryList({ stories, selectedCode, sectorName, onOpen }) {
+export default function StoryList({ stories, selectedCode, placeOf, onOpen }) {
   const selected = useRef(null)
 
   // A story picked from outside (for example "Ver en el mapa") comes into view in the list.
@@ -37,7 +37,7 @@ export default function StoryList({ stories, selectedCode, sectorName, onOpen })
                 </span>
                 <span className="ag-storyitem__title">{story.titulo}</span>
                 <span className="ag-storyitem__meta">
-                  {[story.narrador_nombre, sectorName(story.sector_id), story.epoca].filter(Boolean).join(' · ')}
+                  {[story.narrador_nombre, placeOf(story), story.epoca].filter(Boolean).join(' · ')}
                 </span>
                 <span className="ag-storyitem__formats">
                   {story.formatos.map((format) => (

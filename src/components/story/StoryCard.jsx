@@ -5,7 +5,7 @@ import { usePortalData } from '../../context/PortalDataContext.jsx'
 import { fetchStory } from '../../services/stories.js'
 import { ApiError, OfflineError } from '../../services/http.js'
 import { formatDate } from '../../utils/format.js'
-import { appleMapsUrl, googleMapsUrl, placeName } from '../../utils/geo.js'
+import { appleMapsUrl, googleMapsUrl, placeLine, placeName } from '../../utils/geo.js'
 import FCode from '../ui/FCode.jsx'
 import Icon from '../ui/Icon.jsx'
 import ListenButton from '../ui/ListenButton.jsx'
@@ -26,6 +26,8 @@ export default function StoryCard({ story, onClose }) {
   // As in the design: the sectors other than Minca are "zona de Minca".
   const sector = placeName(story.sector_id, config.sectores)
   const sectorName = story.sector_id && story.sector_id !== 'minca' ? `${sector}, zona de Minca` : sector
+  // With a name given by the narrator ("Finca La Esperanza, La Tagua") that is what is said; otherwise the sector.
+  const whereText = story.lugar_nombre ? placeLine(story, config.sectores) : sectorName
   const published = story.estado === undefined || story.estado === 'publicada'
   const photos = story.medios.filter((medio) => medio.tipo === 'foto')
   const audios = story.medios.filter((medio) => medio.tipo === 'audio')
@@ -34,7 +36,7 @@ export default function StoryCard({ story, onClose }) {
   const readAloud = () =>
     [
       story.titulo,
-      `Ocurrió ${story.epoca}, en ${sectorName}.`,
+      `Ocurrió ${story.epoca}, en ${whereText}.`,
       story.narrador_nombre ? `Narra ${story.narrador_nombre}.` : '',
       story.texto || 'Esta historia está contada en audio.',
     ]
@@ -99,7 +101,7 @@ export default function StoryCard({ story, onClose }) {
             </div>
             <div>
               <dt>Lugar</dt>
-              <dd>{sectorName}</dd>
+              <dd>{whereText}</dd>
             </div>
             <div>
               <dt>Narra</dt>
@@ -137,6 +139,11 @@ export default function StoryCard({ story, onClose }) {
                     Abrir en Apple Maps
                   </a>
                 </>
+              )}
+              {story.aproximada && (
+                <p className="ag-hint ag-card-story__approx">
+                  El punto del mapa es aproximado (unos 500 metros) para cuidar la privacidad de quien cuenta.
+                </p>
               )}
             </div>
           )}

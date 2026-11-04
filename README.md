@@ -198,11 +198,24 @@ sectores son provisionales hasta confirmarlos con las familias de la zona.
   de la zona». Lo que mande el teléfono como sector se ignora. Un sector con punto provisional solo cuenta si la
   persona lo eligió. Que un punto esté en la zona lo revisa además el administrador (comprobación «Ocurrió en
   Minca o en un sector aledaño»).
+- **Privacidad del lugar.** Quien cuenta una historia puede estar en su casa. Por eso el servidor guarda el punto
+  exacto (lo ven los administradores al revisar) pero el mapa, la lista y la ficha públicos muestran **un punto
+  redondeado a una cuadrícula de unos 500 m** (`GRID_DEGREES` en `lib/stories/privacy.py`): las historias de
+  una misma cuadrícula se ven en el mismo sitio y los números exactos no salen en ninguna respuesta pública. La
+  ficha y los enlaces a Google/Apple Maps usan ese punto aproximado y lo avisan. No se redondean las historias
+  ubicadas con un botón de sector (es el centro del sector, no la posición de alguien) ni las del proyecto (el
+  equipo eligió el lugar a propósito). El formulario también se lo dice a quien cuenta.
+- **Nombre del lugar (opcional).** Quien cuenta puede escribir cómo se llama el lugar («Finca La Esperanza»,
+  hasta 80 letras). Se muestra en la ficha pública y en las listas junto al sector («Finca La Esperanza, La Tagua»),
+  y entra en la búsqueda. El administrador lo ve al revisar (la comprobación «No expone datos personales de otras
+  personas» lo cubre).
 - **Dónde están los sectores.** Cada sector tiene un punto central (en `lib/seed/catalog.py`) que usan las
   historias que se ubican «en el sector». **Minca, La Tagua y San Lorenzo están confirmados** (los dos últimos
   con puntos de Google Maps que pasó el equipo; el de San Lorenzo cae en «Cuchillas San Lorenzo», una cresta de
   montaña: hay que confirmar con las familias si su San Lorenzo es otro punto cercano). **Tijereras sigue
-  provisional** (`centro_provisional`): el mapa no escribe su nombre y la pantalla de configuración lo avisa. Para corregirlos: cambia las coordenadas y **sube `SECTORES_VERSION`**. En el siguiente arranque
+  provisional** (`centro_provisional`) y así se queda mientras no haga falta: el mapa no escribe su nombre, el
+  formulario no le ofrece botón de atajo (pondría la historia en un lugar inventado) y la pantalla de configuración
+  lo avisa. Quien viva ahí toca el lugar exacto en el mapa. Solo sirve de sector para las historias de ejemplo. Para corregirlos: cambia las coordenadas y **sube `SECTORES_VERSION`**. En el siguiente arranque
   la aplicación mueve los sectores guardados y también las historias ubicadas «en el sector» (con la misma
   distancia); las historias con punto propio (GPS o un toque en el mapa) no se mueven.
 - **Nombres de los sectores en el mapa.** Se comportan como las etiquetas de un mapa: salen en un rango de

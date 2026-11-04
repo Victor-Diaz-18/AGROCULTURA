@@ -465,3 +465,11 @@
   font-size: 13.5px;
   line-height: 1.5;
 }
+
+.ag-tell__optional {
+  font-weight: 600;
+  color: var(--texto-4);
+}
+.ag-tell__privacy {
+  margin: 0;
+}

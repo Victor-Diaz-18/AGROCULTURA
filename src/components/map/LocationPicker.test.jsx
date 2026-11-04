@@ -17,12 +17,13 @@ afterEach(() => {
 })
 
 describe('LocationPicker (F3, F1)', () => {
-  it('shows one button per sector on the map', () => {
+  it('shows one button per sector on the map, except for a sector whose point is not confirmed', () => {
     render(<LocationPicker sectors={sectors} value={null} onChange={vi.fn()} />)
 
-    for (const name of ['Minca', 'La Tagua', 'San Lorenzo', 'Tijereras']) {
+    for (const name of ['Minca', 'La Tagua', 'San Lorenzo']) {
       expect(screen.getByRole('button', { name })).toBeInTheDocument()
     }
+    expect(screen.queryByRole('button', { name: 'Tijereras' })).not.toBeInTheDocument() // it would put the story on a made-up place
     expect(screen.getByRole('application', { name: 'Mapa para elegir dónde ocurrió' })).toBeInTheDocument()
   })
 
@@ -41,7 +42,7 @@ describe('LocationPicker (F3, F1)', () => {
     const { container } = render(<LocationPicker sectors={sectors} value={value} onChange={vi.fn()} />)
 
     expect(screen.getByRole('button', { name: 'Minca' })).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.getByRole('button', { name: 'Tijereras' })).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByRole('button', { name: 'San Lorenzo' })).toHaveAttribute('aria-pressed', 'false')
     expect(container.querySelector('.ag-location-pin')).toBeNull()
   })
 

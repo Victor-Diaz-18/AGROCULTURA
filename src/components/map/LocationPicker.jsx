@@ -101,7 +101,8 @@ export default function LocationPicker({ sectors, value, onChange }) {
     const layer = sectorLayer.current
     if (!map || !layer) return
     layer.clearLayers()
-    sectors.forEach((sector) => {
+    // A sector whose point is not confirmed gets no shortcut: it would put the story on a made-up place.
+    sectors.filter((sector) => !sector.provisional).forEach((sector) => {
       const marker = L.marker([sector.centro.lat, sector.centro.lon], {
         icon: sectorIcon(sector.nombre, value?.sectorId === sector.id),
         keyboard: false, // the button inside is already focusable

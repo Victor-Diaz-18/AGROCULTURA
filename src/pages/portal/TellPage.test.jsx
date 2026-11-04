@@ -155,6 +155,48 @@ describe('Contar una historia: el lugar puede ser cualquiera de la zona', () => 
     expect(sentBody(fetchMock)).not.toHaveProperty('sector_id')
   })
 
+  it('the place can be given a name, and it goes with the story', async () => {
+    const user = userEvent.setup()
+    setPosition(11.0835, -74.045)
+    const { fetchMock } = open()
+    await writeStory(user)
+    await user.type(screen.getByLabelText('Ponle un título'), 'La trilla')
+    await user.click(screen.getByRole('button', { name: /Usar mi ubicación/ }))
+    await user.selectOptions(screen.getByRole('combobox', { name: /Cuándo ocurrió/ }), 'Antes de 1960')
+
+    await user.type(screen.getByLabelText(/Nombre del lugar/), '  Finca La Esperanza ')
+
+    expect(screen.getByRole('complementary', { name: 'Resumen de tu historia' })).toHaveTextContent('Lugar: Finca La Esperanza, La Tagua')
+    await user.click(nextButton())
+    await user.click(nextButton())
+    await screen.findByRole('heading', { name: 'Mis historias' })
+    expect(sentBody(fetchMock)).toMatchObject({ lugar_nombre: 'Finca La Esperanza' })
+  })
+
+  it('the name of the place is optional: nothing is sent when it is left empty', async () => {
+    const user = userEvent.setup()
+    setPosition(11.0835, -74.045)
+    const { fetchMock } = open()
+    await writeStory(user)
+    await user.type(screen.getByLabelText('Ponle un título'), 'La trilla')
+    await user.click(screen.getByRole('button', { name: /Usar mi ubicación/ }))
+    await user.selectOptions(screen.getByRole('combobox', { name: /Cuándo ocurrió/ }), 'Antes de 1960')
+
+    await user.click(nextButton())
+    await user.click(nextButton())
+
+    await screen.findByRole('heading', { name: 'Mis historias' })
+    expect(sentBody(fetchMock)).not.toHaveProperty('lugar_nombre')
+  })
+
+  it('tells the narrator that the public map shows only an approximate point', async () => {
+    const user = userEvent.setup()
+    open()
+    await writeStory(user)
+
+    expect(screen.getByText(/en el mapa público se ve un punto aproximado/)).toBeInTheDocument()
+  })
+
   it('a place near a sector is told with its name', async () => {
     const user = userEvent.setup()
     setPosition(11.0835, -74.045)

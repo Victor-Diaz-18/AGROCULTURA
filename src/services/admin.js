@@ -55,6 +55,7 @@ export async function publishProjectStory(draft, { uploaded = new WeakMap() } = 
     epoca: draft.epoca,
     ubicacion: { lat: draft.location.lat, lon: draft.location.lon },
     ubicacion_origen: draft.location.origen,
+    ...(draft.lugar ? { lugar_nombre: draft.lugar } : {}),
     etiquetas: draft.etiquetas,
     narrador_nombre: draft.narrador || undefined,
     medios: medios.map(({ tipo, url, mime, bytes, duracion_s: duracion }) => ({

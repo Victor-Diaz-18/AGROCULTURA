@@ -52,6 +52,31 @@ describe('Ficha de la historia (F8)', () => {
     }
   })
 
+  it('says the point on the map is approximate when it is, and nothing when it is not', async () => {
+    const approximate = await openCard(storyCard({ aproximada: true }))
+    expect(await within(approximate.dialog).findByText(/El punto del mapa es aproximado \(unos 500 metros\)/)).toBeInTheDocument()
+    approximate.restore()
+  })
+
+  it('does not say it for a story placed where it really is', async () => {
+    const { dialog } = await openCard(storyCard({ aproximada: false }))
+
+    await within(dialog).findByRole('heading', { name: /camino de mulas/ })
+    expect(within(dialog).queryByText(/aproximado/)).not.toBeInTheDocument()
+  })
+
+  it('says the name the narrator gave to the place, with its sector', async () => {
+    const { dialog } = await openCard(storyCard({ lugar_nombre: 'Finca La Esperanza', sector_id: 'la-tagua' }))
+
+    expect(await within(dialog).findByText('Finca La Esperanza, La Tagua')).toBeInTheDocument()
+  })
+
+  it('says "Otro lugar de la zona" for a place far from every sector, and its name when it has one', async () => {
+    const plain = await openCard(storyCard({ sector_id: null }))
+    expect(await within(plain.dialog).findByText('Otro lugar de la zona')).toBeInTheDocument()
+    plain.restore()
+  })
+
   it('says "zona de Minca" for the other sectors, as the design does', async () => {
     const { dialog } = await openCard(storyCard({ sector_id: 'la-tagua' }))
 

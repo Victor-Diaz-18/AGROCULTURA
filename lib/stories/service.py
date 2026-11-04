@@ -12,7 +12,7 @@ from lib.catalog import service as catalog
 from lib.core.clock import utcnow
 from lib.core.errors import InvalidDataError, NotFoundError
 from lib.media.validation import check_media_url
-from lib.stories import repository
+from lib.stories import privacy, repository
 from lib.stories.constants import ORIGENES, TIPOS_MEDIO
 from lib.stories.schemas import HistoriaIn
 
@@ -119,6 +119,7 @@ def insert_story(
         "epoca": data.epoca,
         "fecha_hechos": None,  # the design only asks for the epoch
         "sector_id": sector_id,
+        "lugar_nombre": data.lugar_nombre,
         "etiquetas": data.etiquetas,
         "ubicacion": location,
         "ubicacion_origen": data.ubicacion_origen,
@@ -129,7 +130,7 @@ def insert_story(
         "motivo_rechazo": None,
         "origen": origen,
         "ejemplo": False,
-        "busqueda": search_text(data.titulo, narrador_nombre, sector_name, data.epoca, " ".join(data.etiquetas)),
+        "busqueda": search_text(data.titulo, narrador_nombre, sector_name, data.lugar_nombre or "", data.epoca, " ".join(data.etiquetas)),
         "creada_en": now,
         "enviada_en": now,
         "revisada_en": None,
@@ -165,6 +166,7 @@ def my_stories(db: Database, user: dict) -> list[dict]:
             "codigo": story["codigo"],
             "titulo": story["titulo"],
             "sector_id": story.get("sector_id"),
+            "lugar_nombre": story.get("lugar_nombre"),
             "epoca": story["epoca"],
             "formatos": formats_of(story),
             "estado": story["estado"],
@@ -185,18 +187,20 @@ def _coordinates(story: dict) -> tuple[float, float]:
 
 
 def story_for_map(story: dict) -> dict:
-    lat, lon = _coordinates(story)
+    lat, lon, approximate = privacy.public_point(story)  # the exact point never leaves through here
     first_photo = next((m.get("url") for m in story.get("medios", []) if m.get("tipo") == "foto" and m.get("url")), None)
     return {
         "codigo": story["codigo"],
         "titulo": story["titulo"],
         "narrador_nombre": story.get("narrador_nombre", ""),
         "sector_id": story.get("sector_id"),
+        "lugar_nombre": story.get("lugar_nombre"),
         "epoca": story["epoca"],
         "formatos": formats_of(story),
         "origen": story["origen"],
         "lat": lat,
         "lon": lon,
+        "aproximada": approximate,
         "foto_url": first_photo,
         "publicada_en": _iso(story.get("publicada_en")),
     }

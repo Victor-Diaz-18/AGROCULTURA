@@ -12,6 +12,7 @@ from lib.stories.constants import EPOCAS, NARRADOR_PROYECTO
 MAX_TAGS = 6
 MAX_PHOTOS = 6
 MAX_TEXT = 5000
+MAX_PLACE_NAME = 80
 
 
 # ---- statistics --------------------------------------------------------------
@@ -68,7 +69,18 @@ class HistoriaIn(BaseModel):
     etiquetas: list[str] = Field(default_factory=list, max_length=20)
     ubicacion: UbicacionIn
     ubicacion_origen: Literal["gps", "mapa", "sector"]
+    lugar_nombre: str | None = Field(None, max_length=200)  # optional name of the place, e.g. "Finca La Esperanza"
     medios: list[MedioIn] = Field(default_factory=list, max_length=20)
+
+    @field_validator("lugar_nombre")
+    @classmethod
+    def clean_place_name(cls, value: str | None) -> str | None:
+        name = re.sub(r"\s+", " ", value or "").strip()
+        if not name:
+            return None
+        if len(name) > MAX_PLACE_NAME:
+            raise ValueError(f"El nombre del lugar es muy largo (máximo {MAX_PLACE_NAME} letras).")
+        return name
 
     @field_validator("client_id")
     @classmethod
@@ -157,11 +169,13 @@ class HistoriaMapa(BaseModel):
     titulo: str
     narrador_nombre: str
     sector_id: str | None = None  # None: another place of the zone
+    lugar_nombre: str | None = None
     epoca: str
     formatos: list[str]
     origen: str
     lat: float
     lon: float
+    aproximada: bool = False  # the point is rounded (about 500 m) to care for the privacy of whoever told it
     foto_url: str | None = None  # the first photo, for the thumbnail
     publicada_en: str
 
@@ -190,6 +204,7 @@ class HistoriaAdmin(BaseModel):
     texto: str
     narrador_nombre: str
     sector_id: str | None = None
+    lugar_nombre: str | None = None
     epoca: str
     etiquetas: list[str]
     formatos: list[str]
@@ -219,6 +234,7 @@ class HistoriaMia(BaseModel):
     codigo: str
     titulo: str
     sector_id: str | None = None  # None: another place of the zone
+    lugar_nombre: str | None = None
     epoca: str
     formatos: list[str]
     estado: str

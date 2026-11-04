@@ -124,6 +124,10 @@ Al cerrar cada bloque se compara el resultado con el diseño de referencia (qué
   sector es opcional y lo calcula el servidor (el más cercano dentro de 3 km; si no, «Otro lugar de la zona»). El
   diseño decía «Toca el sector en el mapa»; ahora dice «Toca el lugar en el mapa» y los botones de sector son
   atajos. «Nueva historia del proyecto» también elige el lugar en el mapa (ya no hay lista de sectores).
+- **Privacidad y nombre del lugar** (decididos con el equipo): lo público ve un punto aproximado (cuadrícula de
+  ~500 m) de las historias contadas con GPS o tocando el mapa; el exacto solo lo ven los administradores. Campo
+  opcional «Nombre del lugar» (hasta 80 letras) en el paso 2 y en «Nueva historia del proyecto». **Tijereras**:
+  no se pidió su posición; se queda provisional, sin nombre en el mapa y sin botón de atajo.
 - Adiciones y decisiones del bloque 5:
   - El mapa es **Leaflet de verdad** (el del diseño era un dibujo): lleva control de zoom, la atribución de
     OpenStreetMap y agrupa los pines cercanos (un círculo verde oscuro con cuántas historias hay; al tocarlo se acerca).

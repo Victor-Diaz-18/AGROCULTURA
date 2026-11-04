@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { CONFIG } from '../test/fixtures.js'
-import { appleMapsUrl, distanceKm, googleMapsUrl, inBounds, inZone, placeName, pointsOf, sectorAt } from './geo.js'
+import { appleMapsUrl, distanceKm, googleMapsUrl, inBounds, inZone, placeLine, placeName, pointsOf, sectorAt } from './geo.js'
 
 describe('distanceKm', () => {
   it('is zero for the same point and about 111 km per degree of latitude', () => {
@@ -56,6 +56,21 @@ describe('placeName', () => {
     expect(placeName('la-tagua', CONFIG.sectores)).toBe('La Tagua')
     expect(placeName(null, CONFIG.sectores)).toBe('Otro lugar de la zona')
     expect(placeName('desaparecido', CONFIG.sectores)).toBe('Otro lugar de la zona')
+  })
+})
+
+describe('placeLine', () => {
+  it('puts the name given to the place before its sector', () => {
+    expect(placeLine({ sector_id: 'la-tagua', lugar_nombre: 'Finca La Esperanza' }, CONFIG.sectores)).toBe('Finca La Esperanza, La Tagua')
+  })
+
+  it('is the name alone when the place has no sector', () => {
+    expect(placeLine({ sector_id: null, lugar_nombre: 'Finca La Esperanza' }, CONFIG.sectores)).toBe('Finca La Esperanza')
+  })
+
+  it('is the sector, or "Otro lugar de la zona", when the place has no name', () => {
+    expect(placeLine({ sector_id: 'minca', lugar_nombre: null }, CONFIG.sectores)).toBe('Minca')
+    expect(placeLine({ sector_id: null }, CONFIG.sectores)).toBe('Otro lugar de la zona')
   })
 })
 

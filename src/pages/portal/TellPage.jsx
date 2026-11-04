@@ -18,7 +18,7 @@ import { ApiError, OfflineError } from '../../services/http.js'
 import { sendStory } from '../../services/stories.js'
 import { formatDuration } from '../../utils/format.js'
 import { newId } from '../../utils/id.js'
-import { placeName } from '../../utils/geo.js'
+import { placeLine } from '../../utils/geo.js'
 
 const SUBTITLE = 'Con tu voz, una foto, un video o por escrito. Nadie la ve hasta que un administrador la aprueba.'
 
@@ -58,6 +58,7 @@ export default function TellPage() {
   const [fotos, setFotos] = useState([])
   const [titulo, setTitulo] = useState('')
   const [location, setLocation] = useState(null)
+  const [lugar, setLugar] = useState('')
   const [epoca, setEpoca] = useState('')
   const [etiquetas, setEtiquetas] = useState([])
   const [sending, setSending] = useState(false)
@@ -114,7 +115,7 @@ export default function TellPage() {
   if (fotos.length > 0) formats.push(fotos.length === 1 ? '1 foto' : `${fotos.length} fotos`)
   const summary = {
     titulo: titulo.trim() || 'Sin título todavía',
-    lugar: location ? placeName(location.sectorId, config.sectores) : 'Sin elegir',
+    lugar: location ? placeLine({ sector_id: location.sectorId, lugar_nombre: lugar.trim() }, config.sectores) : 'Sin elegir',
     epoca: epoca || 'Sin elegir',
     narrador: user?.nombre ?? '',
     texto:
@@ -130,7 +131,7 @@ export default function TellPage() {
     setSendError('')
     try {
       await sendStory(
-        { clientId, titulo: titulo.trim(), texto: texto.trim(), epoca, location, etiquetas: sentTags, audio, fotos },
+        { clientId, titulo: titulo.trim(), texto: texto.trim(), epoca, location, lugar: lugar.trim(), etiquetas: sentTags, audio, fotos },
         { uploaded: uploaded.current },
       )
     } catch (error) {
@@ -182,6 +183,8 @@ export default function TellPage() {
               onTitulo={setTitulo}
               location={location}
               onLocation={setLocation}
+              lugar={lugar}
+              onLugar={setLugar}
               epoca={epoca}
               onEpoca={setEpoca}
               etiquetas={etiquetas}

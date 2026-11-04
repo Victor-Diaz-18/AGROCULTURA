@@ -9,7 +9,7 @@ import { formatDate } from '../../utils/format.js'
 import StoryMedia from '../story/StoryMedia.jsx'
 import Icon from '../ui/Icon.jsx'
 import Modal from '../ui/Modal.jsx'
-import { placeName } from '../../utils/geo.js'
+import { placeLine } from '../../utils/geo.js'
 
 /**
  * Review of one story (F6): read it, hear it, see it, tick the three checks and approve; or reject with a reason.
@@ -30,7 +30,7 @@ export default function ReviewModal({ story, queue, variant = 'portal', onClose,
 
   const allChecked = COMPROBACIONES.every(({ id }) => checked.includes(id))
   const position = queue.findIndex((item) => item.codigo === story.codigo)
-  const sectorName = placeName(story.sector_id, config.sectores)
+  const sectorName = placeLine(story, config.sectores)
 
   const toggle = (id) => setChecked((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]))
 

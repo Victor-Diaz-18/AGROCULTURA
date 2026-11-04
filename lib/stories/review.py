@@ -23,6 +23,7 @@ def story_for_admin(story: dict) -> dict:
         "texto": story.get("texto", ""),
         "narrador_nombre": story.get("narrador_nombre", ""),
         "sector_id": story.get("sector_id"),
+        "lugar_nombre": story.get("lugar_nombre"),
         "epoca": story["epoca"],
         "etiquetas": story.get("etiquetas", []),
         "formatos": service.formats_of(story),

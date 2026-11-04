@@ -32,6 +32,7 @@ export function buildStoryPayload(draft, medios) {
     etiquetas: draft.etiquetas,
     ubicacion: { lat: draft.location.lat, lon: draft.location.lon },
     ubicacion_origen: draft.location.origen,
+    ...(draft.lugar ? { lugar_nombre: draft.lugar } : {}),
     medios: medios.map(({ tipo, url, mime, bytes, duracion_s: duracion }) => ({
       tipo,
       url,
