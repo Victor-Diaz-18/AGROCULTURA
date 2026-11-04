@@ -33,6 +33,18 @@ describe('Header', () => {
     expect(toggle).toHaveAttribute('aria-pressed', 'false')
   })
 
+  it('tells the person when the signal goes and when it comes back', async () => {
+    const user = userEvent.setup()
+    renderApp()
+    const toggle = screen.getByRole('button', { name: /Simular conexión/ })
+
+    await user.click(toggle)
+    expect(await screen.findByText('Sin señal: lo que cuentes se guarda en el dispositivo.')).toBeInTheDocument()
+
+    await user.click(toggle)
+    expect(await screen.findByText('Volvió la señal.')).toBeInTheDocument()
+  })
+
   it('does not call the API while the demo switch simulates no signal, and reloads when it ends', async () => {
     const user = userEvent.setup()
     const { fetchMock } = renderApp()

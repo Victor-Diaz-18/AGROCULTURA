@@ -1,3 +1,8 @@
+/*
+ * border-box everywhere keeps component CSS simple. The prototypes used the browser
+ * default (content-box) on a few cards with an explicit flex-basis/width; those
+ * rules set `box-sizing: content-box` on purpose to keep the approved proportions.
+ */
 *,
 *::before,
 *::after {

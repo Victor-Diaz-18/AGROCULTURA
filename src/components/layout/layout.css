@@ -344,9 +344,10 @@
 .ag-header--admin .ag-brand__name {
   font-size: 15px;
 }
-.ag-brand--inline {
-  align-items: baseline;
+.ag-brand__line {
+  display: flex;
   flex-wrap: wrap;
+  align-items: baseline;
   gap: 10px;
 }
 .ag-admin-tag {

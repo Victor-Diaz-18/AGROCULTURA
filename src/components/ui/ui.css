@@ -250,6 +250,9 @@
   font-size: 13px;
   color: var(--texto-3);
 }
+.ag-stat--tight {
+  gap: 8px; /* admin summary cards */
+}
 .ag-stat--aviso {
   background: var(--aviso-fondo);
   border-color: var(--aviso-borde);

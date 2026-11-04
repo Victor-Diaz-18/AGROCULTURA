@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { screen } from '@testing-library/react'
+import { act, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderApp } from '../test/renderApp.jsx'
 import { splitForSpeech } from './SpeechContext.jsx'
@@ -63,6 +63,29 @@ describe('voice guide (F9)', () => {
     await user.click(screen.getByRole('button', { name: 'Escuchar' }))
 
     expect(await screen.findByText('Este dispositivo no puede leer en voz alta.')).toBeInTheDocument()
+  })
+
+  it('tells the person when the device has no voice that can read', async () => {
+    const user = userEvent.setup()
+    renderApp()
+    await user.click(screen.getByRole('button', { name: 'Escuchar' }))
+
+    const utterance = window.speechSynthesis.speak.mock.calls[0][0]
+    act(() => utterance.onerror({ error: 'synthesis-failed' }))
+
+    expect(await screen.findByText('No se pudo leer en voz alta en este dispositivo.')).toBeInTheDocument()
+    expect(screen.queryByText(/Leyendo en voz alta/)).not.toBeInTheDocument()
+  })
+
+  it('does not warn when the reading is stopped on purpose', async () => {
+    const user = userEvent.setup()
+    renderApp()
+    await user.click(screen.getByRole('button', { name: 'Escuchar' }))
+
+    const utterance = window.speechSynthesis.speak.mock.calls[0][0]
+    act(() => utterance.onerror({ error: 'interrupted' }))
+
+    expect(screen.queryByText('No se pudo leer en voz alta en este dispositivo.')).not.toBeInTheDocument()
   })
 
   it('splits long text into short pieces on sentence ends', () => {

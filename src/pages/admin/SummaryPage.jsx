@@ -17,7 +17,7 @@ export default function SummaryPage() {
       />
 
       <div className="ag-stats" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))' }}>
-        <button type="button" className="ag-stat ag-stat--aviso ag-stat--button" onClick={() => navigate('/admin/revision')}>
+        <button type="button" className="ag-stat ag-stat--tight ag-stat--aviso ag-stat--button" onClick={() => navigate('/admin/revision')}>
           <span className="ag-stat__title">Por revisar</span>
           <span className="ag-stat__value">{stats.en_revision}</span>
           <span className="ag-stat__note" style={{ fontWeight: 700 }}>
@@ -25,7 +25,7 @@ export default function SummaryPage() {
           </span>
         </button>
 
-        <div className="ag-stat">
+        <div className="ag-stat ag-stat--tight">
           <span className="ag-stat__title">Publicadas en el mapa</span>
           <span className="ag-stat__value">{stats.publicadas}</span>
           <span className="ag-stat__note">
@@ -33,7 +33,7 @@ export default function SummaryPage() {
           </span>
         </div>
 
-        <div className="ag-stat">
+        <div className="ag-stat ag-stat--tight">
           <span className="ag-stat__title">Sectores con historias</span>
           <div className="ag-stat__row">
             <span className="ag-stat__value">{stats.sectores_con_historias}</span>
@@ -44,7 +44,7 @@ export default function SummaryPage() {
           </div>
         </div>
 
-        <div className="ag-stat">
+        <div className="ag-stat ag-stat--tight">
           <span className="ag-stat__title">Formatos publicados</span>
           <div className="ag-stat__formats">
             <span>

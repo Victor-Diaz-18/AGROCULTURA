@@ -130,6 +130,7 @@
   line-height: 1.5;
 }
 .ag-future__deps {
+  box-sizing: content-box; /* the design relies on the default here: flex-basis excludes padding */
   display: flex;
   flex: 1 1 260px;
   flex-direction: column;

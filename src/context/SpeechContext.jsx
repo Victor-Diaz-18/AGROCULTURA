@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import Icon from '../components/ui/Icon.jsx'
+import { useToast } from './ToastContext.jsx'
 
 /**
  * Voice guide (F9): reads a page aloud with the browser's speech synthesis, in
@@ -47,6 +48,7 @@ export function SpeechProvider({ children }) {
   const [reading, setReading] = useState('')
   const session = useRef(0) // identifies the current reading so a stale "end" event is ignored
   const location = useLocation()
+  const toast = useToast()
 
   const stop = useCallback(() => {
     session.current += 1
@@ -77,14 +79,18 @@ export function SpeechProvider({ children }) {
         }
         utterance.onerror = (event) => {
           const interrupted = event?.error === 'interrupted' || event?.error === 'canceled'
-          if (session.current === mine && !interrupted) setReading('')
+          if (session.current !== mine || interrupted) return
+          session.current += 1 // ignore the errors of the remaining pieces
+          synth()?.cancel()
+          setReading('')
+          toast('No se pudo leer en voz alta en este dispositivo.', 'info')
         }
         synth().speak(utterance)
       })
       setReading(title)
       return true
     },
-    [supported],
+    [supported, toast],
   )
 
   // A page change must not keep reading the previous page.

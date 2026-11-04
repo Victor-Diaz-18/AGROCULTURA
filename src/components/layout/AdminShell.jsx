@@ -31,12 +31,14 @@ export default function AdminShell() {
   return (
     <div className="ag-app ag-app--admin">
       <header className="ag-header ag-header--admin">
-        <div className="ag-brand ag-brand--inline">
+        <div className="ag-brand">
           <div className="ag-brand__logo">
             <Icon name="pin" size={18} strokeWidth={2.2} />
           </div>
-          <span className="ag-brand__name">{config.portal.nombre}</span>
-          <span className="ag-admin-tag">ADMINISTRACIÓN</span>
+          <div className="ag-brand__line">
+            <span className="ag-brand__name">{config.portal.nombre}</span>
+            <span className="ag-admin-tag">ADMINISTRACIÓN</span>
+          </div>
         </div>
         <div className="ag-header__actions">
           <Link to="/" className="ag-public-link">
