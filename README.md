@@ -23,8 +23,8 @@ Equipo Protopía: Jeison, Victor y Marleidys. Referencia: [La Piragua](https://l
 
 ## Requisitos
 
-- Node.js 20 o superior
-- Python 3.12 o superior
+- Node.js 22 (Vercel usa la misma versión; ver `engines` en `package.json`)
+- Python 3.12 (ver `.python-version`)
 - Una base de datos en MongoDB Atlas (ver [MongoDB Atlas](#mongodb-atlas))
 
 ## Instalación
@@ -123,17 +123,20 @@ pytest                 # backend: pytest + httpx (con el entorno virtual activad
 - Cada prueba del frontend vive junto al componente que prueba (por ejemplo
   `src/offline/connectivity.test.js`).
 
-## Cargar los datos iniciales (seed)
+## Datos iniciales
 
-Con `MONGODB_URI` definido en tu `.env` y el entorno virtual activado:
+La primera vez que la API se conecta a una base vacía, **carga sola** los sectores, las etiquetas y la
+configuración del portal (queda una marca en la colección `configuracion` para que no se repita).
+Por eso, para desplegar solo hace falta definir `MONGODB_URI`.
+
+Si prefieres cargarlos a mano (con `MONGODB_URI` en tu `.env` y el entorno virtual activado):
 
 ```bash
 python -m scripts.seed
 ```
 
-Carga los sectores, las etiquetas y la configuración del portal. **Solo llena colecciones vacías**:
-si la base ya tiene datos, no los sobrescribe. (Los centros de los sectores son provisionales hasta
-confirmarlos con las familias de la zona.)
+El seed **solo llena colecciones vacías**: nunca sobrescribe lo que ya existe. Los centros de los
+sectores son provisionales hasta confirmarlos con las familias de la zona.
 
 ## API
 

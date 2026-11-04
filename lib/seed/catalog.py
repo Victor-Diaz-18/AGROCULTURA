@@ -38,6 +38,13 @@ PORTAL_SEED = {
 }
 
 
+def _seed_portal(db: Database) -> int:
+    """Creates the portal document if missing (by id, so other documents in the collection do not matter)."""
+    values = {key: value for key, value in PORTAL_SEED.items() if key != "_id"}
+    result = db[CONFIG].update_one({"_id": PORTAL_ID}, {"$setOnInsert": values}, upsert=True)
+    return 1 if result.upserted_id is not None else 0
+
+
 def _insert_if_empty(collection: Collection, documents: list[dict]) -> int:
     if collection.count_documents({}) > 0:
         return 0
@@ -52,5 +59,5 @@ def seed_catalog(db: Database) -> dict[str, int]:
         "etiquetas": _insert_if_empty(
             db[ETIQUETAS], [{"nombre": nombre, "orden": i} for i, nombre in enumerate(ETIQUETAS_SEED, 1)]
         ),
-        "configuracion": _insert_if_empty(db[CONFIG], [dict(PORTAL_SEED)]),
+        "configuracion": _seed_portal(db),
     }

@@ -99,3 +99,6 @@ Al cerrar cada bloque se compara el resultado con el diseño de referencia (qué
   del diseño; no son geografía real y hay que confirmarlos con las familias.
 - Starlette recomienda `httpx2` para su `TestClient`; se mantiene `httpx` como se acordó y se silencia
   solo ese aviso en `pytest.ini`. Migrar es cambiar una línea de `requirements-dev.txt`.
+- Versiones fijadas tras el primer despliegue: Node 22.x (`engines`) y Python 3.12 (`.python-version`).
+- El catálogo (sectores, etiquetas, configuración) se carga solo la primera vez que la API ve una base
+  vacía (`lib/core/bootstrap.py`); el administrador inicial se creará igual desde el bloque 2.
