@@ -69,7 +69,7 @@ export default function AdminShell() {
             variant="admin"
             ariaLabel="Secciones de administración"
             top={
-              <Link to="/admin/historias" className="ag-nav__create">
+              <Link to="/admin/historias?nueva=1" className="ag-nav__create">
                 <Icon name="mas" size={18} strokeWidth={2.4} />
                 <span>Crear historia</span>
               </Link>

@@ -18,6 +18,8 @@ import './components/layout/layout.css'
 import './components/auth/auth.css'
 import './components/map/map.css'
 import './components/tell/tell.css'
+import './components/story/story.css'
+import './components/admin/admin.css'
 import './pages/pages.css'
 
 import App from './App.jsx'

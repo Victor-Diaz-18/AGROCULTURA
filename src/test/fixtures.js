@@ -1,7 +1,7 @@
 import { EMPTY_STATS } from '../config/constants.js'
 
 export const CONFIG = {
-  portal: { nombre: 'AGROCULTURA', avisar_rechazo: false, datos_de_ejemplo: true },
+  portal: { nombre: 'AGROCULTURA', avisar_rechazo: false, datos_de_ejemplo: true, reinicio_disponible: false },
   sectores: [
     { id: 'minca', nombre: 'Minca', centro: { lat: 11.14, lon: -74.118 } },
     { id: 'la-tagua', nombre: 'La Tagua', centro: { lat: 11.13, lon: -74.087 } },
@@ -12,7 +12,29 @@ export const CONFIG = {
   epocas: ['Antes de 1960', '1960 a 1979', '1980 a 1999', '2000 en adelante'],
   motivos_rechazo: [
     { id: 'fuera-del-tema', etiqueta: 'Fuera del tema', texto: 'Fuera del tema: no trata de la cultura cafetera' },
+    { id: 'contenido-incompleto', etiqueta: 'Contenido incompleto', texto: 'Contenido incompleto o no se entiende' },
   ],
 }
 
 export const STATS = { ...EMPTY_STATS }
+
+/** A story as /api/admin/historias answers it. */
+export const adminStory = (overrides = {}) => ({
+  codigo: 'HIS-2026-008',
+  titulo: 'El beneficiadero comunitario',
+  texto: 'Entre varias familias armamos un beneficiadero para lavar y secar el café de todos.',
+  narrador_nombre: 'Jorge Iván Castro',
+  sector_id: 'la-tagua',
+  epoca: '2000 en adelante',
+  etiquetas: ['#café', '#oficios'],
+  formatos: ['Texto'],
+  medios: [],
+  estado: 'revision',
+  origen: 'comunidad',
+  ejemplo: false,
+  motivo_rechazo: null,
+  enviada_en: '2026-10-18T12:00:00Z',
+  revisada_en: '',
+  publicada_en: '',
+  ...overrides,
+})

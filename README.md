@@ -63,7 +63,7 @@ Están descritas en [`.env.example`](.env.example). Las principales:
 | `ADMIN_USER`, `ADMIN_PASSWORD` | Administrador inicial. La contraseña tiene **10 caracteres o más** |
 | `SEED_DEMO_NARRATOR_*` | Narradora de ejemplo (opcional) |
 | `BLOB_READ_WRITE_TOKEN` | Token de Vercel Blob, donde se guardan las fotos y los audios. Aparece solo al conectar un *Blob store* al proyecto (Storage → Create → Blob, con acceso **Public**) |
-| `ALLOW_DEMO_RESET` | Permite el botón "Reiniciar datos de ejemplo" |
+| `ALLOW_DEMO_RESET` | Muestra y permite el botón «Reiniciar datos de ejemplo» (**borra todas las historias**). Sin esta variable (o con `false`) el botón no existe. Se quita antes de usar la plataforma con familias reales |
 | `VITE_SHOW_CODES` | Muestra los códigos F1, F2… del diseño |
 
 Para generar un `JWT_SECRET` (con Node, que ya tienes instalado):
@@ -175,6 +175,33 @@ sectores son provisionales hasta confirmarlos con las familias de la zona.
 - El lugar se elige tocando un sector, tocando el mapa o con el botón «Usar mi ubicación» (el GPS del
   teléfono funciona sin señal). Se guarda como un punto GeoJSON `[longitud, latitud]` con un índice `2dsphere`.
 
+## Administración (revisión, historias del proyecto y ajustes)
+
+Todo lo de `/api/admin/*` exige una sesión de administrador: el guardián está en el propio router, y una prueba
+recorre **todas** las rutas `/api/admin/*` del esquema de la API (también las que se agreguen) comprobando que un
+visitante recibe 401 y un narrador 403.
+
+- **Revisión (F6).** Para **aprobar** hay que marcar las tres comprobaciones (cultura cafetera, territorio, datos
+  personales): el servidor las exige, no solo el botón. Para **rechazar** hace falta un motivo de la lista; el
+  narrador lo lee en «Mis historias» y se guarda tal como se escribió (si la lista cambia después, no se reescribe
+  la historia). Una historia se decide **una sola vez**: la decisión es una sola operación atómica sobre las que
+  siguen «en revisión», así que dos administradores no pueden decidir la misma a la vez (el segundo recibe 409).
+  Las historias del proyecto no pasan por revisión.
+- **Historias del proyecto (F12).** Se publican de una vez y quedan marcadas «del proyecto». Los archivos los sube
+  el propio administrador (`POST /api/medios`) y una historia solo puede apuntar a archivos que subió quien la crea.
+  Sin punto en el mapa, queda en el centro de su sector.
+- **Configuración (F7).** Nombre del portal, «avisar al narrador si se rechaza» (se guarda, pero todavía no envía
+  ningún aviso: está por definir con el profesor), la etiqueta «datos de ejemplo» del encabezado y las etiquetas
+  (se normalizan como `#café-viejo`; máximo 40; quitar una no cambia las historias que ya la tienen). **Los
+  sectores son de solo lectura.**
+- **Reiniciar datos de ejemplo.** Solo con `ALLOW_DEMO_RESET` activo y con un administrador con sesión. Borra
+  **todas** las historias, también las reales, y los archivos a los que apuntan, y carga las 12 historias de
+  ejemplo del diseño (`HIS-2026-001` a `012`; la siguiente historia real será la `013`). Pide escribir la palabra
+  `REINICIAR`. Si hay una narradora de ejemplo (`SEED_DEMO_NARRATOR_*`), se queda con dos de ellas, como Ana en el
+  diseño. **Para quitar la función:** borra `lib/seed/demo.py`, `lib/admin/demo_router.py`, su línea en
+  `api/index.py`, `src/components/admin/DemoResetDialog.jsx` y la tarjeta «Datos de ejemplo» de
+  `SettingsPage.jsx`; o simplemente no definas `ALLOW_DEMO_RESET`.
+
 ## API
 
 La documentación interactiva está en `/api/docs` cuando la API corre. Rutas disponibles por ahora:
@@ -190,6 +217,13 @@ La documentación interactiva está en `/api/docs` cuando la API corre. Rutas di
 | `POST /api/medios` | Sube una foto o un audio (narrador o administrador); devuelve su URL en Blob |
 | `POST /api/historias` | Envía una historia (solo narradores); queda siempre «en revisión» |
 | `GET /api/historias/mias` | Las historias del narrador que ingresó, con su estado y el motivo si no se publicó |
+| `GET /api/admin/historias` | Historias con todo su contenido, filtradas por `estado` y `origen` (administrador) |
+| `POST /api/admin/historias/{codigo}/aprobar` | Publica una historia en revisión; exige las tres comprobaciones |
+| `POST /api/admin/historias/{codigo}/rechazar` | Rechaza una historia en revisión; exige un motivo de la lista |
+| `POST /api/admin/historias-proyecto` | Publica una historia del equipo (origen «proyecto») |
+| `PATCH /api/admin/portal` | Cambia el nombre, «avisar al rechazar» o la etiqueta de datos de ejemplo |
+| `POST` / `DELETE /api/admin/etiquetas` | Agrega o quita una etiqueta |
+| `POST /api/admin/reiniciar-ejemplo` | Borra todas las historias y carga las de ejemplo (solo con `ALLOW_DEMO_RESET`) |
 
 ## MongoDB Atlas
 
@@ -236,7 +270,8 @@ La versión 1 se construye por bloques (ver `docs/plan-v1.md`).
 - [x] Bloque 1: base visual, encabezado, menú, conexión simulada, voz, `/api/config` y `/api/estadisticas`
 - [x] Bloque 2: registro e ingreso (F2)
 - [x] Bloque 3: contar una historia con voz, texto y fotos; «Mis historias» (F3, F4, F5)
-- [ ] Bloques 4 a 8: moderación, mapa, sin conexión, filtros, video y cierre
+- [x] Bloque 4: revisión, historias del proyecto, configuración y reinicio de ejemplo (F6, F7, F12)
+- [ ] Bloques 5 a 8: mapa, sin conexión, filtros, video y cierre
 
 En `docs/comparacion/` hay capturas de cada bloque frente al diseño aprobado. Los pasos para
 desplegar en Vercel se documentan al cerrar el bloque 8.

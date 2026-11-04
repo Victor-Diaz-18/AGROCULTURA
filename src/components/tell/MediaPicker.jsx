@@ -34,7 +34,8 @@ function PhotoChip({ photo, onRemove }) {
   )
 }
 
-export default function MediaPicker({ photos, nextName, onAdd, onRemove }) {
+/** `heading`: the title above the buttons (null hides it). `children`: more buttons for the same row (e.g. "Agregar audio"). */
+export default function MediaPicker({ photos, nextName, onAdd, onRemove, heading = 'Fotos', children }) {
   const input = useRef(null)
   const [busy, setBusy] = useState(false)
   const [problem, setProblem] = useState('')
@@ -66,13 +67,14 @@ export default function MediaPicker({ photos, nextName, onAdd, onRemove }) {
 
   return (
     <div className="ag-tell__block ag-tell__block--wide">
-      <div className="ag-tell__label">Fotos</div>
+      {heading && <div className="ag-tell__label">{heading}</div>}
       <div className="ag-attach">
         <Button variant="line" icon="camara" onClick={() => input.current?.click()} disabled={busy || photos.length >= LIMITS.fotos}>
           <span>Agregar foto</span>
           <FCode>F4</FCode>
         </Button>
         <input ref={input} type="file" accept="image/*" multiple hidden aria-label="Elegir fotos" onChange={pick} />
+        {children}
       </div>
       {busy && (
         <p role="status" className="ag-hint">

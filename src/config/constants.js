@@ -2,6 +2,16 @@
 
 export const EPOCAS = ['Antes de 1960', '1960 a 1979', '1980 a 1999', '2000 en adelante']
 
+/** What the administrator confirms before approving a story. The ids are the ones the server asks for. */
+export const COMPROBACIONES = [
+  { id: 'tema', texto: 'Trata de la cultura cafetera.' },
+  { id: 'territorio', texto: 'Ocurrió en Minca o en un sector aledaño.' },
+  { id: 'datos', texto: 'No expone datos personales de otras personas.' },
+]
+
+/** The most an upload may weigh (a Vercel function takes about 4.5 MB per request): same as lib/media/validation.py. */
+export const MAX_UPLOAD_BYTES = 3_500_000
+
 /** Applied when the narrator picks no tag, as in the approved design. */
 export const DEFAULT_TAG = '#café'
 

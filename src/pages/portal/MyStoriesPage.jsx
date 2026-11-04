@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PageHeader from '../../components/layout/PageHeader.jsx'
 import Button from '../../components/ui/Button.jsx'
+import DataTable, { Cell, TableRow } from '../../components/ui/DataTable.jsx'
 import FCode from '../../components/ui/FCode.jsx'
 import Icon from '../../components/ui/Icon.jsx'
 import ListenButton from '../../components/ui/ListenButton.jsx'
@@ -14,6 +15,8 @@ import useConnectivity from '../../hooks/useConnectivity.js'
 import { formatDate } from '../../utils/format.js'
 
 const READ_ALOUD = 'Mis historias. Lo que has contado y en qué va cada historia.'
+
+const COLUMNS = ['CÓDIGO', 'HISTORIA', 'SECTOR', 'FORMATOS', 'FECHA', 'ESTADO', 'QUÉ SIGUE']
 
 const TABS = [
   { id: 'todas', label: 'Todas', dot: 'var(--st-borrador-dot)' },
@@ -48,6 +51,24 @@ export default function MyStoriesPage() {
     count: item.id === 'todas' ? all.length : all.filter((story) => story.estado === item.id).length,
   }))
   const rows = all.filter((story) => tab === 'todas' || story.estado === tab)
+  const emptyText = {
+    loading: 'Cargando tus historias…',
+    offline: 'Sin señal: tus historias se cargarán cuando vuelva la conexión.',
+    error: (
+      <span role="alert">
+        No pudimos cargar tus historias.{' '}
+        <button type="button" className="ag-linkbutton" onClick={reload}>
+          Intentar de nuevo
+        </button>
+      </span>
+    ),
+    ready:
+      all.length === 0
+        ? 'Todavía no has contado ninguna historia. Cuando cuentes una, aparecerá aquí con su estado.'
+        : rows.length === 0
+          ? 'No hay historias en este estado.'
+          : null,
+  }[status]
   const sectorName = (id) => config.sectores.find((sector) => sector.id === id)?.nombre ?? id
 
   return (
@@ -82,55 +103,27 @@ export default function MyStoriesPage() {
         <div className="ag-table-card__bar">
           <SegmentedTabs items={items} value={tab} onChange={setTab} label="Filtrar por estado" />
         </div>
-        <div className="ag-table-card__scroll">
-          <div className="ag-mytable" role="table" aria-label="Mis historias">
-            <div className="ag-mytable__head" role="row">
-              {['CÓDIGO', 'HISTORIA', 'SECTOR', 'FORMATOS', 'FECHA', 'ESTADO', 'QUÉ SIGUE'].map((name) => (
-                <span key={name} role="columnheader">
-                  {name}
-                </span>
-              ))}
-            </div>
-            {status === 'loading' && <div className="ag-mytable__empty" role="status">Cargando tus historias…</div>}
-            {status === 'error' && (
-              <div className="ag-mytable__empty" role="alert">
-                No pudimos cargar tus historias.{' '}
-                <button type="button" className="ag-linkbutton" onClick={reload}>
-                  Intentar de nuevo
-                </button>
-              </div>
-            )}
-            {status === 'ready' && all.length === 0 && (
-              <div className="ag-mytable__empty">Todavía no has contado ninguna historia. Cuando cuentes una, aparecerá aquí con su estado.</div>
-            )}
-            {status === 'ready' && all.length > 0 && rows.length === 0 && (
-              <div className="ag-mytable__empty">No hay historias en este estado.</div>
-            )}
-            {rows.map((story) => (
-              <div key={story.codigo} className="ag-mytable__row" role="row">
-                <span role="cell" className="ag-mytable__code">
-                  {story.codigo}
-                </span>
-                <span role="cell" className="ag-mytable__title">
-                  {story.titulo}
-                </span>
-                <span role="cell">{sectorName(story.sector_id)}</span>
-                <span role="cell" className="ag-mytable__muted">
-                  {story.formatos.join(' · ')}
-                </span>
-                <span role="cell" className="ag-mytable__muted">
-                  {formatDate(story.enviada_en)}
-                </span>
-                <span role="cell">
-                  <StatusChip estado={story.estado} />
-                </span>
-                <span role="cell" className="ag-mytable__next">
-                  {nextStep(story)}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
+        <DataTable
+          label="Mis historias"
+          columns={COLUMNS.map((label) => ({ label }))}
+          template="130px minmax(220px, 2fr) 120px 150px 110px 130px minmax(150px, 1fr)"
+          minWidth={860}
+          empty={emptyText}
+        >
+          {rows.map((story) => (
+            <TableRow key={story.codigo}>
+              <Cell className="ag-table__code">{story.codigo}</Cell>
+              <Cell className="ag-table__title">{story.titulo}</Cell>
+              <Cell>{sectorName(story.sector_id)}</Cell>
+              <Cell className="ag-table__muted">{story.formatos.join(' · ')}</Cell>
+              <Cell className="ag-table__muted">{formatDate(story.enviada_en)}</Cell>
+              <Cell>
+                <StatusChip estado={story.estado} />
+              </Cell>
+              <Cell className="ag-table__next">{nextStep(story)}</Cell>
+            </TableRow>
+          ))}
+        </DataTable>
       </div>
     </>
   )

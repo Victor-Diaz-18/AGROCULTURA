@@ -84,7 +84,8 @@ Al cerrar cada bloque se compara el resultado con el diseño de referencia (qué
 | 1 Base | Hecho. Pruebas: 18 de backend (+2 que solo corren con Mongo real) y 36 de frontend. Comparación en `docs/comparacion/bloque-1/` |
 | 2 Ingreso (F2) | Hecho. Pruebas: 77 de backend (+2 con Mongo real) y 74 de frontend. Comparación en `docs/comparacion/bloque-2/` |
 | 3 Contar (F3, F4, F5) | Hecho. Pruebas: 123 de backend (+3 con Mongo real) y 153 de frontend. Comparación en `docs/comparacion/bloque-3/` |
-| 4 a 8 | Pendientes |
+| 4 Administración (F6, F7, F12) | Hecho. Pruebas: 205 de backend (+4 con Mongo real) y 226 de frontend. Comparación en `docs/comparacion/bloque-4/` |
+| 5 a 8 | Pendientes |
 
 ## Notas de construcción
 
@@ -105,6 +106,22 @@ Al cerrar cada bloque se compara el resultado con el diseño de referencia (qué
     «Ver ficha» llega con el mapa (bloque 5).
   - El título exige al menos 3 letras (lo mismo que valida el servidor).
   - Si no se elige ninguna etiqueta, se envía `#café` (como hacía el prototipo) y se muestra en el paso 3.
+- Adiciones del bloque 4 al diseño (para revisar con el equipo):
+  - La revisión muestra los **archivos** de la historia: un reproductor de audio (el mismo del diseño de la ficha),
+    las fotos y el video. Sin verlos, la revisión no sirve para decidir.
+  - «Nueva historia del proyecto» sube **archivos reales**: el selector «Formatos que vas a subir» (tres botones
+    de ejemplo) pasó a ser «Agregar foto» y «Agregar audio». El audio es un archivo que el equipo ya tiene
+    (máximo 3,5 MB por ahora; el bloque 7 puede pasar el audio a subida directa si hacen falta archivos más grandes).
+  - La **época no tiene valor por defecto** en ese formulario (el prototipo traía «1960 a 1979» puesto): un valor
+    puesto de antemano pasa desapercibido.
+  - En la tarjeta «Portal»: un interruptor para **apagar «datos de ejemplo»** del encabezado antes de usar la
+    plataforma con familias reales (el prototipo no tenía cómo).
+  - «Reiniciar datos de ejemplo» pide escribir **REINICIAR**, además del texto que dice que borra todas las
+    historias, también las reales.
+  - El nombre del portal se guarda al salir del campo (o con Enter) y avisa «Nombre del portal guardado.».
+  - La columna «Ver ficha» de las tablas llega con la ficha (bloque 5).
+- «Avisar al narrador si se rechaza» solo guarda la opción: todavía no hay aviso (correo, SMS o WhatsApp) que
+  enviar; depende de lo que decida el profesor.
 - Temporal hasta el bloque 6 (sin conexión): el botón de enviar se desactiva sin señal y los textos de
   «guardado en el dispositivo» se cambian por lo que hoy es cierto (lo escrito vive en la página mientras no se
   cierre). En el bloque 6 vuelven los textos del diseño y el borrador se guarda de verdad.
