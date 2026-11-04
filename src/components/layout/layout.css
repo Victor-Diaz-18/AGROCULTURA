@@ -119,11 +119,12 @@
 .ag-hchip--toggle .ag-hchip__dot {
   background: var(--verde-ok);
 }
-.ag-hchip--toggle[aria-pressed='true'] {
+/* Yellow whenever there is no signal: the demo switch is on, or the phone really lost it. */
+.ag-hchip--toggle[data-offline='true'] {
   border-color: #b8862a;
   background: #6b4e00;
 }
-.ag-hchip--toggle[aria-pressed='true'] .ag-hchip__dot {
+.ag-hchip--toggle[data-offline='true'] .ag-hchip__dot {
   background: var(--amarillo);
 }
 .ag-header__divider {

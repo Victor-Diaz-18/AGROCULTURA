@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { toggleSimulatedOffline } from '../../offline/connectivity.js'
+import { breakStoreForTests, loadWorkingDraft } from '../../offline/store.js'
 import { NARRATOR } from '../../test/auth.js'
 import { installFakeRecording } from '../../test/fakeMedia.js'
 import { callsTo, renderApp, reply } from '../../test/renderApp.jsx'
@@ -377,7 +378,7 @@ describe('Contar una historia: sending (F3, F5, F4)', () => {
     expect(callsTo(fetchMock, '/historias')).toHaveLength(1)
   })
 
-  it('without signal the last step explains it and does not send', async () => {
+  it('without signal the last step offers to keep the story on the device instead of sending it', async () => {
     const user = userEvent.setup()
     const { fetchMock } = open()
     await writeStory(user)
@@ -386,13 +387,13 @@ describe('Contar una historia: sending (F3, F5, F4)', () => {
 
     act(() => toggleSimulatedOffline())
 
-    expect(await screen.findByText(/Para enviarla necesitas señal/)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Enviar historia' })).toBeDisabled()
-    expect(screen.getByText('Sin señal: necesitas conexión para enviarla.')).toBeInTheDocument()
+    expect(await screen.findByText('Se guarda en el dispositivo y se envía sola cuando vuelva la señal.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Guardar en el dispositivo' })).toBeEnabled()
+    expect(screen.getByText('Sin señal: quedará como borrador.')).toBeInTheDocument()
     expect(callsTo(fetchMock, '/historias')).toHaveLength(0)
 
     act(() => toggleSimulatedOffline())
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Enviar historia' })).toBeEnabled())
+    expect(await screen.findByRole('button', { name: 'Enviar historia' })).toBeEnabled()
   })
 
   it('asks to sign in again when the session expired, without losing the story', async () => {
@@ -412,5 +413,241 @@ describe('Contar una historia: sending (F3, F5, F4)', () => {
     renderApp({ route: '/contar' })
 
     expect(screen.queryByRole('heading', { name: 'Contar una historia' })).not.toBeInTheDocument()
+  })
+})
+
+/** The narrator's list as the server keeps it: empty until a story is created. */
+function serverWithStories() {
+  const sent = []
+  return {
+    sent,
+    api: {
+      '/historias': (init) => {
+        const body = JSON.parse(init.body)
+        sent.push({
+          codigo: `HIS-2026-${String(20 + sent.length)}`,
+          titulo: body.titulo,
+          sector_id: 'minca',
+          epoca: body.epoca,
+          formatos: body.medios.length ? ['Audio'] : ['Texto'],
+          estado: 'revision',
+          motivo_rechazo: null,
+          enviada_en: '2026-11-04T10:00:00Z',
+          client_id: body.client_id,
+        })
+        return { ...sent.at(-1) }
+      },
+      '/historias/mias': () => [...sent],
+    },
+  }
+}
+
+describe('Contar una historia: sin señal (F10)', () => {
+  const finishAndSave = async (user) => {
+    await writeStory(user)
+    await fillWhereAndWhen(user)
+    await user.click(nextButton())
+  }
+
+  it('keeps the finished story on the device, tells it, and shows it as a draft in "Mis historias"', async () => {
+    const user = userEvent.setup()
+    const server = serverWithStories()
+    const { fetchMock } = open(server.api)
+    await finishAndSave(user)
+    act(() => toggleSimulatedOffline())
+
+    await user.click(await screen.findByRole('button', { name: 'Guardar en el dispositivo' }))
+
+    expect(await screen.findByRole('heading', { name: 'Mis historias' })).toBeInTheDocument()
+    expect(screen.getByText(SEND_MESSAGES.queued)).toBeInTheDocument()
+    expect(callsTo(fetchMock, '/historias')).toHaveLength(0)
+    const row = (await screen.findByText('El camino de mulas')).closest('[role="row"]')
+    expect(row).toHaveTextContent('Borrador')
+    expect(row).toHaveTextContent('Por asignar')
+    expect(row).toHaveTextContent('Se envía cuando haya señal')
+  })
+
+  it('sends it by itself when the signal returns, with the same id, and says so', async () => {
+    const user = userEvent.setup()
+    const server = serverWithStories()
+    const { fetchMock } = open(server.api)
+    await finishAndSave(user)
+    act(() => toggleSimulatedOffline())
+    await user.click(await screen.findByRole('button', { name: 'Guardar en el dispositivo' }))
+    await screen.findByText('Por asignar')
+
+    act(() => toggleSimulatedOffline())
+
+    expect(await screen.findByText('Volvió la señal: se envió 1 borrador a revisión.')).toBeInTheDocument()
+    await waitFor(() => expect(screen.queryByText('Por asignar')).not.toBeInTheDocument())
+    const row = (await screen.findByText('HIS-2026-20')).closest('[role="row"]')
+    expect(row).toHaveTextContent('En revisión')
+    expect(callsTo(fetchMock, '/historias')).toHaveLength(1)
+    expect(sentBody(fetchMock).client_id).toMatch(/^[A-Za-z0-9_-]{8,64}$/)
+  })
+
+  it('a story with a recording and photos goes out whole when the signal returns', async () => {
+    const user = userEvent.setup()
+    installFakeRecording()
+    const server = serverWithStories()
+    const { fetchMock } = open(server.api)
+    await user.click(screen.getByRole('button', { name: 'Grabar tu historia' }))
+    await user.click(await screen.findByRole('button', { name: 'Terminar de grabar' }))
+    await user.upload(screen.getByLabelText('Elegir fotos'), new File(['x'], 'p.jpg', { type: 'image/jpeg' }))
+    await screen.findByText(/foto_01\.jpg/)
+    await user.click(nextButton())
+    await fillWhereAndWhen(user)
+    await user.click(nextButton())
+    act(() => toggleSimulatedOffline())
+    await user.click(await screen.findByRole('button', { name: 'Guardar en el dispositivo' }))
+    await screen.findByText('Por asignar')
+    expect(callsTo(fetchMock, '/medios')).toHaveLength(0)
+
+    act(() => toggleSimulatedOffline())
+
+    await screen.findByText('Volvió la señal: se envió 1 borrador a revisión.')
+    const uploads = callsTo(fetchMock, '/medios').map(([, init]) => init.body.get('tipo'))
+    expect(uploads).toEqual(['audio', 'foto'])
+    expect(sentBody(fetchMock).medios.map((medio) => medio.tipo)).toEqual(['audio', 'foto'])
+  })
+
+  it('if the signal is lost while sending, the story is kept and what already went up is not uploaded again', async () => {
+    const user = userEvent.setup()
+    installFakeRecording()
+    const server = serverWithStories()
+    let signal = true
+    const { fetchMock } = open({
+      ...server.api,
+      '/historias': (init, url) => {
+        if (!signal) throw new TypeError('Failed to fetch') // what a browser does when the connection drops
+        return server.api['/historias'](init, url)
+      },
+    })
+    await user.click(screen.getByRole('button', { name: 'Grabar tu historia' }))
+    await user.click(await screen.findByRole('button', { name: 'Terminar de grabar' }))
+    await user.click(nextButton())
+    await fillWhereAndWhen(user)
+    await user.click(nextButton())
+    signal = false
+
+    await user.click(screen.getByRole('button', { name: 'Enviar historia' }))
+
+    expect(await screen.findByRole('heading', { name: 'Mis historias' })).toBeInTheDocument()
+    expect(screen.getByText(SEND_MESSAGES.queued)).toBeInTheDocument()
+    expect(await screen.findByText('Por asignar')).toBeInTheDocument()
+    expect(callsTo(fetchMock, '/medios')).toHaveLength(1)
+
+    signal = true
+    act(() => toggleSimulatedOffline())
+    act(() => toggleSimulatedOffline()) // the connection comes back
+
+    await screen.findByText(/se envió 1 borrador a revisión/)
+    expect(callsTo(fetchMock, '/medios')).toHaveLength(1) // the audio was not uploaded a second time
+    const ids = callsTo(fetchMock, '/historias').map(([, init]) => JSON.parse(init.body).client_id)
+    expect(new Set(ids).size).toBe(1) // one story, however many attempts
+  })
+
+  it('says plainly when the phone cannot keep the story beyond this page', async () => {
+    const user = userEvent.setup()
+    breakStoreForTests()
+    open(serverWithStories().api)
+    await finishAndSave(user)
+    act(() => toggleSimulatedOffline())
+
+    await user.click(await screen.findByRole('button', { name: 'Guardar en el dispositivo' }))
+
+    expect(await screen.findByText(SEND_MESSAGES.queuedLoose)).toBeInTheDocument()
+  })
+})
+
+describe('Contar una historia: lo que queda a medias se guarda en el dispositivo (F10)', () => {
+  it('comes back as it was left when the person returns to the page', async () => {
+    const user = userEvent.setup()
+    const first = open()
+    await user.type(screen.getByLabelText('O escríbela'), 'Mi abuelo sembró el primer cafetal.')
+    await user.click(nextButton())
+    await user.type(screen.getByLabelText('Ponle un título'), 'El primer cafetal')
+    await user.click(screen.getByRole('button', { name: 'Minca' }))
+    first.unmount() // closing the page
+
+    open()
+
+    expect(await screen.findByText('Recuperamos la historia que dejaste a medias.')).toBeInTheDocument()
+    expect(screen.getByText('Dónde y cuándo').closest('li')).toHaveAttribute('aria-current', 'step') // on the step it was left
+    expect(screen.getByLabelText('Ponle un título')).toHaveValue('El primer cafetal')
+    expect(screen.getByRole('complementary', { name: 'Resumen de tu historia' })).toHaveTextContent('Lugar: Minca')
+    await user.click(screen.getByRole('button', { name: 'Atrás' }))
+    expect(screen.getByLabelText('O escríbela')).toHaveValue('Mi abuelo sembró el primer cafetal.')
+  })
+
+  it('also keeps it while the person is still typing, without waiting for them to leave', async () => {
+    const user = userEvent.setup()
+    open()
+    await user.type(screen.getByLabelText('O escríbela'), 'Un recuerdo.')
+
+    await waitFor(async () => expect((await loadWorkingDraft(NARRATOR.id))?.texto).toBe('Un recuerdo.'), { timeout: 3000 })
+  })
+
+  it('brings back the recording and the photos too', async () => {
+    const user = userEvent.setup()
+    installFakeRecording()
+    const first = open()
+    await user.click(screen.getByRole('button', { name: 'Grabar tu historia' }))
+    await user.click(await screen.findByRole('button', { name: 'Terminar de grabar' }))
+    await user.upload(screen.getByLabelText('Elegir fotos'), new File(['x'], 'p.jpg', { type: 'image/jpeg' }))
+    await screen.findByText(/foto_01\.jpg/)
+    first.unmount()
+
+    open()
+
+    expect(await screen.findByText(/Audio grabado/)).toBeInTheDocument()
+    expect(screen.getByText('Se guarda en este dispositivo hasta que la envíes.')).toBeInTheDocument()
+    expect(screen.getByText(/foto_01\.jpg/)).toBeInTheDocument()
+  })
+
+  it('"Empezar de nuevo" leaves an empty page and nothing is kept', async () => {
+    const user = userEvent.setup()
+    const first = open()
+    await user.type(screen.getByLabelText('O escríbela'), 'Algo que ya no quiero.')
+    first.unmount()
+    open()
+    await user.click(await screen.findByRole('button', { name: 'Empezar de nuevo' }))
+
+    expect(screen.getByLabelText('O escríbela')).toHaveValue('')
+    expect(screen.queryByText('Recuperamos la historia que dejaste a medias.')).not.toBeInTheDocument()
+    expect(await loadWorkingDraft(NARRATOR.id)).toBeNull()
+  })
+
+  it('once the story is sent nothing of it remains to be recovered', async () => {
+    const user = userEvent.setup()
+    const server = serverWithStories()
+    open(server.api)
+    await writeStory(user)
+    await fillWhereAndWhen(user)
+    await user.click(nextButton())
+    await user.click(nextButton())
+    await screen.findByRole('heading', { name: 'Mis historias' })
+
+    expect(await loadWorkingDraft(NARRATOR.id)).toBeNull()
+  })
+
+  it('belongs to the person who told it: another narrator starts with an empty page', async () => {
+    const user = userEvent.setup()
+    const first = open()
+    await user.type(screen.getByLabelText('O escríbela'), 'Esto es de Ana.')
+    first.unmount()
+
+    renderApp({ route: '/contar', user: { ...NARRATOR, id: 'u2', nombre: 'Luis' }, api: { '/historias/mias': [] } })
+
+    await screen.findByRole('heading', { name: 'Contar una historia' })
+    expect(screen.getByLabelText('O escríbela')).toHaveValue('')
+    expect(screen.queryByText('Recuperamos la historia que dejaste a medias.')).not.toBeInTheDocument()
+  })
+
+  it('on a phone that cannot keep it, says the story stays on the page only', async () => {
+    breakStoreForTests()
+    open()
+
+    expect(await screen.findByText(/Tu teléfono no deja guardar en el dispositivo/)).toBeInTheDocument()
   })
 })

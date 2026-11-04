@@ -57,6 +57,8 @@ export default function MapPage() {
       'Para contar tu historia, toca el botón rojo «Contar una historia».',
     ].join(' ')
 
+  // Stories kept from an earlier visit are shown while the signal is away or the server fails.
+  const state = status !== 'ready' && stories.length > 0 ? 'ready' : status
   const listMessage = {
     loading: ['Cargando las historias…', ''],
     offline: ['Sin señal', 'Las historias se cargan cuando vuelva la conexión.'],
@@ -67,7 +69,7 @@ export default function MapPage() {
         : visible.length === 0
           ? ['No hay historias en esta zona del mapa', 'Mueve o aleja el mapa para ver más.']
           : null,
-  }[status]
+  }[state]
 
   return (
     <>

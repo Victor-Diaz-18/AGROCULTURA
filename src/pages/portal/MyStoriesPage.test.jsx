@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { act, screen, within } from '@testing-library/react'
+import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { toggleSimulatedOffline } from '../../offline/connectivity.js'
+import { setSimulatedOffline, toggleSimulatedOffline } from '../../offline/connectivity.js'
+import { cacheGet, cacheSet, listQueued, queueStory } from '../../offline/store.js'
 import { NARRATOR } from '../../test/auth.js'
-import { storyCard } from '../../test/fixtures.js'
-import { renderApp, reply } from '../../test/renderApp.jsx'
+import { queuedDraft, storyCard } from '../../test/fixtures.js'
+import { callsTo, renderApp, reply } from '../../test/renderApp.jsx'
 import { nextStep } from './MyStoriesPage.jsx'
 
 const story = (overrides) => ({
@@ -177,5 +178,123 @@ describe('Mis historias: ver la ficha', () => {
     const dialog = await screen.findByRole('dialog', { name: 'Ficha de la historia' })
     expect(within(dialog).getByRole('heading', { name: 'La trilla' })).toBeInTheDocument()
     expect(fetchMock.mock.calls.some(([url]) => url === '/api/historias/HIS-2026-002')).toBe(true)
+  })
+})
+
+describe('Mis historias: borradores en el dispositivo (F10)', () => {
+  const saved = (overrides) => queueStory(queuedDraft(overrides))
+
+  it('shows a story kept on the phone first, as a draft that goes out when there is signal', async () => {
+    setSimulatedOffline(true)
+    await saved()
+    open()
+
+    const rows = await waitFor(() => {
+      const found = tableRows()
+      expect(found[0]).toHaveTextContent('El camino de mulas')
+      return found
+    })
+    expect(rows[0]).toHaveTextContent('Por asignar')
+    expect(rows[0]).toHaveTextContent('Minca')
+    expect(rows[0]).toHaveTextContent('Texto')
+    expect(rows[0]).toHaveTextContent('Borrador')
+    expect(rows[0]).toHaveTextContent('Se envía cuando haya señal')
+  })
+
+  it('counts drafts in the tab and in the menu, and filters by them', async () => {
+    const user = userEvent.setup()
+    setSimulatedOffline(true)
+    await saved()
+    open()
+    const nav = screen.getByRole('navigation', { name: 'Secciones' })
+    await within(nav).findByText('1')
+
+    const tabs = screen.getByRole('group', { name: 'Filtrar por estado' })
+    await user.click(within(tabs).getByRole('button', { name: /^Borrador\s*1$/ }))
+
+    expect(tableRows()).toHaveLength(1)
+    expect(tableRows()[0]).toHaveTextContent('El camino de mulas')
+  })
+
+  it('joins them with the stories the server has', async () => {
+    await saved({ fallo: 'Pendiente' }) // refused earlier, so it stays a draft even with signal
+    open()
+
+    await screen.findByText('Por asignar')
+    expect(await screen.findByText('La trilla')).toBeInTheDocument()
+    expect(tableRows()).toHaveLength(4)
+  })
+
+  it('without signal, says the drafts are safe on the device', async () => {
+    setSimulatedOffline(true)
+    await saved()
+    open()
+
+    expect(await screen.findByText('Tus borradores están guardados en este dispositivo y se enviarán solos cuando vuelva la conexión.')).toBeInTheDocument()
+  })
+
+  it('does not show the drafts of another narrator', async () => {
+    setSimulatedOffline(true)
+    await saved({ narratorId: 'u2', titulo: 'De otra persona' })
+    open()
+
+    await screen.findByText('Sin señal.', { exact: false })
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    expect(screen.queryByText('De otra persona')).not.toBeInTheDocument()
+  })
+
+  it('a story the server refused shows why, and can be tried again', async () => {
+    const user = userEvent.setup()
+    await saved({ fallo: 'El audio pesa demasiado.' })
+    const { fetchMock } = renderApp({
+      route: '/mis-historias',
+      user: NARRATOR,
+      api: { '/historias/mias': [], '/historias': () => ({ codigo: 'HIS-2026-031', titulo: 'El camino de mulas', estado: 'revision' }) },
+    })
+    expect(await screen.findByText('El audio pesa demasiado.')).toBeInTheDocument()
+    expect(callsTo(fetchMock, '/historias')).toHaveLength(0) // not retried by itself
+
+    await user.click(screen.getByRole('button', { name: 'Reintentar' }))
+
+    expect(await screen.findByText('Se envió 1 borrador a revisión.')).toBeInTheDocument()
+    expect(callsTo(fetchMock, '/historias')).toHaveLength(1)
+  })
+
+  it('a draft can be thrown away, after asking, because nobody else has a copy', async () => {
+    const user = userEvent.setup()
+    await saved({ fallo: 'El audio pesa demasiado.' })
+    open([])
+    await user.click(await screen.findByRole('button', { name: 'Quitar' }))
+
+    const dialog = await screen.findByRole('dialog', { name: 'Quitar borrador' })
+    expect(dialog).toHaveTextContent('todavía no se ha enviado')
+    await user.click(within(dialog).getByRole('button', { name: 'No, dejarla' }))
+    expect(screen.getByText('El camino de mulas')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Quitar' }))
+    await user.click(within(await screen.findByRole('dialog', { name: 'Quitar borrador' })).getByRole('button', { name: 'Sí, quitarla' }))
+
+    await waitFor(() => expect(screen.queryByText('El camino de mulas')).not.toBeInTheDocument())
+    expect(await listQueued(NARRATOR.id)).toEqual([])
+  })
+
+  it('opened without signal, it shows the last list the server gave', async () => {
+    await cacheSet(`mias:${NARRATOR.id}`, MINE)
+    setSimulatedOffline(true)
+    open()
+
+    expect(await screen.findByText('La trilla')).toBeInTheDocument()
+    expect(screen.getByText('Ves lo último que se cargó.', { exact: false })).toBeInTheDocument()
+  })
+
+  it('forgets that list when the narrator signs out', async () => {
+    const user = userEvent.setup()
+    open()
+    await screen.findByText('La trilla')
+    await waitFor(async () => expect(await cacheGet(`mias:${NARRATOR.id}`)).not.toBeNull())
+
+    await user.click(screen.getByRole('button', { name: 'Salir' }))
+
+    await waitFor(async () => expect(await cacheGet(`mias:${NARRATOR.id}`)).toBeNull())
   })
 })

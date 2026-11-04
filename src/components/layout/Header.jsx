@@ -57,6 +57,7 @@ export default function Header() {
           type="button"
           className="ag-hchip ag-hchip--toggle"
           aria-pressed={simulatedOffline}
+          data-offline={!online}
           onClick={toggleSimulated}
         >
           <span className="ag-hchip__dot" />

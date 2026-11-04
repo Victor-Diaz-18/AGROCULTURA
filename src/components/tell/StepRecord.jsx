@@ -4,7 +4,7 @@ import AudioRecorder from './AudioRecorder.jsx'
 import MediaPicker from './MediaPicker.jsx'
 
 /** Step 1, "Cuéntala": voice (F5), writing (F3) and photos (F4). */
-export default function StepRecord({ recorder, audio, onStartRecording, onRemoveAudio, texto, onTexto, photos }) {
+export default function StepRecord({ recorder, audio, onStartRecording, onRemoveAudio, texto, onTexto, photos, onDevice = true }) {
   return (
     <>
       <div className="ag-tell__block">
@@ -19,6 +19,7 @@ export default function StepRecord({ recorder, audio, onStartRecording, onRemove
           notice={recorder.notice}
           supported={recorder.supported}
           audio={audio}
+          onDevice={onDevice}
           onStart={onStartRecording}
           onStop={recorder.stop}
           onRemove={onRemoveAudio}

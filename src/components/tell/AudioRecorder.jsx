@@ -61,7 +61,7 @@ function Listen({ blob }) {
   )
 }
 
-export default function AudioRecorder({ status, seconds, audio, error, notice, supported, onStart, onStop, onRemove }) {
+export default function AudioRecorder({ status, seconds, audio, error, notice, supported, onDevice = true, onStart, onStop, onRemove }) {
   const recording = status === 'recording'
   const problem = error || (!supported ? MESSAGES.unsupported : '')
 
@@ -85,7 +85,9 @@ export default function AudioRecorder({ status, seconds, audio, error, notice, s
           </span>
           <div className="ag-rec__text">
             <span className="ag-rec__title">Audio grabado · {formatDuration(audio.seconds)}</span>
-            <span className="ag-rec__note">Se queda en esta página hasta que la envíes.</span>
+            <span className="ag-rec__note">
+              {onDevice ? 'Se guarda en este dispositivo hasta que la envíes.' : 'Se queda en esta página hasta que la envíes.'}
+            </span>
           </div>
           <div className="ag-rec__actions">
             <Listen blob={audio.blob} />

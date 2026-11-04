@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { screen } from '@testing-library/react'
+import { act, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { STATS } from '../../test/fixtures.js'
 import { renderApp } from '../../test/renderApp.jsx'
@@ -31,6 +31,23 @@ describe('Header', () => {
     await user.click(toggle)
     expect(toggle).toHaveTextContent('En línea')
     expect(toggle).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  it('also shows "Sin señal" (in yellow) when the phone really loses the connection, without the demo switch', async () => {
+    renderApp()
+    const toggle = screen.getByRole('button', { name: /Simular conexión/ })
+    expect(toggle).toHaveAttribute('data-offline', 'false')
+
+    act(() => window.dispatchEvent(new Event('offline')))
+
+    expect(toggle).toHaveTextContent('Sin señal')
+    expect(toggle).toHaveAttribute('data-offline', 'true')
+    expect(toggle).toHaveAttribute('aria-pressed', 'false') // the switch itself is off
+
+    act(() => window.dispatchEvent(new Event('online')))
+
+    expect(toggle).toHaveTextContent('En línea')
+    expect(toggle).toHaveAttribute('data-offline', 'false')
   })
 
   it('tells the person when the signal goes and when it comes back', async () => {

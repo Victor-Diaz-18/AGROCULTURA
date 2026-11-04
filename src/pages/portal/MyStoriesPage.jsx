@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import PageHeader from '../../components/layout/PageHeader.jsx'
 import Button from '../../components/ui/Button.jsx'
 import { StoryCardLoader } from '../../components/story/StoryCard.jsx'
+import DiscardDraftDialog from '../../components/tell/DiscardDraftDialog.jsx'
 import DataTable, { Cell, TableRow } from '../../components/ui/DataTable.jsx'
 import FCode from '../../components/ui/FCode.jsx'
 import Icon from '../../components/ui/Icon.jsx'
@@ -11,6 +12,7 @@ import SegmentedTabs from '../../components/ui/SegmentedTabs.jsx'
 import StatusChip from '../../components/ui/StatusChip.jsx'
 import { ESTADOS } from '../../config/constants.js'
 import { useMyStories } from '../../context/MyStoriesContext.jsx'
+import { useOutbox } from '../../context/OutboxContext.jsx'
 import { usePortalData } from '../../context/PortalDataContext.jsx'
 import useConnectivity from '../../hooks/useConnectivity.js'
 import { formatDate } from '../../utils/format.js'
@@ -28,9 +30,10 @@ const TABS = [
   { id: 'rechazada', label: ESTADOS.rechazada.label, dot: 'var(--st-rechazada-dot)' },
 ]
 
-/** What happens next with a story: the rejection reason, or the next step of its state. */
+/** What happens next with a story: the rejection reason, why a draft is stuck, or the next step of its state. */
 export function nextStep(story) {
   if (story.estado === 'rechazada') return story.motivo_rechazo ?? ''
+  if (story.estado === 'borrador' && story.fallo) return story.fallo
   if (story.estado === 'publicada') return ''
   return ESTADOS[story.estado]?.sigue ?? ''
 }
@@ -40,9 +43,11 @@ export default function MyStoriesPage() {
   const navigate = useNavigate()
   const { config } = usePortalData()
   const { online } = useConnectivity()
-  const { stories, status, reload } = useMyStories()
+  const { stories, drafts, status, reload } = useMyStories()
+  const { retry, discard } = useOutbox()
   const [tab, setTab] = useState('todas')
   const [openCode, setOpenCode] = useState(null)
+  const [discarding, setDiscarding] = useState(null) // the draft the person is about to throw away
 
   useEffect(() => {
     if (online) reload() // always show what the server has now, not what was loaded when the session started
@@ -54,7 +59,7 @@ export default function MyStoriesPage() {
     count: item.id === 'todas' ? all.length : all.filter((story) => story.estado === item.id).length,
   }))
   const rows = all.filter((story) => tab === 'todas' || story.estado === tab)
-  const emptyText = {
+  const emptyTexts = {
     loading: 'Cargando tus historias…',
     offline: 'Sin señal: tus historias se cargarán cuando vuelva la conexión.',
     error: (
@@ -68,10 +73,9 @@ export default function MyStoriesPage() {
     ready:
       all.length === 0
         ? 'Todavía no has contado ninguna historia. Cuando cuentes una, aparecerá aquí con su estado.'
-        : rows.length === 0
-          ? 'No hay historias en este estado.'
-          : null,
-  }[status]
+        : 'No hay historias en este estado.',
+  }
+  const emptyText = rows.length > 0 ? null : emptyTexts[status]
 
   return (
     <>
@@ -93,9 +97,11 @@ export default function MyStoriesPage() {
           <Icon name="wifi-off" size={22} />
           <span className="ag-banner__text">
             <b>Sin señal.</b>{' '}
-            {stories
-              ? 'Ves lo último que se cargó. Se actualizará cuando vuelva la conexión.'
-              : 'No pudimos cargar tus historias. Se cargarán cuando vuelva la conexión.'}
+            {drafts > 0
+              ? 'Tus borradores están guardados en este dispositivo y se enviarán solos cuando vuelva la conexión.'
+              : stories
+                ? 'Ves lo último que se cargó. Se actualizará cuando vuelva la conexión.'
+                : 'No pudimos cargar tus historias. Se cargarán cuando vuelva la conexión.'}
           </span>
           <FCode>F10</FCode>
         </div>
@@ -113,10 +119,10 @@ export default function MyStoriesPage() {
           empty={emptyText}
         >
           {rows.map((story) => (
-            <TableRow key={story.codigo}>
-              <Cell className="ag-table__code">{story.codigo}</Cell>
+            <TableRow key={story.codigo ?? story.clientId}>
+              <Cell className="ag-table__code">{story.codigo ?? 'Por asignar'}</Cell>
               <Cell className="ag-table__title">{story.titulo}</Cell>
-              <Cell>{placeLine(story, config.sectores)}</Cell>
+              <Cell>{story.lugar_texto ?? placeLine(story, config.sectores)}</Cell>
               <Cell className="ag-table__muted">{story.formatos.join(' · ')}</Cell>
               <Cell className="ag-table__muted">{formatDate(story.enviada_en)}</Cell>
               <Cell>
@@ -128,6 +134,16 @@ export default function MyStoriesPage() {
                     Ver ficha
                   </button>
                 )}
+                {story.estado === 'borrador' && story.fallo && (
+                  <>
+                    <button type="button" className="ag-rowbtn ag-rowbtn--outline ag-rowbtn--sm" onClick={() => retry(story.clientId)}>
+                      Reintentar
+                    </button>
+                    <button type="button" className="ag-rowbtn ag-rowbtn--ghost ag-rowbtn--sm" onClick={() => setDiscarding(story)}>
+                      Quitar
+                    </button>
+                  </>
+                )}
                 <span>{nextStep(story)}</span>
               </Cell>
             </TableRow>
@@ -136,6 +152,16 @@ export default function MyStoriesPage() {
       </div>
 
       {openCode && <StoryCardLoader key={openCode} code={openCode} onClose={() => setOpenCode(null)} />}
+      {discarding && (
+        <DiscardDraftDialog
+          title={discarding.titulo}
+          onClose={() => setDiscarding(null)}
+          onConfirm={() => {
+            discard(discarding.clientId)
+            setDiscarding(null)
+          }}
+        />
+      )}
     </>
   )
 }

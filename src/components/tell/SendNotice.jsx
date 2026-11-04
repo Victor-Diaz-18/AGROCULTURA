@@ -1,10 +1,7 @@
 import FCode from '../ui/FCode.jsx'
 import Icon from '../ui/Icon.jsx'
 
-/**
- * Green with signal, yellow without (F10).
- * Block 3 sends only with a connection; block 6 changes the offline wording to "se guarda y se envía sola".
- */
+/** Green with signal, yellow without (F10): without signal the story is kept on the phone and goes out by itself. */
 export default function SendNotice({ online }) {
   return (
     <div className={`ag-signal${online ? '' : ' ag-signal--off'}`}>
@@ -14,7 +11,7 @@ export default function SendNotice({ online }) {
         <span>
           {online
             ? 'Se envía ahora y un administrador la revisa antes de publicarla.'
-            : 'Para enviarla necesitas señal. Tu historia sigue aquí: cuando vuelva la señal, toca «Enviar historia».'}
+            : 'Se guarda en el dispositivo y se envía sola cuando vuelva la señal.'}
         </span>
       </div>
       <FCode>F10</FCode>

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PageHeader from '../../components/layout/PageHeader.jsx'
 import Icon from '../../components/ui/Icon.jsx'
@@ -10,10 +10,12 @@ import StepWhereWhen from '../../components/tell/StepWhereWhen.jsx'
 import { DEFAULT_TAG, LIMITS } from '../../config/constants.js'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { useMyStories } from '../../context/MyStoriesContext.jsx'
+import { useOutbox } from '../../context/OutboxContext.jsx'
 import { usePortalData } from '../../context/PortalDataContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import useConnectivity from '../../hooks/useConnectivity.js'
 import useRecorder from '../../hooks/useRecorder.js'
+import { clearWorkingDraft, loadWorkingDraft, saveWorkingDraft } from '../../offline/store.js'
 import { ApiError, OfflineError } from '../../services/http.js'
 import { sendStory } from '../../services/stories.js'
 import { formatDuration } from '../../utils/format.js'
@@ -31,13 +33,35 @@ const READ_ALOUD = {
 
 export const SEND_MESSAGES = {
   done: 'Enviada. Un administrador la revisará antes de publicarla.',
-  offline: 'Se fue la señal. Tu historia sigue aquí: toca «Enviar historia» cuando vuelva.',
+  queued: 'Sin señal: quedó como borrador en el dispositivo.',
+  queuedLoose: 'Sin señal: quedó como borrador, pero solo mientras no cierres esta página.',
+  notSaved: 'No pudimos guardar tu historia en el dispositivo. Tu historia sigue aquí: intenta de nuevo.',
   expired: 'Tu sesión venció. Ingresa de nuevo y toca «Enviar historia»: tu historia sigue aquí.',
   failed: 'No pudimos enviar tu historia. Intenta de nuevo en un momento.',
 }
 
+/** How long the form waits after the last change before saving it on the phone. */
+export const SAVE_DELAY_MS = 600
+
+const isBlank = (draft) =>
+  !draft.texto.trim() &&
+  !draft.titulo.trim() &&
+  !draft.lugar.trim() &&
+  !draft.audio &&
+  !draft.location &&
+  !draft.epoca &&
+  draft.fotos.length === 0 &&
+  draft.etiquetas.length === 0
+
+/** The formats of a story as "Mis historias" lists them (the same words the server uses). */
+const formatLabels = (audio, fotos) => {
+  const labels = []
+  if (audio) labels.push('Audio')
+  if (fotos.length > 0) labels.push('Foto')
+  return labels.length > 0 ? labels : ['Texto']
+}
+
 function describeFailure(error) {
-  if (error instanceof OfflineError) return SEND_MESSAGES.offline
   if (error instanceof ApiError && error.status === 401) return SEND_MESSAGES.expired
   if (error instanceof ApiError) return error.message
   return SEND_MESSAGES.failed
@@ -50,7 +74,9 @@ export default function TellPage() {
   const { user, openLogin } = useAuth()
   const { config, reload } = usePortalData()
   const { reload: reloadMine } = useMyStories()
+  const { enqueue, persistent } = useOutbox()
   const { online } = useConnectivity()
+  const narratorId = user?.id ?? null
 
   const [step, setStep] = useState(1)
   const [texto, setTexto] = useState('')
@@ -63,14 +89,85 @@ export default function TellPage() {
   const [etiquetas, setEtiquetas] = useState([])
   const [sending, setSending] = useState(false)
   const [sendError, setSendError] = useState('')
+  const [clientId, setClientId] = useState(newId) // the same story keeps this id, so resending never duplicates it
+  const [saved, setSaved] = useState(false) // the phone has been asked for what it kept of this story
+  const [recovered, setRecovered] = useState(false) // ...and it had something
 
-  const [clientId] = useState(newId) // the same story keeps this id, so resending never duplicates it
   const uploaded = useRef(new WeakMap()) // files that already went up: a retry does not upload them again
   const photoNumber = useRef(1)
   const stepper = useRef(null)
   const firstRender = useRef(true)
+  const finished = useRef(false) // the story left (sent or kept in the queue): nothing more to save as a draft
 
   const recorder = useRecorder({ onRecorded: ({ blob, seconds, mime }) => setAudio({ blob, seconds, mime }) })
+
+  // Everything the person has put in so far: what is kept on the phone while they tell it (F10).
+  const draft = { clientId, step, texto, titulo, location, lugar, epoca, etiquetas, audio, fotos, photoNumber: photoNumber.current }
+  const latest = useRef(draft)
+  latest.current = draft
+  const savedRef = useRef(false)
+  savedRef.current = saved
+
+  // Pick up the story the person left half told on this phone.
+  useEffect(() => {
+    if (!narratorId) return undefined
+    let cancelled = false
+    loadWorkingDraft(narratorId)
+      .catch(() => null)
+      .then((found) => {
+        if (cancelled) return
+        if (found && isBlank(latest.current)) {
+          setClientId(found.clientId)
+          setStep(found.step)
+          setTexto(found.texto)
+          setAudio(found.audio)
+          setFotos(found.fotos)
+          setTitulo(found.titulo)
+          setLocation(found.location)
+          setLugar(found.lugar)
+          setEpoca(found.epoca)
+          setEtiquetas(found.etiquetas)
+          photoNumber.current = found.photoNumber ?? found.fotos.length + 1
+          setRecovered(true)
+        }
+        setSaved(true)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [narratorId])
+
+  const keepDraft = useCallback(() => {
+    if (!narratorId || !savedRef.current || finished.current) return
+    const current = latest.current
+    const done = isBlank(current) ? clearWorkingDraft(narratorId) : saveWorkingDraft(narratorId, current)
+    done.catch(() => {}) // without room on the phone the story still works, it is only not kept
+  }, [narratorId])
+
+  // Typing is saved when the person pauses; moving to another step (a deliberate act) is saved at once.
+  useEffect(() => {
+    if (!saved) return undefined
+    const timer = setTimeout(keepDraft, SAVE_DELAY_MS)
+    return () => clearTimeout(timer)
+  }, [saved, keepDraft, clientId, texto, titulo, location, lugar, epoca, etiquetas, audio, fotos])
+
+  useEffect(() => {
+    if (saved) keepDraft()
+  }, [saved, step, keepDraft])
+
+  // Leaving the page, reloading it or switching to another app must not lose the last words.
+  useEffect(() => {
+    const onHide = () => {
+      if (document.visibilityState === 'hidden') keepDraft()
+    }
+    document.addEventListener('visibilitychange', onHide)
+    window.addEventListener('pagehide', keepDraft)
+    return () => {
+      document.removeEventListener('visibilitychange', onHide)
+      window.removeEventListener('pagehide', keepDraft)
+      keepDraft()
+    }
+  }, [keepDraft])
 
   // On a phone the buttons sit at the bottom of a long step: show the new one from its top.
   useEffect(() => {
@@ -86,13 +183,13 @@ export default function TellPage() {
   const canContinue = {
     1: Boolean(audio) || recording || texto.trim().length > 0,
     2: titulo.trim().length >= LIMITS.tituloMin && Boolean(location) && Boolean(epoca),
-    3: online && !sending,
+    3: !sending, // without signal the story is kept on the phone
   }[step]
 
   const help = {
     1: canContinue ? 'Puedes agregar fotos si las tienes.' : 'Graba un audio o escribe la historia para seguir.',
     2: canContinue ? 'Todo listo para revisar.' : 'Falta el título, el sector o la época.',
-    3: online ? 'Al enviarla pasa a revisión (F6).' : 'Sin señal: necesitas conexión para enviarla.',
+    3: online ? 'Al enviarla pasa a revisión (F6).' : 'Sin señal: quedará como borrador.',
   }[step]
 
   const startRecording = () => recorder.start()
@@ -107,6 +204,25 @@ export default function TellPage() {
     nextName: () => `foto_${String(photoNumber.current++).padStart(2, '0')}.jpg`,
     onAdd: (added) => setFotos((current) => [...current, ...added]),
     onRemove: (id) => setFotos((current) => current.filter((photo) => photo.id !== id)),
+  }
+
+  const startOver = () => {
+    finished.current = false
+    clearWorkingDraft(narratorId).catch(() => {})
+    uploaded.current = new WeakMap()
+    photoNumber.current = 1
+    setClientId(newId())
+    setStep(1)
+    setTexto('')
+    setAudio(null)
+    setFotos([])
+    setTitulo('')
+    setLocation(null)
+    setLugar('')
+    setEpoca('')
+    setEtiquetas([])
+    setSendError('')
+    setRecovered(false)
   }
 
   const sentTags = etiquetas.length > 0 ? etiquetas : [DEFAULT_TAG]
@@ -126,20 +242,62 @@ export default function TellPage() {
     etiquetas: sentTags,
   }
 
+  const story = () => ({
+    clientId,
+    titulo: titulo.trim(),
+    texto: texto.trim(),
+    epoca,
+    location,
+    lugar: lugar.trim(),
+    etiquetas: sentTags,
+    audio,
+    fotos,
+  })
+
+  /** No signal: the finished story stays on the phone and goes out by itself when the signal returns. */
+  const keepOnDevice = async () => {
+    // What already went up in a send that was cut off is remembered, so it is not uploaded again.
+    const subidos = {}
+    const audioMedio = audio && uploaded.current.get(audio.blob)
+    if (audioMedio) subidos.audio = audioMedio
+    for (const photo of fotos) {
+      const medio = uploaded.current.get(photo.blob)
+      if (medio) subidos[photo.id] = medio
+    }
+    try {
+      await enqueue({ ...story(), formatos: formatLabels(audio, fotos), lugarTexto: summary.lugar, subidos })
+    } catch {
+      setSendError(SEND_MESSAGES.notSaved)
+      setSending(false)
+      return
+    }
+    finished.current = true
+    clearWorkingDraft(narratorId).catch(() => {})
+    toast(persistent ? SEND_MESSAGES.queued : SEND_MESSAGES.queuedLoose, 'info')
+    navigate('/mis-historias')
+  }
+
   const send = async () => {
     setSending(true)
     setSendError('')
+    if (!online) {
+      await keepOnDevice()
+      return
+    }
     try {
-      await sendStory(
-        { clientId, titulo: titulo.trim(), texto: texto.trim(), epoca, location, lugar: lugar.trim(), etiquetas: sentTags, audio, fotos },
-        { uploaded: uploaded.current },
-      )
+      await sendStory(story(), { uploaded: uploaded.current })
     } catch (error) {
+      if (error instanceof OfflineError) {
+        await keepOnDevice() // the signal went away while sending
+        return
+      }
       if (error instanceof ApiError && error.status === 401) openLogin({ tab: 'narrador' })
       setSendError(describeFailure(error))
       setSending(false)
       return
     }
+    finished.current = true
+    clearWorkingDraft(narratorId).catch(() => {})
     toast(SEND_MESSAGES.done)
     reload() // the public counters change when a story enters review
     reloadMine()
@@ -154,6 +312,8 @@ export default function TellPage() {
     else send()
   }
 
+  const nextLabel = step < 3 ? 'Siguiente' : sending ? 'Enviando…' : online ? 'Enviar historia' : 'Guardar en el dispositivo'
+
   return (
     <>
       <PageHeader
@@ -165,6 +325,14 @@ export default function TellPage() {
 
       <div className="ag-tell">
         <div className="ag-tell__card">
+          {recovered && !recording && (
+            <p role="status" className="ag-hint ag-tell__recovered">
+              Recuperamos la historia que dejaste a medias.{' '}
+              <button type="button" className="ag-linkbutton" onClick={startOver}>
+                Empezar de nuevo
+              </button>
+            </p>
+          )}
           {step === 1 && (
             <StepRecord
               recorder={recorder}
@@ -174,6 +342,7 @@ export default function TellPage() {
               texto={texto}
               onTexto={setTexto}
               photos={photos}
+              onDevice={persistent}
             />
           )}
           {step === 2 && (
@@ -207,7 +376,7 @@ export default function TellPage() {
                 onClick={next}
                 disabled={!canContinue}
               >
-                {step < 3 ? 'Siguiente' : sending ? 'Enviando…' : 'Enviar historia'}
+                {nextLabel}
               </button>
             </div>
           </div>
@@ -231,7 +400,11 @@ export default function TellPage() {
           </div>
           <div className={`ag-signal ag-signal--aside${online ? '' : ' ag-signal--off'}`}>
             <Icon name="wifi-off" size={22} />
-            <p>Lo que cuentas se queda en esta página mientras no la cierres. Para enviarla al final necesitas señal.</p>
+            <p>
+              {persistent
+                ? 'Todo se guarda en el dispositivo mientras la cuentas. Si no hay señal al final, queda como borrador y se envía sola después.'
+                : 'Tu teléfono no deja guardar en el dispositivo: lo que cuentas se queda en esta página mientras no la cierres. Para enviarla al final necesitas señal.'}
+            </p>
           </div>
         </aside>
       </div>
