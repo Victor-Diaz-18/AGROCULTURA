@@ -77,8 +77,8 @@ describe('checkUpload: what a token may be used for', () => {
   it('allows one video in the person’s own folder, up to 25 MB', () => {
     const allowed = checkUpload(`historias/${USER}/video-abc123.mp4`, USER)
 
-    expect(allowed.maximumSizeInBytes).toBe(25 * 1024 * 1024)
-    expect(MAX_VIDEO_BYTES).toBe(25 * 1024 * 1024)
+    expect(allowed.maximumSizeInBytes).toBe(25_000_000)
+    expect(MAX_VIDEO_BYTES).toBe(25_000_000)
     expect(allowed.allowedContentTypes).toEqual(['video/mp4', 'video/quicktime', 'video/webm'])
     expect(allowed.addRandomSuffix).toBe(true)
     expect(allowed.allowOverwrite).toBe(false)

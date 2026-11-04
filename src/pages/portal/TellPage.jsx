@@ -33,6 +33,8 @@ const READ_ALOUD = {
 
 export const SEND_MESSAGES = {
   done: 'Enviada. Un administrador la revisará antes de publicarla.',
+  doneWithVideo: 'Enviada. Estamos subiendo el video; un administrador la revisará antes de publicarla.',
+  videoNotKept: 'Enviada, pero no pudimos guardar el video para subirlo. Avisa al equipo para que lo agreguen.',
   queued: 'Sin señal: quedó como borrador en el dispositivo.',
   queuedLoose: 'Sin señal: quedó como borrador, pero solo mientras no cierres esta página.',
   notSaved: 'No pudimos guardar tu historia en el dispositivo. Tu historia sigue aquí: intenta de nuevo.',
@@ -48,16 +50,18 @@ const isBlank = (draft) =>
   !draft.titulo.trim() &&
   !draft.lugar.trim() &&
   !draft.audio &&
+  !draft.video &&
   !draft.location &&
   !draft.epoca &&
   draft.fotos.length === 0 &&
   draft.etiquetas.length === 0
 
 /** The formats of a story as "Mis historias" lists them (the same words the server uses). */
-const formatLabels = (audio, fotos) => {
+const formatLabels = (audio, fotos, video) => {
   const labels = []
   if (audio) labels.push('Audio')
   if (fotos.length > 0) labels.push('Foto')
+  if (video) labels.push('Video')
   return labels.length > 0 ? labels : ['Texto']
 }
 
@@ -74,7 +78,7 @@ export default function TellPage() {
   const { user, openLogin } = useAuth()
   const { config, reload } = usePortalData()
   const { reload: reloadMine } = useMyStories()
-  const { enqueue, persistent } = useOutbox()
+  const { enqueue, enqueueVideo, persistent } = useOutbox()
   const { online } = useConnectivity()
   const narratorId = user?.id ?? null
 
@@ -82,6 +86,7 @@ export default function TellPage() {
   const [texto, setTexto] = useState('')
   const [audio, setAudio] = useState(null)
   const [fotos, setFotos] = useState([])
+  const [video, setVideo] = useState(null) // { id, name, blob, mime }: one at most; it goes up after the story
   const [titulo, setTitulo] = useState('')
   const [location, setLocation] = useState(null)
   const [lugar, setLugar] = useState('')
@@ -102,7 +107,7 @@ export default function TellPage() {
   const recorder = useRecorder({ onRecorded: ({ blob, seconds, mime }) => setAudio({ blob, seconds, mime }) })
 
   // Everything the person has put in so far: what is kept on the phone while they tell it (F10).
-  const draft = { clientId, step, texto, titulo, location, lugar, epoca, etiquetas, audio, fotos, photoNumber: photoNumber.current }
+  const draft = { clientId, step, texto, titulo, location, lugar, epoca, etiquetas, audio, fotos, video, photoNumber: photoNumber.current }
   const latest = useRef(draft)
   latest.current = draft
   const savedRef = useRef(false)
@@ -122,6 +127,7 @@ export default function TellPage() {
           setTexto(found.texto)
           setAudio(found.audio)
           setFotos(found.fotos)
+          setVideo(found.video ?? null)
           setTitulo(found.titulo)
           setLocation(found.location)
           setLugar(found.lugar)
@@ -149,7 +155,7 @@ export default function TellPage() {
     if (!saved) return undefined
     const timer = setTimeout(keepDraft, SAVE_DELAY_MS)
     return () => clearTimeout(timer)
-  }, [saved, keepDraft, clientId, texto, titulo, location, lugar, epoca, etiquetas, audio, fotos])
+  }, [saved, keepDraft, clientId, texto, titulo, location, lugar, epoca, etiquetas, audio, fotos, video])
 
   useEffect(() => {
     if (saved) keepDraft()
@@ -187,7 +193,7 @@ export default function TellPage() {
   }[step]
 
   const help = {
-    1: canContinue ? 'Puedes agregar fotos si las tienes.' : 'Graba un audio o escribe la historia para seguir.',
+    1: canContinue ? 'Puedes agregar fotos o un video si los tienes.' : 'Graba un audio o escribe la historia para seguir.',
     2: canContinue ? 'Todo listo para revisar.' : 'Falta el título, el sector o la época.',
     3: online ? 'Al enviarla pasa a revisión (F6).' : 'Sin señal: quedará como borrador.',
   }[step]
@@ -204,6 +210,9 @@ export default function TellPage() {
     nextName: () => `foto_${String(photoNumber.current++).padStart(2, '0')}.jpg`,
     onAdd: (added) => setFotos((current) => [...current, ...added]),
     onRemove: (id) => setFotos((current) => current.filter((photo) => photo.id !== id)),
+    video,
+    onAddVideo: setVideo,
+    onRemoveVideo: () => setVideo(null),
   }
 
   const startOver = () => {
@@ -216,6 +225,7 @@ export default function TellPage() {
     setTexto('')
     setAudio(null)
     setFotos([])
+    setVideo(null)
     setTitulo('')
     setLocation(null)
     setLugar('')
@@ -229,6 +239,7 @@ export default function TellPage() {
   const formats = []
   if (audio) formats.push(`Audio ${formatDuration(audio.seconds)}`)
   if (fotos.length > 0) formats.push(fotos.length === 1 ? '1 foto' : `${fotos.length} fotos`)
+  if (video) formats.push('Video')
   const summary = {
     titulo: titulo.trim() || 'Sin título todavía',
     lugar: location ? placeLine({ sector_id: location.sectorId, lugar_nombre: lugar.trim() }, config.sectores) : 'Sin elegir',
@@ -252,6 +263,7 @@ export default function TellPage() {
     etiquetas: sentTags,
     audio,
     fotos,
+    video,
   })
 
   /** No signal: the finished story stays on the phone and goes out by itself when the signal returns. */
@@ -265,7 +277,7 @@ export default function TellPage() {
       if (medio) subidos[photo.id] = medio
     }
     try {
-      await enqueue({ ...story(), formatos: formatLabels(audio, fotos), lugarTexto: summary.lugar, subidos })
+      await enqueue({ ...story(), formatos: formatLabels(audio, fotos, video), lugarTexto: summary.lugar, subidos })
     } catch {
       setSendError(SEND_MESSAGES.notSaved)
       setSending(false)
@@ -284,8 +296,9 @@ export default function TellPage() {
       await keepOnDevice()
       return
     }
+    let sent
     try {
-      await sendStory(story(), { uploaded: uploaded.current })
+      sent = await sendStory(story(), { uploaded: uploaded.current })
     } catch (error) {
       if (error instanceof OfflineError) {
         await keepOnDevice() // the signal went away while sending
@@ -296,9 +309,18 @@ export default function TellPage() {
       setSending(false)
       return
     }
+    // The story is in. Its video goes after it, on its own (it can take long over a bad connection): the story never waits.
+    let message = video ? SEND_MESSAGES.doneWithVideo : SEND_MESSAGES.done
+    if (video) {
+      try {
+        await enqueueVideo({ clientId, codigo: sent.codigo, titulo: titulo.trim(), video })
+      } catch {
+        message = SEND_MESSAGES.videoNotKept
+      }
+    }
     finished.current = true
     clearWorkingDraft(narratorId).catch(() => {})
-    toast(SEND_MESSAGES.done)
+    toast(message)
     reload() // the public counters change when a story enters review
     reloadMine()
     navigate('/mis-historias')

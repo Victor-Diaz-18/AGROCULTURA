@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { setSimulatedOffline, toggleSimulatedOffline } from '../../offline/connectivity.js'
@@ -7,6 +7,9 @@ import { NARRATOR } from '../../test/auth.js'
 import { queuedDraft, storyCard } from '../../test/fixtures.js'
 import { callsTo, renderApp, reply } from '../../test/renderApp.jsx'
 import { nextStep } from './MyStoriesPage.jsx'
+import { put } from '@vercel/blob/client'
+
+vi.mock('@vercel/blob/client', () => ({ put: vi.fn() }))
 
 const story = (overrides) => ({
   codigo: 'HIS-2026-001',
@@ -296,5 +299,83 @@ describe('Mis historias: borradores en el dispositivo (F10)', () => {
     await user.click(screen.getByRole('button', { name: 'Salir' }))
 
     await waitFor(async () => expect(await cacheGet(`mias:${NARRATOR.id}`)).toBeNull())
+  })
+})
+
+
+describe('Mis historias: el video que falta subir (F13)', () => {
+  const waiting = (overrides) =>
+    queueStory(
+      queuedDraft({
+        clientId: 'video-0001',
+        fase: 'video',
+        codigo: 'HIS-2026-001',
+        texto: '',
+        formatos: ['Video'],
+        video: { id: 'v1', name: 'video_01.mp4', mime: 'video/mp4', blob: new Blob(['clip'], { type: 'video/mp4' }) },
+        ...overrides,
+      }),
+    )
+  const firstRow = () => tableRows().find((row) => row.textContent.includes('HIS-2026-001'))
+
+  beforeEach(() => put.mockReset().mockResolvedValue({ url: 'https://store1.public.blob.vercel-storage.com/historias/u1/video-x.mp4' }))
+
+  it('says what is next for a story whose video is not up yet', () => {
+    expect(nextStep(story({ video_pendiente: { fallo: null, progreso: null } }))).toBe('Lo revisa un administrador. Falta subir el video: se sube cuando haya señal.')
+    expect(nextStep(story({ video_pendiente: { fallo: null, progreso: 40 } }))).toBe('Lo revisa un administrador. Subiendo el video… 40 %')
+    expect(nextStep(story({ video_pendiente: { fallo: 'No pudimos subir el video.', progreso: null } }))).toBe('No pudimos subir el video.')
+  })
+
+  it('shows it in the story’s row, and the story is not counted as a draft', async () => {
+    await cacheSet(`mias:${NARRATOR.id}`, MINE) // the last list the server gave
+    setSimulatedOffline(true)
+    await waiting()
+    open()
+
+    await waitFor(() => expect(firstRow()).toHaveTextContent('Falta subir el video: se sube cuando haya señal.'))
+    expect(firstRow()).toHaveTextContent('En revisión') // the story itself is in
+    const tabs = screen.getByRole('group', { name: 'Filtrar por estado' })
+    expect(within(tabs).getByRole('button', { name: /^Borrador\s*0$/ })).toBeInTheDocument()
+  })
+
+  it('a video the server refused shows why, and can be tried again', async () => {
+    const user = userEvent.setup()
+    await waiting({ fallo: 'No pudimos subir el video. Revisa tu conexión y toca «Reintentar».' })
+    const { fetchMock } = renderApp({
+      route: '/mis-historias',
+      user: NARRATOR,
+      api: {
+        '/historias/mias': MINE,
+        '/blob-token': { type: 'blob.generate-client-token', clientToken: 'client-token-1' },
+        '/historias/HIS-2026-001/video': { codigo: 'HIS-2026-001', titulo: 'x', estado: 'revision', enviada_en: '' },
+      },
+    })
+    expect(await screen.findByText(/toca «Reintentar»/)).toBeInTheDocument()
+    expect(put).not.toHaveBeenCalled() // not retried by itself
+
+    await user.click(screen.getByRole('button', { name: 'Reintentar' }))
+
+    expect(await screen.findByText('Se subió el video de «El camino de mulas».')).toBeInTheDocument()
+    expect(put).toHaveBeenCalledTimes(1)
+    expect(callsTo(fetchMock, '/historias/HIS-2026-001/video').filter(([, init]) => init?.method === 'POST')).toHaveLength(1)
+  })
+
+  it('the video can be thrown away, after asking, and the story stays', async () => {
+    const user = userEvent.setup()
+    await waiting({ fallo: 'Esta historia ya fue revisada: ya no se le puede agregar un video.' })
+    open()
+    await user.click(await screen.findByRole('button', { name: 'Quitar' }))
+
+    const dialog = await screen.findByRole('dialog', { name: 'Quitar video' })
+    expect(dialog).toHaveTextContent('la historia sigue en revisión pero sin video')
+    await user.click(within(dialog).getByRole('button', { name: 'No, dejarlo' }))
+    expect(screen.getByText(/ya no se le puede agregar un video/)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Quitar' }))
+    await user.click(within(await screen.findByRole('dialog', { name: 'Quitar video' })).getByRole('button', { name: 'Sí, quitarlo' }))
+
+    await waitFor(() => expect(screen.queryByText(/ya no se le puede agregar un video/)).not.toBeInTheDocument())
+    expect(await listQueued(NARRATOR.id)).toEqual([])
+    expect(screen.getByText('El camino de mulas')).toBeInTheDocument() // the story is still there
   })
 })

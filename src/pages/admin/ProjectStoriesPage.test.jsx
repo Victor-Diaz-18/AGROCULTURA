@@ -5,10 +5,12 @@ import { ADMIN } from '../../test/auth.js'
 import { adminStory } from '../../test/fixtures.js'
 import { mockMapSize } from '../../test/layout.js'
 import { callsTo, renderApp, reply } from '../../test/renderApp.jsx'
+import { put } from '@vercel/blob/client'
 
 vi.mock('../../offline/media.js', () => ({
   compressImage: vi.fn(async () => new Blob(['reduced-photo'], { type: 'image/jpeg' })),
 }))
+vi.mock('@vercel/blob/client', () => ({ put: vi.fn() })) // the video goes straight to Blob
 
 const PROJECT = adminStory({
   codigo: 'HIS-2026-004',
@@ -274,5 +276,95 @@ describe('Nueva historia del proyecto', () => {
     renderApp({ route: '/historias-propias' })
 
     expect(screen.queryByRole('heading', { name: 'Historias del proyecto' })).not.toBeInTheDocument()
+  })
+})
+
+
+describe('Historias del proyecto: el video (F13)', () => {
+  const VIDEO_URL = 'https://s.public.blob.vercel-storage.com/historias/a1/video-x.mp4'
+  const clip = (size = 6000) => new File([new Uint8Array(size)], 'fiesta.mp4', { type: 'video/mp4' })
+  const withToken = { '/blob-token': { type: 'blob.generate-client-token', clientToken: 'client-token-1' } }
+
+  beforeEach(() => put.mockReset().mockResolvedValue({ url: VIDEO_URL }))
+
+  async function fill(user, extra = {}) {
+    const { fetchMock } = open('/admin/historias?nueva=1', { ...withToken, ...extra })
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByLabelText('Título'), 'La fiesta')
+    await user.type(within(dialog).getByLabelText('Relato'), 'Se celebra al final de la cosecha.')
+    await pickPlaceAndPeriod(dialog, user)
+    return { fetchMock, dialog }
+  }
+
+  it('has "Agregar video" next to the photo and the audio ones', async () => {
+    open('/admin/historias?nueva=1')
+    const dialog = await screen.findByRole('dialog')
+
+    expect(within(dialog).getByRole('button', { name: /Agregar video/ })).toBeEnabled()
+    expect(within(dialog).getByRole('button', { name: /Agregar foto/ })).toBeInTheDocument()
+    expect(within(dialog).getByRole('button', { name: /Agregar audio/ })).toBeInTheDocument()
+  })
+
+  it('uploads the video straight to Blob, then publishes the story with its address', async () => {
+    const user = userEvent.setup()
+    const { fetchMock, dialog } = await fill(user)
+    await user.upload(within(dialog).getByLabelText('Elegir un video'), clip())
+    await within(dialog).findByText(/^video_01\.mp4/)
+
+    await user.click(publishButton())
+
+    await screen.findByText(/Historia del proyecto publicada/)
+    expect(put).toHaveBeenCalledTimes(1)
+    expect(put.mock.calls[0][0]).toMatch(/^historias\/a1\/video-.*\.mp4$/) // the administrator's own folder
+    const medios = sentBody(fetchMock).medios
+    expect(medios).toEqual([{ tipo: 'video', url: VIDEO_URL, mime: 'video/mp4', bytes: 6000 }])
+    expect(callsTo(fetchMock, '/medios')).toHaveLength(0) // the video does not go through the API
+  })
+
+  it('does not publish without the video when it cannot go up: the team is looking at the screen and tries again', async () => {
+    const user = userEvent.setup()
+    put.mockRejectedValueOnce(new Error('connection reset'))
+    const { fetchMock, dialog } = await fill(user)
+    await user.upload(within(dialog).getByLabelText('Elegir un video'), clip())
+    await within(dialog).findByText(/^video_01\.mp4/)
+
+    await user.click(publishButton())
+
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('No pudimos subir el video')
+    expect(callsTo(fetchMock, '/admin/historias-proyecto')).toHaveLength(0)
+    expect(publishButton()).toBeEnabled()
+
+    await user.click(publishButton())
+
+    await screen.findByText(/Historia del proyecto publicada/)
+    expect(callsTo(fetchMock, '/admin/historias-proyecto')).toHaveLength(1)
+  })
+
+  it('a retry after the story failed does not upload the video again', async () => {
+    const user = userEvent.setup()
+    let attempts = 0
+    const { dialog } = await fill(user, { '/admin/historias-proyecto': () => (++attempts === 1 ? reply({ detail: 'Falló' }, 500) : created) })
+    await user.upload(within(dialog).getByLabelText('Elegir un video'), clip())
+    await within(dialog).findByText(/^video_01\.mp4/)
+
+    await user.click(publishButton())
+    await within(dialog).findByRole('alert')
+    await user.click(publishButton())
+
+    await screen.findByText(/Historia del proyecto publicada/)
+    expect(put).toHaveBeenCalledTimes(1)
+  })
+
+  it('refuses a video over 25 MB before uploading anything', async () => {
+    const user = userEvent.setup()
+    open('/admin/historias?nueva=1', withToken)
+    const dialog = await screen.findByRole('dialog')
+    const big = clip()
+    Object.defineProperty(big, 'size', { value: 40_000_000 })
+
+    await user.upload(within(dialog).getByLabelText('Elegir un video'), big)
+
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent(/lo máximo es 25,0 MB/)
+    expect(put).not.toHaveBeenCalled()
   })
 })

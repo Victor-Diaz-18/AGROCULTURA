@@ -11,7 +11,7 @@ from lib.core.errors import InvalidDataError, PayloadTooLargeError
 MAX_MEDIA_BYTES = 3_500_000
 
 # A video goes straight from the phone to Blob (api/blob-token.js): the 25 MB limit is the one the token enforces.
-MAX_VIDEO_BYTES = 25 * 1024 * 1024
+MAX_VIDEO_BYTES = 25_000_000  # 25 MB as phones count them (millions of bytes)
 VIDEO_MIMES = {"video/mp4", "video/quicktime", "video/webm"}
 VIDEO_EXTENSIONS = (".mp4", ".mov", ".webm")
 

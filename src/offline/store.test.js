@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   breakStoreForTests,
   cacheDelete,
@@ -88,6 +88,62 @@ describe('the story being told', () => {
     await clearWorkingDraft('u1')
 
     expect(await loadWorkingDraft('u1')).toBeNull()
+  })
+})
+
+describe('the video of a story (F13)', () => {
+  const video = () => ({ id: 'v1', name: 'video_01.mp4', mime: 'video/mp4', blob: new Blob(['clip-bytes'], { type: 'video/mp4' }) })
+
+  it('comes back with the story being told, with its type and bytes', async () => {
+    await saveWorkingDraft('u1', draft({ video: video() }))
+
+    const back = await loadWorkingDraft('u1')
+
+    expect(back.video).toMatchObject({ id: 'v1', name: 'video_01.mp4', mime: 'video/mp4' })
+    expect(back.video.blob.type).toBe('video/mp4')
+    expect(await textOf(back.video.blob)).toBe('clip-bytes')
+  })
+
+  it('is let go of when the person takes it out, and with the draft when it is cleared', async () => {
+    await saveWorkingDraft('u1', draft({ video: video() }))
+    await saveWorkingDraft('u1', draft({ video: null }))
+    expect((await loadWorkingDraft('u1')).video).toBeNull()
+
+    await saveWorkingDraft('u1', draft({ video: video() }))
+    await clearWorkingDraft('u1')
+    expect(await loadWorkingDraft('u1')).toBeNull()
+    await saveWorkingDraft('u1', draft())
+    expect((await loadWorkingDraft('u1')).video).toBeNull() // nothing of the old video stayed behind
+  })
+
+  it('is written when it changes, not at every save of the text (it can weigh 25 MB)', async () => {
+    const clip = video()
+    const writes = vi.spyOn(Blob.prototype, 'arrayBuffer')
+    await saveWorkingDraft('u1', draft({ video: clip, texto: 'a' }))
+    await saveWorkingDraft('u1', draft({ video: clip, texto: 'ab' }))
+    await saveWorkingDraft('u1', draft({ video: clip, texto: 'abc' }))
+
+    expect((await loadWorkingDraft('u1')).texto).toBe('abc')
+    // the clip's bytes were read once, however many times the draft was saved
+    expect(writes.mock.contexts.filter((blob) => blob === clip.blob)).toHaveLength(1)
+    writes.mockRestore()
+  })
+
+  it('goes with a story kept for the signal, and the list says it has one without carrying it', async () => {
+    await queueStory(queued({ video: video() }))
+
+    const [summary] = await listQueued('u1')
+    const whole = await getQueued('draft-0001')
+
+    expect(summary).toMatchObject({ tieneVideo: true })
+    expect(summary.video).toBeUndefined()
+    expect(await textOf(whole.video.blob)).toBe('clip-bytes')
+  })
+
+  it('a story kept before there were videos still opens (no video)', async () => {
+    await queueStory(queued())
+
+    expect((await getQueued('draft-0001')).video).toBeNull()
   })
 })
 

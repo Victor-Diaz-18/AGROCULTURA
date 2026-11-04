@@ -6,11 +6,14 @@ import { breakStoreForTests, loadWorkingDraft } from '../../offline/store.js'
 import { NARRATOR } from '../../test/auth.js'
 import { installFakeRecording } from '../../test/fakeMedia.js'
 import { callsTo, renderApp, reply } from '../../test/renderApp.jsx'
+import { put } from '@vercel/blob/client'
+import { setRetryDelayForTests } from '../../context/OutboxContext.jsx'
 import { SEND_MESSAGES } from './TellPage.jsx'
 
 vi.mock('../../offline/media.js', () => ({
   compressImage: vi.fn(async () => new Blob(['reduced-photo'], { type: 'image/jpeg' })),
 }))
+vi.mock('@vercel/blob/client', () => ({ put: vi.fn() })) // the video goes straight to Blob: no network here
 
 const AUDIO_URL = 'https://store1.public.blob.vercel-storage.com/historias/u1/audio-x1.webm'
 const PHOTO_URL = 'https://store1.public.blob.vercel-storage.com/historias/u1/foto_01-x2.jpg'
@@ -649,5 +652,172 @@ describe('Contar una historia: lo que queda a medias se guarda en el dispositivo
     open()
 
     expect(await screen.findByText(/Tu teléfono no deja guardar en el dispositivo/)).toBeInTheDocument()
+  })
+})
+
+
+describe('Contar una historia: el video (F13)', () => {
+  const VIDEO_URL = 'https://store1.public.blob.vercel-storage.com/historias/u1/video-ab12.mp4'
+  const movie = (size = 8000) => new File([new Uint8Array(size)], 'IMG_0042.MOV', { type: 'video/quicktime' })
+  const videoApi = (server, extra = {}) => ({
+    ...server.api,
+    '/blob-token': { type: 'blob.generate-client-token', clientToken: 'client-token-1' },
+    '/historias/HIS-2026-20/video': { codigo: 'HIS-2026-20', titulo: 'x', estado: 'revision', enviada_en: '' },
+    ...extra,
+  })
+  const addVideo = async (user, file = movie()) => {
+    await user.upload(screen.getByLabelText('Elegir un video'), file)
+    await screen.findByText(/video_01\.mov/)
+  }
+  const reachReview = async (user) => {
+    await user.type(screen.getByLabelText('O escríbela'), 'Antes de que hubiera carretera, el café bajaba en mula.')
+    await addVideo(user)
+    await user.click(nextButton())
+    await fillWhereAndWhen(user)
+    await user.click(nextButton())
+  }
+  const postsTo = (fetchMock, path) => callsTo(fetchMock, path).filter(([, init]) => init?.method === 'POST')
+
+  beforeEach(() => {
+    put.mockReset().mockResolvedValue({ url: VIDEO_URL })
+  })
+  afterEach(() => setRetryDelayForTests())
+
+  it('is part of "Fotos y video": a button, a chip with its name and size, and the video as a format', async () => {
+    const user = userEvent.setup()
+    open()
+
+    expect(screen.getByText('Fotos y video')).toBeInTheDocument()
+    await user.type(screen.getByLabelText('O escríbela'), 'Un recuerdo.')
+    expect(screen.getByText('Puedes agregar fotos o un video si los tienes.')).toBeInTheDocument()
+    await addVideo(user)
+
+    expect(screen.getByText('video_01.mov · 8 KB')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Agregar video/ })).toBeDisabled()
+    expect(screen.getByRole('complementary', { name: 'Resumen de tu historia' })).toHaveTextContent('Formatos: Video')
+  })
+
+  it('a video alone is not a story: there still has to be a voice or a text', async () => {
+    const user = userEvent.setup()
+    open()
+
+    await addVideo(user)
+
+    expect(nextButton()).toBeDisabled()
+  })
+
+  it('can be taken out again', async () => {
+    const user = userEvent.setup()
+    open()
+    await user.type(screen.getByLabelText('O escríbela'), 'Un recuerdo.')
+    await addVideo(user)
+
+    await user.click(screen.getByRole('button', { name: 'Quitar video_01.mov' }))
+
+    expect(screen.queryByText(/video_01\.mov/)).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Agregar video/ })).toBeEnabled()
+  })
+
+  it('the review lists the video among the formats', async () => {
+    const user = userEvent.setup()
+    open()
+    await reachReview(user)
+
+    expect(screen.getByText('REVISA ANTES DE ENVIAR')).toBeInTheDocument()
+    expect(screen.getByText('Video', { selector: '.ag-format' })).toBeInTheDocument()
+  })
+
+  it('sends the story first, without waiting for the video, which then goes up and is added to it', async () => {
+    const user = userEvent.setup()
+    const server = serverWithStories()
+    const { fetchMock } = open(videoApi(server))
+    await reachReview(user)
+
+    await user.click(nextButton())
+
+    expect(await screen.findByRole('heading', { name: 'Mis historias' })).toBeInTheDocument()
+    const body = sentBody(fetchMock)
+    expect(body.medios).toEqual([]) // the story went without it
+    expect(await screen.findByText('Se subió el video de «El camino de mulas».')).toBeInTheDocument()
+    expect(put).toHaveBeenCalledTimes(1)
+    expect(put.mock.calls[0][0]).toMatch(/^historias\/u1\/video-.*\.mov$/)
+    const attach = postsTo(fetchMock, '/historias/HIS-2026-20/video')
+    expect(attach).toHaveLength(1)
+    expect(JSON.parse(attach[0][1].body)).toEqual({ url: VIDEO_URL, mime: 'video/quicktime', bytes: 8000 })
+    expect(postsTo(fetchMock, '/historias')).toHaveLength(1) // one story
+  })
+
+  it('the story is in even when the video cannot go up; the video waits on the phone and is tried again', async () => {
+    const user = userEvent.setup()
+    setRetryDelayForTests(40)
+    const server = serverWithStories()
+    put.mockRejectedValueOnce(new Error('connection reset')).mockResolvedValue({ url: VIDEO_URL })
+    const { fetchMock } = open(videoApi(server))
+    await reachReview(user)
+
+    await user.click(nextButton())
+
+    expect(await screen.findByRole('heading', { name: 'Mis historias' })).toBeInTheDocument()
+    expect(await screen.findByText('Se subió el video de «El camino de mulas».', undefined, { timeout: 3000 })).toBeInTheDocument()
+    expect(put).toHaveBeenCalledTimes(2) // the first one failed, the second one went
+    expect(postsTo(fetchMock, '/historias')).toHaveLength(1) // the story was never sent twice
+    expect(postsTo(fetchMock, '/historias/HIS-2026-20/video')).toHaveLength(1)
+  })
+
+  it('without signal the story and its video are kept on the device and both go out when the signal returns', async () => {
+    const user = userEvent.setup()
+    const server = serverWithStories()
+    const { fetchMock } = open(videoApi(server))
+    await reachReview(user)
+    act(() => toggleSimulatedOffline())
+    await user.click(await screen.findByRole('button', { name: 'Guardar en el dispositivo' }))
+    await screen.findByText('Por asignar')
+    expect(put).not.toHaveBeenCalled()
+
+    act(() => toggleSimulatedOffline())
+
+    expect(await screen.findByText(/se envió 1 borrador a revisión/)).toBeInTheDocument()
+    await waitFor(() => expect(put).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(postsTo(fetchMock, '/historias/HIS-2026-20/video')).toHaveLength(1))
+    expect(postsTo(fetchMock, '/historias')).toHaveLength(1)
+  })
+
+  it('comes back with the story that was left half told', async () => {
+    const user = userEvent.setup()
+    const first = open()
+    await user.type(screen.getByLabelText('O escríbela'), 'Un recuerdo.')
+    await addVideo(user)
+    first.unmount()
+
+    open()
+
+    expect(await screen.findByText('Recuperamos la historia que dejaste a medias.')).toBeInTheDocument()
+    expect(screen.getByText('video_01.mov · 8 KB')).toBeInTheDocument()
+  })
+
+  it('"Empezar de nuevo" lets go of the video too', async () => {
+    const user = userEvent.setup()
+    const first = open()
+    await user.type(screen.getByLabelText('O escríbela'), 'Un recuerdo.')
+    await addVideo(user)
+    first.unmount()
+    open()
+
+    await user.click(await screen.findByRole('button', { name: 'Empezar de nuevo' }))
+
+    expect(screen.queryByText(/video_01\.mov/)).not.toBeInTheDocument()
+    expect((await loadWorkingDraft(NARRATOR.id)) ?? null).toBeNull()
+  })
+
+  it('once the story is sent nothing of the draft remains, not even the video', async () => {
+    const user = userEvent.setup()
+    const server = serverWithStories()
+    open(videoApi(server))
+    await reachReview(user)
+
+    await user.click(nextButton())
+    await screen.findByRole('heading', { name: 'Mis historias' })
+
+    expect(await loadWorkingDraft(NARRATOR.id)).toBeNull()
   })
 })

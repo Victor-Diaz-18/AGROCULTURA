@@ -1,5 +1,6 @@
 import { request } from './http.js'
 import { uploadMedia } from './stories.js'
+import { uploadVideo } from './video.js'
 
 /** Everything here needs an administrator session. */
 
@@ -31,10 +32,12 @@ export const resetDemoData = () => request('/admin/reiniciar-ejemplo', { method:
 export const createProjectStory = (payload) => request('/admin/historias-proyecto', { method: 'POST', body: payload })
 
 /**
- * Uploads the audio and photos, then publishes the team's story.
- * `uploaded` remembers what already went up, so a retry does not upload it again.
+ * Uploads the audio and photos (through the API) and the video (straight to Blob), then publishes the team's story.
+ * `uploaded` remembers what already went up, so a retry does not upload it again. `userId` is the administrator's: the
+ * video goes to their folder. `onProgress(percent)` follows the video. Unlike a narrator's story, a team story is not
+ * published without its video: whoever uploads it is looking at the screen and can try again.
  */
-export async function publishProjectStory(draft, { uploaded = new WeakMap() } = {}) {
+export async function publishProjectStory(draft, { uploaded = new WeakMap(), userId, onProgress } = {}) {
   const files = []
   if (draft.audio) files.push({ blob: draft.audio.blob, tipo: 'audio', name: draft.audio.name, duracion: draft.audio.seconds })
   for (const photo of draft.fotos) files.push({ blob: photo.blob, tipo: 'foto', name: photo.name })
@@ -45,6 +48,14 @@ export async function publishProjectStory(draft, { uploaded = new WeakMap() } = 
     if (!medio) {
       medio = await uploadMedia(file)
       uploaded.set(file.blob, medio)
+    }
+    medios.push(medio)
+  }
+  if (draft.video) {
+    let medio = uploaded.get(draft.video.blob)
+    if (!medio) {
+      medio = await uploadVideo(draft.video, { userId, onProgress })
+      uploaded.set(draft.video.blob, medio)
     }
     medios.push(medio)
   }

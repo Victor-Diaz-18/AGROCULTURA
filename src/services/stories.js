@@ -14,6 +14,13 @@ export function uploadMedia({ blob, tipo, name, duracion }) {
 
 export const createStory = (payload) => request('/historias', { method: 'POST', body: payload })
 
+/** Adds the (already uploaded) video to the narrator's own story while it waits for review. */
+export const attachVideo = (codigo, medio) =>
+  request(`/historias/${encodeURIComponent(codigo)}/video`, {
+    method: 'POST',
+    body: { url: medio.url, mime: medio.mime, ...(medio.bytes != null ? { bytes: medio.bytes } : {}) },
+  })
+
 export const fetchMyStories = () => request('/historias/mias')
 
 /** Every published story, as the map needs it (public). */

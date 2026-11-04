@@ -3,7 +3,7 @@ import FCode from '../ui/FCode.jsx'
 import AudioRecorder from './AudioRecorder.jsx'
 import MediaPicker from './MediaPicker.jsx'
 
-/** Step 1, "Cuéntala": voice (F5), writing (F3) and photos (F4). */
+/** Step 1, "Cuéntala": voice (F5), writing (F3), photos (F4) and video (F13). */
 export default function StepRecord({ recorder, audio, onStartRecording, onRemoveAudio, texto, onTexto, photos, onDevice = true }) {
   return (
     <>
@@ -43,7 +43,7 @@ export default function StepRecord({ recorder, audio, onStartRecording, onRemove
         />
       </div>
 
-      <MediaPicker {...photos} />
+      <MediaPicker {...photos} heading="Fotos y video" />
     </>
   )
 }

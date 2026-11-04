@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { LIMITS, MAX_PLACE_NAME, MAX_UPLOAD_BYTES } from '../../config/constants.js'
+import { useAuth } from '../../context/AuthContext.jsx'
 import { usePortalData } from '../../context/PortalDataContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { ApiError, OfflineError } from '../../services/http.js'
@@ -17,7 +18,8 @@ import Modal from '../ui/Modal.jsx'
 
 /**
  * "Nueva historia del proyecto" (F12): a story the team uploads; it is published at once.
- * Photos are reduced like the narrators' (MediaPicker); the audio is a file the team already has.
+ * Photos are reduced like the narrators' (MediaPicker); the audio is a file the team already has; the video (up to 25 MB)
+ * goes straight to Blob.
  */
 
 export const AUDIO_MESSAGES = {
@@ -26,6 +28,7 @@ export const AUDIO_MESSAGES = {
 
 export default function ProjectStoryModal({ onClose, onPublished }) {
   const { config, reload } = usePortalData()
+  const { user } = useAuth()
   const toast = useToast()
   const [titulo, setTitulo] = useState('')
   const [location, setLocation] = useState(null) // { lat, lon, origen, sectorId }: anywhere in the zone
@@ -35,6 +38,8 @@ export default function ProjectStoryModal({ onClose, onPublished }) {
   const [texto, setTexto] = useState('')
   const [etiquetas, setEtiquetas] = useState([])
   const [fotos, setFotos] = useState([])
+  const [video, setVideo] = useState(null) // { id, name, blob, mime }: it goes straight to Blob
+  const [progress, setProgress] = useState(null) // percent of the video that is going up
   const [audio, setAudio] = useState(null)
   const [audioProblem, setAudioProblem] = useState('')
   const [busy, setBusy] = useState(false)
@@ -55,6 +60,9 @@ export default function ProjectStoryModal({ onClose, onPublished }) {
     nextName: () => `foto_${String(photoNumber.current++).padStart(2, '0')}.jpg`,
     onAdd: (added) => setFotos((current) => [...current, ...added]),
     onRemove: (id) => setFotos((current) => current.filter((photo) => photo.id !== id)),
+    video,
+    onAddVideo: setVideo,
+    onRemoveVideo: () => setVideo(null),
   }
 
   const pickAudio = async (event) => {
@@ -82,10 +90,11 @@ export default function ProjectStoryModal({ onClose, onPublished }) {
   const publish = async () => {
     setBusy(true)
     setError('')
+    setProgress(null)
     try {
       const story = await publishProjectStory(
-        { clientId, titulo: titulo.trim(), texto: texto.trim(), epoca, location, lugar: lugar.trim(), etiquetas, narrador: narrador.trim(), audio, fotos },
-        { uploaded: uploaded.current },
+        { clientId, titulo: titulo.trim(), texto: texto.trim(), epoca, location, lugar: lugar.trim(), etiquetas, narrador: narrador.trim(), audio, fotos, video },
+        { uploaded: uploaded.current, userId: user?.id, onProgress: setProgress },
       )
       const sector = config.sectores.find((item) => item.id === story.sector_id)
       toast(sector ? `Historia del proyecto publicada en ${sector.nombre}.` : 'Historia del proyecto publicada.')
@@ -227,6 +236,11 @@ export default function ProjectStoryModal({ onClose, onPublished }) {
         )}
       </div>
 
+      {busy && video && progress != null && (
+        <p role="status" className="ag-hint">
+          Subiendo el video… {progress} %
+        </p>
+      )}
       {error && (
         <p role="alert" className="ag-error">
           {error}

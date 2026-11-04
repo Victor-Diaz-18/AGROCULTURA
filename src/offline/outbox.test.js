@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError, OfflineError } from '../services/http.js'
-import { STOPPED, flushQueue } from './outbox.js'
+import { MAX_VIDEO_ATTEMPTS, STOPPED, flushQueue } from './outbox.js'
 import { getQueued, listQueued, queueStory, resetStoreForTests } from './store.js'
 
 const item = (overrides = {}) => ({
@@ -170,6 +170,154 @@ describe('when something goes wrong', () => {
     const result = await flushQueue('u1', { send })
 
     expect(result.failed[0].fallo).toBe('No pudimos enviar esta historia.')
+    expect(await listQueued('u1')).toHaveLength(1)
+  })
+})
+
+describe('the video that goes after the story (F13)', () => {
+  const VIDEO_MEDIO = { tipo: 'video', url: 'https://s.public.blob.vercel-storage.com/historias/u1/v.mp4', mime: 'video/mp4', bytes: 4 }
+  const withVideo = (overrides = {}) => item({ video: { id: 'v1', name: 'video_01.mp4', mime: 'video/mp4', blob: new Blob(['clip'], { type: 'video/mp4' }) }, formatos: ['Video'], ...overrides })
+  const story = vi.fn()
+  const sendVideoFile = vi.fn()
+
+  beforeEach(() => {
+    story.mockReset().mockResolvedValue({ codigo: 'HIS-2026-001' })
+    sendVideoFile.mockReset().mockResolvedValue({})
+  })
+  const flush = (options) => flushQueue('u1', { send: story, sendVideoFile, ...options })
+
+  it('sends the story first and then its video, to the story the server just made', async () => {
+    await queueStory(withVideo())
+
+    const result = await flush()
+
+    expect(story).toHaveBeenCalledTimes(1)
+    expect(sendVideoFile).toHaveBeenCalledTimes(1)
+    const [codigo, video, options] = sendVideoFile.mock.calls[0]
+    expect(codigo).toBe('HIS-2026-001')
+    expect(await video.blob.text()).toBe('clip')
+    expect(options.userId).toBe('u1')
+    expect(result).toMatchObject({ failed: [], stopped: null })
+    expect(result.sent).toHaveLength(1)
+    expect(result.videos).toHaveLength(1)
+    expect(await listQueued('u1')).toEqual([])
+  })
+
+  it('a story without video never touches the video code', async () => {
+    await queueStory(item())
+
+    const result = await flush()
+
+    expect(sendVideoFile).not.toHaveBeenCalled()
+    expect(result.videos).toEqual([])
+  })
+
+  it('if the signal goes after the story, the story is in and only the video is left (it is not sent again)', async () => {
+    await queueStory(withVideo({ audio: { blob: new Blob(['voz'], { type: 'audio/webm' }), seconds: 5, mime: 'audio/webm' }, texto: 'Un texto largo.' }))
+    sendVideoFile.mockRejectedValueOnce(new OfflineError())
+
+    const first = await flush()
+
+    expect(first.sent).toHaveLength(1) // the story reached the server
+    expect(first.videos).toEqual([])
+    expect(first.stopped).toBe(STOPPED.offline)
+    const [left] = await listQueued('u1')
+    expect(left).toMatchObject({ fase: 'video', codigo: 'HIS-2026-001', tieneVideo: true, tieneAudio: false, cantidadFotos: 0, texto: '' }) // the rest of the story was let go
+
+    const second = await flush()
+
+    expect(story).toHaveBeenCalledTimes(1) // no second story
+    expect(sendVideoFile).toHaveBeenCalledTimes(2)
+    expect(sendVideoFile.mock.calls[1][0]).toBe('HIS-2026-001')
+    expect(second.sent).toEqual([])
+    expect(second.videos).toHaveLength(1)
+    expect(await listQueued('u1')).toEqual([])
+  })
+
+  it('a video-only item (the story went up online) is just sent', async () => {
+    await queueStory(item({ fase: 'video', codigo: 'HIS-2026-007', ...withVideo(), clientId: 'story-0001' }))
+
+    const result = await flush()
+
+    expect(story).not.toHaveBeenCalled()
+    expect(sendVideoFile.mock.calls[0][0]).toBe('HIS-2026-007')
+    expect(result).toMatchObject({ sent: [], failed: [], stopped: null })
+    expect(result.videos).toHaveLength(1)
+  })
+
+  it('does not upload again a video that went up and only failed to be added to the story', async () => {
+    await queueStory(withVideo({ fase: 'video', codigo: 'HIS-2026-007', subidos: { video: VIDEO_MEDIO } }))
+
+    await flush()
+
+    const [, video, options] = sendVideoFile.mock.calls[0]
+    expect(options.uploaded.get(video.blob)).toEqual(VIDEO_MEDIO)
+  })
+
+  it('remembers the upload as it happens', async () => {
+    await queueStory(withVideo({ fase: 'video', codigo: 'HIS-2026-007' }))
+    sendVideoFile.mockImplementation(async (_code, _video, options) => {
+      await options.onUploaded({ key: 'video' }, VIDEO_MEDIO)
+      throw new OfflineError()
+    })
+
+    await flush()
+
+    expect((await getQueued('story-0001')).subidos).toEqual({ video: VIDEO_MEDIO })
+  })
+
+  it('tells how the video is going up', async () => {
+    await queueStory(withVideo({ fase: 'video', codigo: 'HIS-2026-007' }))
+    sendVideoFile.mockImplementation(async (_code, _video, options) => options.onProgress(40))
+    const onVideoProgress = vi.fn()
+
+    await flush({ onVideoProgress })
+
+    expect(onVideoProgress).toHaveBeenCalledWith('story-0001', 40)
+  })
+
+  it('a server in trouble stops the round and counts the attempt; after five the video waits for the person', async () => {
+    await queueStory(withVideo({ fase: 'video', codigo: 'HIS-2026-007' }))
+    sendVideoFile.mockRejectedValue(new ApiError(503, 'No pudimos subir el video. Se intentará de nuevo.'))
+
+    for (let attempt = 1; attempt < MAX_VIDEO_ATTEMPTS; attempt++) {
+      const result = await flush()
+      expect(result.stopped).toBe(STOPPED.server)
+      expect((await listQueued('u1'))[0]).toMatchObject({ intentos: attempt, fallo: null })
+    }
+    const last = await flush()
+
+    expect(last.stopped).toBeNull()
+    expect(last.failed).toMatchObject([{ fase: 'video', fallo: 'No pudimos subir el video. Revisa tu conexión y toca «Reintentar».' }])
+    expect((await listQueued('u1'))[0].fallo).toMatch(/Reintentar/)
+
+    sendVideoFile.mockClear()
+    await flush()
+    expect(sendVideoFile).not.toHaveBeenCalled() // not retried by itself any more
+  })
+
+  it('the server refusing the video for good keeps its reason and lets the next one go', async () => {
+    await queueStory(withVideo({ fase: 'video', codigo: 'HIS-2026-007', clientId: 'story-bad1' }))
+    await queueStory(withVideo({ fase: 'video', codigo: 'HIS-2026-008', clientId: 'story-good', guardadoEn: '2026-11-04T11:00:00.000Z' }))
+    sendVideoFile.mockImplementation(async (codigo) => {
+      if (codigo === 'HIS-2026-007') throw new ApiError(409, 'Esta historia ya fue revisada: ya no se le puede agregar un video.')
+      return {}
+    })
+
+    const result = await flush()
+
+    expect(result.videos.map((video) => video.clientId)).toEqual(['story-good'])
+    expect(result.failed).toMatchObject([{ clientId: 'story-bad1', fase: 'video', fallo: 'Esta historia ya fue revisada: ya no se le puede agregar un video.' }])
+    expect((await listQueued('u1')).map((left) => left.clientId)).toEqual(['story-bad1'])
+  })
+
+  it('an expired session stops the round with the video kept', async () => {
+    await queueStory(withVideo({ fase: 'video', codigo: 'HIS-2026-007' }))
+    sendVideoFile.mockRejectedValue(new ApiError(401, 'Tu sesión venció.'))
+
+    const result = await flush()
+
+    expect(result.stopped).toBe(STOPPED.auth)
     expect(await listQueued('u1')).toHaveLength(1)
   })
 })

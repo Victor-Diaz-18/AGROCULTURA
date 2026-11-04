@@ -9,8 +9,8 @@
 
 import { createHmac, timingSafeEqual } from 'node:crypto'
 
-/** The most a video may weigh. The same number is in src/config/constants.js (MAX_VIDEO_BYTES). */
-export const MAX_VIDEO_BYTES = 25 * 1024 * 1024
+/** The most a video may weigh: 25 MB as phones count them (millions of bytes). The same number is in src/config/constants.js. */
+export const MAX_VIDEO_BYTES = 25_000_000
 
 /** What we accept as a video, and the extension of each. */
 export const VIDEO_TYPES = {

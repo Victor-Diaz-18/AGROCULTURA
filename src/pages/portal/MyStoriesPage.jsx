@@ -30,12 +30,23 @@ const TABS = [
   { id: 'rechazada', label: ESTADOS.rechazada.label, dot: 'var(--st-rechazada-dot)' },
 ]
 
-/** What happens next with a story: the rejection reason, why a draft is stuck, or the next step of its state. */
+/** What happens next with a story: the rejection reason, why a draft or a video is stuck, or the next step of its state (and its video, if one is still on the phone). */
 export function nextStep(story) {
   if (story.estado === 'rechazada') return story.motivo_rechazo ?? ''
   if (story.estado === 'borrador' && story.fallo) return story.fallo
-  if (story.estado === 'publicada') return ''
-  return ESTADOS[story.estado]?.sigue ?? ''
+  const video = story.video_pendiente
+  if (video?.fallo) return video.fallo
+  const base = story.estado === 'publicada' ? '' : (ESTADOS[story.estado]?.sigue ?? '')
+  if (!video) return base
+  const about = video.progreso != null ? `Subiendo el video… ${video.progreso} %` : 'Falta subir el video: se sube cuando haya señal.'
+  return base ? `${base}. ${about}` : about
+}
+
+/** What is stuck on the phone for this story, if anything: its draft or its video, refused by the server and waiting for the person. */
+function stuck(story) {
+  if (story.estado === 'borrador' && story.fallo) return { clientId: story.clientId, titulo: story.titulo, video: false }
+  if (story.video_pendiente?.fallo) return { clientId: story.video_pendiente.clientId, titulo: story.titulo, video: true }
+  return null
 }
 
 /** The narrator's own stories with their state (F10, F6). */
@@ -47,7 +58,7 @@ export default function MyStoriesPage() {
   const { retry, discard } = useOutbox()
   const [tab, setTab] = useState('todas')
   const [openCode, setOpenCode] = useState(null)
-  const [discarding, setDiscarding] = useState(null) // the draft the person is about to throw away
+  const [discarding, setDiscarding] = useState(null) // what the person is about to throw away: { clientId, titulo, video }
 
   useEffect(() => {
     if (online) reload() // always show what the server has now, not what was loaded when the session started
@@ -134,12 +145,12 @@ export default function MyStoriesPage() {
                     Ver ficha
                   </button>
                 )}
-                {story.estado === 'borrador' && story.fallo && (
+                {stuck(story) && (
                   <>
-                    <button type="button" className="ag-rowbtn ag-rowbtn--outline ag-rowbtn--sm" onClick={() => retry(story.clientId)}>
+                    <button type="button" className="ag-rowbtn ag-rowbtn--outline ag-rowbtn--sm" onClick={() => retry(stuck(story).clientId)}>
                       Reintentar
                     </button>
-                    <button type="button" className="ag-rowbtn ag-rowbtn--ghost ag-rowbtn--sm" onClick={() => setDiscarding(story)}>
+                    <button type="button" className="ag-rowbtn ag-rowbtn--ghost ag-rowbtn--sm" onClick={() => setDiscarding(stuck(story))}>
                       Quitar
                     </button>
                   </>
@@ -155,6 +166,7 @@ export default function MyStoriesPage() {
       {discarding && (
         <DiscardDraftDialog
           title={discarding.titulo}
+          video={discarding.video}
           onClose={() => setDiscarding(null)}
           onConfirm={() => {
             discard(discarding.clientId)

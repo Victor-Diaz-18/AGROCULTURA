@@ -8,7 +8,8 @@ import { useOutbox } from './OutboxContext.jsx'
 
 /**
  * The signed-in narrator's own stories (F10, F6): the list in "Mis historias" and the counter in the menu.
- * It joins what the server has with the drafts kept on the phone while there is no signal (state "borrador").
+ * It joins what the server has with the drafts kept on the phone while there is no signal (state "borrador"), and marks
+ * the stories whose video is still on the phone (`video_pendiente`: it is sent after the story, F13).
  * Loads when a narrator is signed in and again when the signal returns; each person only ever sees their own.
  *
  * status (of the server's list): loading | ready | offline (never loaded and no signal) | error.
@@ -41,7 +42,7 @@ function draftAsStory(item) {
 export function MyStoriesProvider({ children }) {
   const { user } = useAuth()
   const { online } = useConnectivity()
-  const { items, sentVersion } = useOutbox()
+  const { items, sentVersion, progress } = useOutbox()
   const [state, setState] = useState({ stories: null, status: 'loading' })
   const narratorId = user?.rol === 'narrador' ? user.id : null
   const activeId = useRef(narratorId)
@@ -109,11 +110,17 @@ export function MyStoriesProvider({ children }) {
     if (sentVersion > 0) reload()
   }, [sentVersion, reload])
 
-  const drafts = useMemo(() => items.map(draftAsStory), [items])
-  const stories = useMemo(
-    () => (state.stories || drafts.length > 0 ? [...drafts, ...(state.stories ?? [])] : null),
-    [state.stories, drafts],
-  )
+  // Items in the "video" phase are not drafts: their story is already on the server, only its video is still on the phone.
+  const drafts = useMemo(() => items.filter((item) => item.fase !== 'video').map(draftAsStory), [items])
+  const waitingVideos = useMemo(() => new Map(items.filter((item) => item.fase === 'video').map((item) => [item.codigo, item])), [items])
+  const stories = useMemo(() => {
+    if (!state.stories && drafts.length === 0) return null
+    const server = (state.stories ?? []).map((story) => {
+      const video = waitingVideos.get(story.codigo)
+      return video ? { ...story, video_pendiente: { clientId: video.clientId, titulo: video.titulo, fallo: video.fallo ?? null, progreso: progress[video.clientId] ?? null } } : story
+    })
+    return [...drafts, ...server]
+  }, [state.stories, drafts, waitingVideos, progress])
   const value = useMemo(
     () => ({ stories, drafts: drafts.length, status: state.status, reload }),
     [stories, drafts.length, state.status, reload],

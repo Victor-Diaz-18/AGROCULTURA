@@ -9,7 +9,7 @@
  * memory for as long as the page stays open, and `deviceStorage()` says it is not durable so the screens never
  * promise more than they can keep.
  *
- * Photos and audio are stored as bytes + type, not as Blob objects: older Safari versions lose Blobs kept in IndexedDB.
+ * Photos, audio and video are stored as bytes + type, not as Blob objects: older Safari versions lose Blobs kept in IndexedDB.
  */
 
 import { openDB } from 'idb'
@@ -106,12 +106,16 @@ function pack(blob) {
 
 const unpack = ({ type, buffer }) => new Blob([buffer], { type })
 
+const videoToRecord = async (video) => (video ? { id: video.id, name: video.name, mime: video.mime, data: await pack(video.blob) } : null)
+const videoFromRecord = (record) => (record ? { id: record.id, name: record.name, mime: record.mime, blob: unpack(record.data) } : null)
+
 /** A draft as it is stored: its files become bytes. */
 async function toRecord(draft) {
   return {
     ...draft,
     audio: draft.audio ? { seconds: draft.audio.seconds, mime: draft.audio.mime, data: await pack(draft.audio.blob) } : null,
     fotos: await Promise.all(draft.fotos.map(async ({ id, name, blob }) => ({ id, name, data: await pack(blob) }))),
+    video: await videoToRecord(draft.video),
   }
 }
 
@@ -121,28 +125,55 @@ function fromRecord(record) {
     ...record,
     audio: record.audio ? { seconds: record.audio.seconds, mime: record.audio.mime, blob: unpack(record.audio.data) } : null,
     fotos: record.fotos.map(({ id, name, data }) => ({ id, name, blob: unpack(data) })),
+    video: videoFromRecord(record.video),
   }
 }
 
 /** For lists: everything but the bytes. */
 function summaryOf(record) {
-  const { audio, fotos, ...rest } = record
-  return { ...rest, tieneAudio: Boolean(audio), cantidadFotos: fotos.length }
+  const { audio, fotos, video, ...rest } = record
+  return { ...rest, tieneAudio: Boolean(audio), cantidadFotos: fotos.length, tieneVideo: Boolean(video) }
 }
 
 // ---------- The story being told ----------
 
+// A video can weigh 25 MB, so it is kept under its own key and written only when it changes, not at every key typed.
+const videoKey = (narratorId) => `${narratorId}#video`
+const videoSaved = new Map() // narrator id -> the video Blob last written there (null: none)
+
 export const saveWorkingDraft = (narratorId, draft) =>
-  track(toRecord(draft).then((record) => write(WORKING, { ...record, narratorId }, narratorId)))
+  track(
+    (async () => {
+      const { video, ...rest } = draft
+      const record = await toRecord({ ...rest, video: null })
+      await write(WORKING, { ...record, narratorId }, narratorId)
+      const wanted = video?.blob ?? null
+      if (videoSaved.get(narratorId) !== wanted) {
+        if (video) await write(WORKING, await videoToRecord(video), videoKey(narratorId))
+        else await erase(WORKING, videoKey(narratorId))
+        videoSaved.set(narratorId, wanted)
+      }
+    })(),
+  )
 
 /** The draft of this narrator, or null. */
 export async function loadWorkingDraft(narratorId) {
   await afterWrites()
   const record = await read(WORKING, narratorId)
-  return record ? fromRecord(record) : null
+  if (!record) return null
+  const video = videoFromRecord(await read(WORKING, videoKey(narratorId)))
+  videoSaved.set(narratorId, video?.blob ?? null) // what the form holds now is what is stored
+  return { ...fromRecord(record), video }
 }
 
-export const clearWorkingDraft = (narratorId) => track(erase(WORKING, narratorId))
+export const clearWorkingDraft = (narratorId) =>
+  track(
+    (async () => {
+      await erase(WORKING, narratorId)
+      await erase(WORKING, videoKey(narratorId))
+      videoSaved.set(narratorId, null)
+    })(),
+  )
 
 // ---------- Stories waiting for the signal ----------
 
@@ -212,6 +243,7 @@ export async function resetStoreForTests() {
   db?.close()
   dbPromise = null
   durable = null
+  videoSaved.clear()
   Object.values(memory).forEach((map) => map.clear())
   if (typeof indexedDB === 'undefined') return
   await new Promise((resolve) => {

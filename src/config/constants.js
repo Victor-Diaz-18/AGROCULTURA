@@ -12,6 +12,12 @@ export const COMPROBACIONES = [
 /** The most an upload may weigh (a Vercel function takes about 4.5 MB per request): same as lib/media/validation.py. */
 export const MAX_UPLOAD_BYTES = 3_500_000
 
+/** The most a video may weigh: 25 MB, counted as phones and `formatBytes` do (millions of bytes). Same as api/_lib/video.js and lib/media/validation.py. */
+export const MAX_VIDEO_BYTES = 25_000_000
+
+/** The video types we accept, by file extension (an iPhone records .mov, most others .mp4). */
+export const VIDEO_TYPES = { mp4: 'video/mp4', mov: 'video/quicktime', webm: 'video/webm' }
+
 /** Applied when the narrator picks no tag, as in the approved design. */
 export const DEFAULT_TAG = '#café'
 
