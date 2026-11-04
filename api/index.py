@@ -20,9 +20,11 @@ from fastapi.responses import JSONResponse  # noqa: E402
 from pymongo.errors import ConnectionFailure  # noqa: E402
 
 from lib import __version__  # noqa: E402
+from lib.config import router as config_router  # noqa: E402
 from lib.core import health  # noqa: E402
 from lib.core.errors import DomainError  # noqa: E402
 from lib.core.settings import get_settings  # noqa: E402
+from lib.stories import router as stories_router  # noqa: E402
 
 
 def create_app() -> FastAPI:
@@ -61,6 +63,8 @@ def create_app() -> FastAPI:
         )
 
     app.include_router(health.router, prefix="/api")
+    app.include_router(config_router.router, prefix="/api")
+    app.include_router(stories_router.router, prefix="/api")
     return app
 
 

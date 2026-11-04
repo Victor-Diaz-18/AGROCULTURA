@@ -22,7 +22,9 @@ from fastapi.testclient import TestClient  # noqa: E402
 
 from api.index import create_app  # noqa: E402
 from lib.core.db import get_db  # noqa: E402
+from lib.core.indexes import ensure_indexes  # noqa: E402
 from lib.core.settings import get_settings  # noqa: E402
+from lib.seed.catalog import seed_catalog  # noqa: E402
 
 HAS_REAL_MONGO = bool(os.environ.get("TEST_MONGODB_URI"))
 
@@ -57,6 +59,8 @@ def db(mongo_client):
     assert database.name.endswith("_test"), "refusing to use a non-test database"
     for name in database.list_collection_names():
         database[name].delete_many({})
+    ensure_indexes(database)
+    seed_catalog(database)  # sectors, tags and portal config, like a fresh install
     return database
 
 

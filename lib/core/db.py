@@ -37,4 +37,8 @@ def get_client() -> MongoClient:
 
 def get_db() -> Database:
     """FastAPI dependency returning the application database."""
-    return get_client()[get_settings().mongodb_db]
+    from lib.core.indexes import ensure_indexes_once  # local import avoids a cycle
+
+    db = get_client()[get_settings().mongodb_db]
+    ensure_indexes_once(db)
+    return db
