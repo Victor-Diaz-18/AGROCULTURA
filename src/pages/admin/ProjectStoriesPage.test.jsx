@@ -50,6 +50,17 @@ describe('Historias del proyecto (F12)', () => {
     expect(callsTo(fetchMock, '/admin/historias')[0][0]).toContain('origen=proyecto')
   })
 
+  it('opens the card of a team story', async () => {
+    const user = userEvent.setup()
+    open()
+
+    await user.click(await screen.findByRole('button', { name: 'Ver ficha' }))
+
+    const dialog = await screen.findByRole('dialog', { name: 'Ficha de la historia' })
+    expect(within(dialog).getByRole('heading', { name: 'El patio donde se secaba el café' })).toBeInTheDocument()
+    expect(within(dialog).getByText('Proyecto')).toBeInTheDocument()
+  })
+
   it('invites to create the first one', async () => {
     open('/admin/historias', { '/admin/historias': [] })
 

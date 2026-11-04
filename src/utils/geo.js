@@ -20,3 +20,12 @@ export function nearestSector(point, sectors) {
   }
   return best
 }
+
+/** Is the story's point inside the map's view? `bounds` is { south, west, north, east }; no bounds means "everything". */
+export function inBounds(bounds, story) {
+  if (!bounds) return true
+  return story.lat >= bounds.south && story.lat <= bounds.north && story.lon >= bounds.west && story.lon <= bounds.east
+}
+
+/** The points of a list of stories as [lat, lon] pairs (what Leaflet wants). */
+export const pointsOf = (stories) => stories.map((story) => [story.lat, story.lon])

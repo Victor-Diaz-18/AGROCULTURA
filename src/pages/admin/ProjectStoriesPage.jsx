@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import ProjectStoryModal from '../../components/admin/ProjectStoryModal.jsx'
 import PageHeader from '../../components/layout/PageHeader.jsx'
+import StoryCard from '../../components/story/StoryCard.jsx'
 import Button from '../../components/ui/Button.jsx'
 import DataTable, { Cell, TableRow } from '../../components/ui/DataTable.jsx'
 import ListenButton from '../../components/ui/ListenButton.jsx'
@@ -20,6 +22,8 @@ export default function ProjectStoriesPage({ variant = 'portal' }) {
   const [params, setParams] = useSearchParams()
   const { stories, status, reload } = useAdminStories(FILTERS)
   const creating = params.get('nueva') === '1'
+  const [cardCode, setCardCode] = useState(null)
+  const card = stories.find((story) => story.codigo === cardCode)
   const sectorName = (id) => config.sectores.find((sector) => sector.id === id)?.nombre ?? id
 
   const setCreating = (open) => setParams(open ? { nueva: '1' } : {}, { replace: true })
@@ -48,9 +52,9 @@ export default function ProjectStoriesPage({ variant = 'portal' }) {
       <div className="ag-table-card">
         <DataTable
           label="Historias del proyecto"
-          columns={['CÓDIGO', 'HISTORIA', 'SECTOR', 'ÉPOCA', 'FORMATOS'].map((label) => ({ label }))}
-          template="130px minmax(240px, 2fr) 120px 150px 160px"
-          minWidth={640}
+          columns={[{ label: 'CÓDIGO' }, { label: 'HISTORIA' }, { label: 'SECTOR' }, { label: 'ÉPOCA' }, { label: 'FORMATOS' }, { label: 'FICHA', align: 'right' }]}
+          template="130px minmax(240px, 2fr) 120px 150px 160px 120px"
+          minWidth={760}
           empty={emptyText}
         >
           {stories.map((story) => (
@@ -60,10 +64,17 @@ export default function ProjectStoriesPage({ variant = 'portal' }) {
               <Cell>{sectorName(story.sector_id)}</Cell>
               <Cell className="ag-table__muted">{story.epoca}</Cell>
               <Cell className="ag-table__muted">{story.formatos.join(' · ')}</Cell>
+              <Cell className="ag-table__action">
+                <button type="button" className="ag-rowbtn ag-rowbtn--teal" onClick={() => setCardCode(story.codigo)}>
+                  Ver ficha
+                </button>
+              </Cell>
             </TableRow>
           ))}
         </DataTable>
       </div>
+
+      {card && <StoryCard key={card.codigo} story={card} onClose={() => setCardCode(null)} />}
 
       {creating && (
         <ProjectStoryModal

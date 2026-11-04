@@ -56,3 +56,245 @@
   background: transparent;
   border: 0;
 }
+
+/* ---------- Map of stories (design: card with the map and the list beside it) ---------- */
+.ag-mapcard {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--borde);
+  border-radius: 16px;
+  background: #fff;
+}
+.ag-mapcard__body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+.ag-mapcard__list {
+  flex: 2 1 320px;
+  min-width: 0;
+  max-height: 470px;
+  overflow-y: auto;
+  border-left: 1px solid var(--linea);
+}
+.ag-mapcard__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 28px 22px;
+  font-size: 14px;
+  color: var(--texto-3);
+}
+.ag-mapcard__empty b {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--texto);
+}
+.ag-mapcard__foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 18px;
+  border-top: 1px solid var(--linea);
+  font-size: 13px;
+  color: var(--texto-3);
+}
+.ag-storymap {
+  position: relative;
+  z-index: 0; /* its own stacking context: the legend and Leaflet's controls (z-index up to 1000) stay under dialogs */
+  flex: 3 1 420px;
+  height: 470px;
+  min-width: 0;
+  overflow: hidden;
+  background: #e6ede5;
+}
+.ag-storymap__map.leaflet-container {
+  background: #e6ede5; /* the color of the design while the tiles load, or when there is no signal */
+}
+.ag-storymap__map {
+  position: absolute;
+  inset: 0;
+  z-index: 0; /* keeps Leaflet's layers (z-index up to 1000) below dialogs and the header */
+  font-family: var(--font-body);
+}
+.ag-storymap__legend {
+  position: absolute;
+  bottom: 14px;
+  left: 14px;
+  z-index: 1000;
+  display: flex;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--texto-2);
+  font-size: 12.5px;
+  pointer-events: none;
+}
+.ag-storymap__legend span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ag-storymap__legend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 5px;
+}
+.ag-storymap__code {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 1000;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--texto-3);
+  pointer-events: none;
+}
+
+/* Pins, groups and sector names on the map */
+.ag-pin-icon,
+.ag-cluster-icon,
+.ag-sector-label-icon {
+  background: transparent;
+  border: 0;
+}
+.ag-pin {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.ag-cluster {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 3px solid #fff;
+  border-radius: 22px;
+  background: var(--verde-oscuro);
+  color: #fff;
+  font-family: var(--font-title);
+  font-size: 16px;
+  font-weight: 700;
+  box-shadow: 0 3px 10px rgba(23, 38, 31, 0.3);
+}
+.ag-sector-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, 34px);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: #5e7a66;
+  white-space: nowrap;
+  text-shadow: 0 0 3px #fff, 0 0 3px #fff;
+}
+.leaflet-tooltip.ag-pin-tip {
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--texto);
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 6px 16px rgba(23, 38, 31, 0.25);
+}
+.leaflet-tooltip-top.ag-pin-tip::before {
+  border-top-color: var(--texto);
+}
+
+/* The list beside the map */
+.ag-storylist {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ag-storyitem {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 18px;
+  border: 0;
+  border-bottom: 1px solid var(--linea);
+  background: #fff;
+  color: var(--texto);
+  text-align: left;
+}
+.ag-storyitem--selected {
+  background: #f4f8f3;
+}
+.ag-storyitem__thumb {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: repeating-linear-gradient(135deg, #d7e0d6, #d7e0d6 7px, #e1e8e0 7px, #e1e8e0 14px);
+  color: #4f6857;
+}
+.ag-storyitem__thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.ag-storyitem__text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+.ag-storyitem__top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ag-storyitem__code {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--texto-4);
+}
+.ag-storyitem__title {
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.ag-storyitem__meta {
+  font-size: 13px;
+  color: var(--texto-3);
+}
+.ag-storyitem__formats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.ag-storyitem__formats span {
+  box-sizing: content-box; /* prototype: 22px plus the border */
+  display: flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+  background: var(--fondo);
+  color: var(--texto-2);
+  font-size: 12px;
+  font-weight: 700;
+}

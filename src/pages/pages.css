@@ -351,6 +351,25 @@
   background: #fff;
   color: var(--verde-oscuro);
 }
+.ag-rowbtn--outline {
+  border: 1px solid var(--verde-oscuro);
+  background: #fff;
+  color: var(--verde-oscuro);
+}
+.ag-rowbtn--teal {
+  border: 1px solid var(--verde-azulado);
+  background: #fff;
+  color: var(--verde-azulado);
+}
+.ag-rowbtn--sm {
+  height: 32px;
+  padding: 0 12px;
+}
+.ag-table__next--row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .ag-rowbtn--lg {
   height: 36px;
   padding: 0 16px;

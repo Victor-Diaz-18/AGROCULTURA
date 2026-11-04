@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PageHeader from '../../components/layout/PageHeader.jsx'
 import Button from '../../components/ui/Button.jsx'
+import { StoryCardLoader } from '../../components/story/StoryCard.jsx'
 import DataTable, { Cell, TableRow } from '../../components/ui/DataTable.jsx'
 import FCode from '../../components/ui/FCode.jsx'
 import Icon from '../../components/ui/Icon.jsx'
@@ -40,6 +41,7 @@ export default function MyStoriesPage() {
   const { online } = useConnectivity()
   const { stories, status, reload } = useMyStories()
   const [tab, setTab] = useState('todas')
+  const [openCode, setOpenCode] = useState(null)
 
   useEffect(() => {
     if (online) reload() // always show what the server has now, not what was loaded when the session started
@@ -120,11 +122,20 @@ export default function MyStoriesPage() {
               <Cell>
                 <StatusChip estado={story.estado} />
               </Cell>
-              <Cell className="ag-table__next">{nextStep(story)}</Cell>
+              <Cell className="ag-table__next ag-table__next--row">
+                {story.estado === 'publicada' && (
+                  <button type="button" className="ag-rowbtn ag-rowbtn--outline ag-rowbtn--sm" onClick={() => setOpenCode(story.codigo)}>
+                    Ver ficha
+                  </button>
+                )}
+                <span>{nextStep(story)}</span>
+              </Cell>
             </TableRow>
           ))}
         </DataTable>
       </div>
+
+      {openCode && <StoryCardLoader key={openCode} code={openCode} onClose={() => setOpenCode(null)} />}
     </>
   )
 }

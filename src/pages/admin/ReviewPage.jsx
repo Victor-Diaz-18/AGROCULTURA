@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import ReviewModal from '../../components/admin/ReviewModal.jsx'
 import PageHeader from '../../components/layout/PageHeader.jsx'
+import StoryCard from '../../components/story/StoryCard.jsx'
 import DataTable, { Cell, TableRow } from '../../components/ui/DataTable.jsx'
 import FCode from '../../components/ui/FCode.jsx'
 import ListenButton from '../../components/ui/ListenButton.jsx'
@@ -31,6 +32,7 @@ export default function ReviewPage({ variant = 'portal' }) {
   const { config, stats, reload: reloadPortal } = usePortalData()
   const [tab, setTab] = useState('revision')
   const [openCode, setOpenCode] = useState(null)
+  const [cardCode, setCardCode] = useState(null)
   const current = TABS.find((item) => item.id === tab)
   const { stories, status, reload } = useAdminStories(current.filters)
 
@@ -43,6 +45,7 @@ export default function ReviewPage({ variant = 'portal' }) {
   const items = TABS.map(({ id, label, dot }) => ({ id, label, dot, count: counts[id] }))
   const sectorName = (id) => config.sectores.find((sector) => sector.id === id)?.nombre ?? id
   const reviewing = tab === 'revision' ? stories.find((story) => story.codigo === openCode) : null
+  const card = tab === 'revision' ? null : stories.find((story) => story.codigo === cardCode)
 
   const emptyText = { loading: 'Cargando…', offline: 'Sin señal: la bandeja se carga cuando vuelva la conexión.', error: 'No pudimos cargar las historias. Intenta de nuevo.', ready: stories.length === 0 ? EMPTY[tab] : null }[status]
 
@@ -108,9 +111,13 @@ export default function ReviewPage({ variant = 'portal' }) {
               <Cell className="ag-table__muted">{story.formatos.join(' · ')}</Cell>
               <Cell className="ag-table__muted">{formatDate(story.enviada_en)}</Cell>
               <Cell className="ag-table__action">
-                {story.estado === 'revision' && (
+                {story.estado === 'revision' ? (
                   <button type="button" className="ag-rowbtn ag-rowbtn--dark" onClick={() => setOpenCode(story.codigo)}>
                     Revisar
+                  </button>
+                ) : (
+                  <button type="button" className="ag-rowbtn ag-rowbtn--outline" onClick={() => setCardCode(story.codigo)}>
+                    Ver ficha
                   </button>
                 )}
               </Cell>
@@ -118,6 +125,8 @@ export default function ReviewPage({ variant = 'portal' }) {
           ))}
         </DataTable>
       </div>
+
+      {card && <StoryCard key={card.codigo} story={card} onClose={() => setCardCode(null)} />}
 
       {reviewing && (
         <ReviewModal

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { formatDuration } from '../../utils/format.js'
-import FCode from '../ui/FCode.jsx'
+import { SHOW_CODES } from '../../config/flags.js'
 import Icon from '../ui/Icon.jsx'
 
 /**
@@ -67,7 +67,8 @@ export default function AudioPlayer({ url, seconds = 0, title = 'Audio del narra
       </button>
       <div className="ag-audio__body">
         <span className="ag-audio__title">
-          {title} <FCode className="ag-audio__code">F5</FCode>
+          {title}
+          {SHOW_CODES ? ' · F5' : ''}
         </span>
         <div
           className="ag-audio__bar"

@@ -175,6 +175,27 @@ sectores son provisionales hasta confirmarlos con las familias de la zona.
 - El lugar se elige tocando un sector, tocando el mapa o con el botón «Usar mi ubicación» (el GPS del
   teléfono funciona sin señal). Se guarda como un punto GeoJSON `[longitud, latitud]` con un índice `2dsphere`.
 
+## Mapa y ficha de la historia
+
+- **Qué se ve en el mapa.** `GET /api/historias` es público y devuelve **solo** las historias publicadas (más
+  nuevas primero, hasta 1000), con lo que necesita el mapa: código, título, quién la cuenta, sector, época,
+  formatos, origen, el punto y la primera foto. **Nunca** lleva el texto, el autor, el identificador del borrador
+  ni nada de la revisión. `GET /api/historias/{codigo}` es la ficha: también pública y también solo de historias
+  publicadas (una en revisión, rechazada o inexistente responde 404).
+- **La zona visible.** El mapa carga todas las publicadas de una vez, las agrupa cuando están cerca y la lista
+  de al lado muestra solo las que están en la zona que se ve (se actualiza al mover o acercar el mapa). Así
+  también funciona sin conexión en el bloque 6, sin pedir datos al servidor cada vez que se mueve el mapa.
+  El índice `2dsphere` de `ubicacion` queda listo por si algún día hace falta consultar por zona en el servidor.
+- **Fondo del mapa.** OpenStreetMap, en una sola constante (`src/config/map.js`) para cambiarlo después por un
+  mapa de relieve sin tocar componentes. El servicio gratuito de OpenStreetMap tiene
+  [normas de uso](https://operations.osmfoundation.org/policies/tiles/) para poco tráfico; si el proyecto crece
+  habrá que pasar a un proveedor propio.
+- **Pines.** Rojo: comunidad. Verde azulado: proyecto. Un pin marcado se ve oscuro, más grande y con su título.
+  Los títulos y los nombres de sector se muestran siempre como texto, nunca como HTML.
+- **Ficha (F8).** Fotos (varias, con miniaturas), video, audio y los datos de la historia. «Ver en el mapa» la
+  marca en el mapa (`/?historia=HIS-2026-001`: ese enlace también se puede compartir). Las historias de ejemplo
+  no tienen archivos: la ficha muestra los marcadores de posición del diseño y dice que no hay audio.
+
 ## Administración (revisión, historias del proyecto y ajustes)
 
 Todo lo de `/api/admin/*` exige una sesión de administrador: el guardián está en el propio router, y una prueba
@@ -216,6 +237,8 @@ La documentación interactiva está en `/api/docs` cuando la API corre. Rutas di
 | `GET /api/auth/yo` | El usuario de la sesión actual (requiere sesión) |
 | `POST /api/medios` | Sube una foto o un audio (narrador o administrador); devuelve su URL en Blob |
 | `POST /api/historias` | Envía una historia (solo narradores); queda siempre «en revisión» |
+| `GET /api/historias` | Las historias publicadas que dibuja el mapa (público) |
+| `GET /api/historias/{codigo}` | La ficha de una historia publicada (público; 404 si no está publicada) |
 | `GET /api/historias/mias` | Las historias del narrador que ingresó, con su estado y el motivo si no se publicó |
 | `GET /api/admin/historias` | Historias con todo su contenido, filtradas por `estado` y `origen` (administrador) |
 | `POST /api/admin/historias/{codigo}/aprobar` | Publica una historia en revisión; exige las tres comprobaciones |
@@ -271,7 +294,8 @@ La versión 1 se construye por bloques (ver `docs/plan-v1.md`).
 - [x] Bloque 2: registro e ingreso (F2)
 - [x] Bloque 3: contar una historia con voz, texto y fotos; «Mis historias» (F3, F4, F5)
 - [x] Bloque 4: revisión, historias del proyecto, configuración y reinicio de ejemplo (F6, F7, F12)
-- [ ] Bloques 5 a 8: mapa, sin conexión, filtros, video y cierre
+- [x] Bloque 5: mapa de historias y ficha (F1, F8)
+- [ ] Bloques 6 a 8: sin conexión, filtros, video y cierre
 
 En `docs/comparacion/` hay capturas de cada bloque frente al diseño aprobado. Los pasos para
 desplegar en Vercel se documentan al cerrar el bloque 8.

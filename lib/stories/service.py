@@ -10,7 +10,7 @@ from pymongo.errors import DuplicateKeyError
 
 from lib.catalog import service as catalog
 from lib.core.clock import utcnow
-from lib.core.errors import InvalidDataError
+from lib.core.errors import InvalidDataError, NotFoundError
 from lib.media.validation import check_media_url
 from lib.stories import repository
 from lib.stories.constants import ORIGENES, TIPOS_MEDIO
@@ -166,3 +166,54 @@ def my_stories(db: Database, user: dict) -> list[dict]:
         }
         for story in repository.list_by_author(db, user["_id"])
     ]
+
+
+# ---- what everybody can see: the map and the card ---------------------------------
+
+
+def _coordinates(story: dict) -> tuple[float, float]:
+    """(lat, lon) of a story: GeoJSON keeps [lon, lat]."""
+    lon, lat = story["ubicacion"]["coordinates"]
+    return lat, lon
+
+
+def story_for_map(story: dict) -> dict:
+    lat, lon = _coordinates(story)
+    first_photo = next((m.get("url") for m in story.get("medios", []) if m.get("tipo") == "foto" and m.get("url")), None)
+    return {
+        "codigo": story["codigo"],
+        "titulo": story["titulo"],
+        "narrador_nombre": story.get("narrador_nombre", ""),
+        "sector_id": story["sector_id"],
+        "epoca": story["epoca"],
+        "formatos": formats_of(story),
+        "origen": story["origen"],
+        "lat": lat,
+        "lon": lon,
+        "foto_url": first_photo,
+        "publicada_en": _iso(story.get("publicada_en")),
+    }
+
+
+def story_public(story: dict) -> dict:
+    """The card of a published story. Never the author id, the draft id or anything about the review."""
+    return {
+        **story_for_map(story),
+        "texto": story.get("texto", ""),
+        "etiquetas": story.get("etiquetas", []),
+        "medios": [
+            {key: medio.get(key) for key in ("tipo", "url", "mime", "duracion_s")} for medio in story.get("medios", [])
+        ],
+    }
+
+
+def list_published(db: Database, limit: int = repository.MAX_PUBLISHED) -> list[dict]:
+    limit = max(1, min(limit, repository.MAX_PUBLISHED))
+    return [story_for_map(story) for story in repository.list_published(db, limit)]
+
+
+def get_published(db: Database, code: str) -> dict:
+    story = repository.find_published(db, code)
+    if story is None:
+        raise NotFoundError("No encontramos esa historia.")
+    return story_public(story)

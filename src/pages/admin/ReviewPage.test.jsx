@@ -129,6 +129,20 @@ describe('Revisión: la bandeja (F6)', () => {
     expect(screen.queryByText('El beneficiadero comunitario')).not.toBeInTheDocument()
   })
 
+  it('an approved story has its card, which opens from the list without asking again', async () => {
+    const user = userEvent.setup()
+    const { fetchMock } = open('admin', reviewApi({ approved: [DONE('publicada', { titulo: 'Ya publicada', publicada_en: '2026-10-20T12:00:00Z' })] }))
+    await screen.findByText('El beneficiadero comunitario')
+    await user.click(screen.getByRole('button', { name: /Aprobadas/ }))
+
+    await user.click(await screen.findByRole('button', { name: 'Ver ficha' }))
+
+    const dialog = await screen.findByRole('dialog', { name: 'Ficha de la historia' })
+    expect(within(dialog).getByRole('heading', { name: 'Ya publicada' })).toBeInTheDocument()
+    expect(within(dialog).getByRole('button', { name: 'Ver en el mapa' })).toBeInTheDocument()
+    expect(callsTo(fetchMock, '/historias/HIS-2026-012')).toHaveLength(0)
+  })
+
   it('a narrator cannot get into the review', () => {
     renderApp({ route: '/revision', user: NARRATOR })
 

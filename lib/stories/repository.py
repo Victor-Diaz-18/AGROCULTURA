@@ -124,3 +124,21 @@ def set_counter(db: Database, year: int, value: int) -> None:
 def insert_many(db: Database, documents: list[dict]) -> None:
     if documents:
         collection(db).insert_many(documents)
+
+
+MAX_PUBLISHED = 1000
+
+
+def list_published(db: Database, limit: int) -> list[dict]:
+    """Published stories, newest first (the ones the map shows)."""
+    return list(
+        collection(db)
+        .find({"estado": "publicada"})
+        .sort([("publicada_en", DESCENDING), ("codigo", DESCENDING)])
+        .limit(limit)
+    )
+
+
+def find_published(db: Database, code: str) -> dict | None:
+    """A story by code, only if it is published: nobody else's drafts or rejected stories are reachable."""
+    return collection(db).find_one({"codigo": code, "estado": "publicada"})

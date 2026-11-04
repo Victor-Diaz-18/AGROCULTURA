@@ -141,6 +141,39 @@ class HistoriaOut(BaseModel):
     enviada_en: str
 
 
+class MedioPublico(BaseModel):
+    """A file of a published story. `url` is empty in the example stories, which have no real file."""
+
+    tipo: str
+    url: str | None = None
+    mime: str | None = None
+    duracion_s: int | None = None
+
+
+class HistoriaMapa(BaseModel):
+    """What the map and its list need about a published story (no text, no author id)."""
+
+    codigo: str
+    titulo: str
+    narrador_nombre: str
+    sector_id: str
+    epoca: str
+    formatos: list[str]
+    origen: str
+    lat: float
+    lon: float
+    foto_url: str | None = None  # the first photo, for the thumbnail
+    publicada_en: str
+
+
+class HistoriaPublica(HistoriaMapa):
+    """The card (ficha) of a published story."""
+
+    texto: str
+    etiquetas: list[str]
+    medios: list[MedioPublico]
+
+
 class MedioAdmin(BaseModel):
     tipo: str
     url: str | None = None  # the example stories have no real file

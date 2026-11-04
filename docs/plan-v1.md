@@ -85,7 +85,8 @@ Al cerrar cada bloque se compara el resultado con el diseño de referencia (qué
 | 2 Ingreso (F2) | Hecho. Pruebas: 77 de backend (+2 con Mongo real) y 74 de frontend. Comparación en `docs/comparacion/bloque-2/` |
 | 3 Contar (F3, F4, F5) | Hecho. Pruebas: 123 de backend (+3 con Mongo real) y 153 de frontend. Comparación en `docs/comparacion/bloque-3/` |
 | 4 Administración (F6, F7, F12) | Hecho. Pruebas: 205 de backend (+4 con Mongo real) y 226 de frontend. Comparación en `docs/comparacion/bloque-4/` |
-| 5 a 8 | Pendientes |
+| 5 Mapa y ficha (F1, F8) | Hecho. Pruebas: 218 de backend (+4 con Mongo real) y 276 de frontend. Comparación en `docs/comparacion/bloque-5/` |
+| 6 a 8 | Pendientes |
 
 ## Notas de construcción
 
@@ -119,7 +120,20 @@ Al cerrar cada bloque se compara el resultado con el diseño de referencia (qué
   - «Reiniciar datos de ejemplo» pide escribir **REINICIAR**, además del texto que dice que borra todas las
     historias, también las reales.
   - El nombre del portal se guarda al salir del campo (o con Enter) y avisa «Nombre del portal guardado.».
-  - La columna «Ver ficha» de las tablas llega con la ficha (bloque 5).
+  - Adiciones y decisiones del bloque 5:
+  - El mapa es **Leaflet de verdad** (el del diseño era un dibujo): lleva control de zoom, la atribución de
+    OpenStreetMap y agrupa los pines cercanos (un círculo verde oscuro con cuántas historias hay; al tocarlo se acerca).
+    Se quitó la nota «Mapa ilustrativo, no a escala».
+  - Los nombres de los sectores se dibujan sobre el mapa como en el diseño (en mayúsculas separadas).
+  - **Cambio respecto a lo planeado:** no hay consulta por zona (`bbox`) en el servidor. El mapa carga todas las
+    publicadas y la lista se reduce en el navegador; es más simple y es lo que necesita el modo sin conexión (bloque 6).
+  - La **barra de filtros** del diseño (sectores, origen, búsqueda, época, formato) llega con el bloque 7 (F11);
+    ya hay datos para todos esos filtros en cada historia.
+  - La miniatura de la lista es la primera foto de la historia (si no tiene, la imagen a rayas del diseño).
+  - Como en el diseño, la ficha escribe «La Tagua, zona de Minca» para los sectores que no son Minca.
+  - El reproductor de audio de la ficha es real; en las historias de ejemplo (sin archivo) está apagado y lo dice.
+  - «Ver ficha» en las tablas: «Mis historias» (solo publicadas), «Revisión» (aprobadas y rechazadas, que se
+    abren desde la lista de administración) e «Historias del proyecto».
 - «Avisar al narrador si se rechaza» solo guarda la opción: todavía no hay aviso (correo, SMS o WhatsApp) que
   enviar; depende de lo que decida el profesor.
 - Temporal hasta el bloque 6 (sin conexión): el botón de enviar se desactiva sin señal y los textos de

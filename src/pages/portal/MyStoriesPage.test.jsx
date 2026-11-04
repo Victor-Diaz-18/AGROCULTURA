@@ -3,6 +3,7 @@ import { act, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { toggleSimulatedOffline } from '../../offline/connectivity.js'
 import { NARRATOR } from '../../test/auth.js'
+import { storyCard } from '../../test/fixtures.js'
 import { renderApp, reply } from '../../test/renderApp.jsx'
 import { nextStep } from './MyStoriesPage.jsx'
 
@@ -154,5 +155,27 @@ describe('nextStep', () => {
     expect(nextStep({ estado: 'rechazada', motivo_rechazo: null })).toBe('')
     expect(nextStep({ estado: 'publicada' })).toBe('')
     expect(nextStep({ estado: 'borrador' })).toBe('Se envía cuando haya señal')
+  })
+})
+
+describe('Mis historias: ver la ficha', () => {
+  it('only a published story has a card, and it opens from its row', async () => {
+    const user = userEvent.setup()
+    const { fetchMock } = renderApp({
+      route: '/mis-historias',
+      user: NARRATOR,
+      api: { '/historias/mias': MINE, '/historias/HIS-2026-002': storyCard({ codigo: 'HIS-2026-002', titulo: 'La trilla' }) },
+    })
+    const published = (await screen.findByText('La trilla')).closest('[role=row]')
+    const waiting = screen.getByText('El camino de mulas').closest('[role=row]')
+    const rejected = screen.getByText('Una receta').closest('[role=row]')
+
+    expect(within(waiting).queryByRole('button', { name: 'Ver ficha' })).not.toBeInTheDocument()
+    expect(within(rejected).queryByRole('button', { name: 'Ver ficha' })).not.toBeInTheDocument()
+    await user.click(within(published).getByRole('button', { name: 'Ver ficha' }))
+
+    const dialog = await screen.findByRole('dialog', { name: 'Ficha de la historia' })
+    expect(within(dialog).getByRole('heading', { name: 'La trilla' })).toBeInTheDocument()
+    expect(fetchMock.mock.calls.some(([url]) => url === '/api/historias/HIS-2026-002')).toBe(true)
   })
 })

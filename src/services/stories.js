@@ -16,6 +16,12 @@ export const createStory = (payload) => request('/historias', { method: 'POST', 
 
 export const fetchMyStories = () => request('/historias/mias')
 
+/** Every published story, as the map needs it (public). */
+export const fetchPublishedStories = () => request('/historias', { auth: false })
+
+/** The card of a published story (public). */
+export const fetchStory = (codigo) => request(`/historias/${encodeURIComponent(codigo)}`, { auth: false })
+
 /** The body POST /api/historias expects, from what the person filled in and the uploaded files. */
 export function buildStoryPayload(draft, medios) {
   return {

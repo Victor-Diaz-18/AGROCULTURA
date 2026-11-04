@@ -38,3 +38,28 @@ export const adminStory = (overrides = {}) => ({
   publicada_en: '',
   ...overrides,
 })
+
+/** A published story as the map list (/api/historias) answers it. Minca center unless told otherwise. */
+export const mapStory = (overrides = {}) => ({
+  codigo: 'HIS-2026-001',
+  titulo: 'El camino de mulas hasta Santa Marta',
+  narrador_nombre: 'Aurelio Martínez',
+  sector_id: 'minca',
+  epoca: 'Antes de 1960',
+  formatos: ['Audio', 'Foto'],
+  origen: 'comunidad',
+  lat: 11.14,
+  lon: -74.118,
+  foto_url: null,
+  publicada_en: '2026-09-14T12:00:00Z',
+  ...overrides,
+})
+
+/** The card of a published story (/api/historias/{codigo}). */
+export const storyCard = (overrides = {}) => ({
+  ...mapStory(),
+  texto: 'Antes de que hubiera carretera, el café bajaba en mula por el camino viejo.',
+  etiquetas: ['#café', '#oficios'],
+  medios: [],
+  ...overrides,
+})

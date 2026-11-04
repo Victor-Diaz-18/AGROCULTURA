@@ -1,11 +1,11 @@
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Query, Response
 from pymongo.database import Database
 
 from lib.auth.constants import ROL_NARRADOR
 from lib.auth.deps import require_roles
 from lib.core.db import get_db
 from lib.stories import service
-from lib.stories.schemas import Estadisticas, HistoriaIn, HistoriaMia, HistoriaOut
+from lib.stories.schemas import Estadisticas, HistoriaIn, HistoriaMapa, HistoriaMia, HistoriaOut, HistoriaPublica
 
 router = APIRouter(tags=["historias"])
 
@@ -39,3 +39,16 @@ def create_story(
     if not created:
         response.status_code = 200
     return service.story_out(story)
+
+
+@router.get("/historias", response_model=list[HistoriaMapa])
+def published_stories(limite: int = Query(1000, ge=1, le=1000), db: Database = Depends(get_db)):
+    """Everything the map shows: the published stories, newest first (public)."""
+    return service.list_published(db, limite)
+
+
+# After "/historias/mias", so "mias" is not taken for a code.
+@router.get("/historias/{codigo}", response_model=HistoriaPublica)
+def published_story(codigo: str, db: Database = Depends(get_db)):
+    """The card of a published story (public). A story that is not published answers 404."""
+    return service.get_published(db, codigo)
