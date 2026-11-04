@@ -101,7 +101,8 @@ npm run dev            # interfaz en http://localhost:5173
 ```
 
 Vite redirige las llamadas a `/api` hacia la API (ver `vite.config.js`), así que el navegador
-solo habla con un origen, igual que en producción.
+solo habla con un origen, igual que en producción. Para ver la aplicación como PWA (con service worker) usa
+`npm run build && npm run preview` en lugar de `npm run dev` (ver «Sin conexión»).
 
 ## Pruebas
 
@@ -121,7 +122,10 @@ pytest                 # backend: pytest + httpx (con el entorno virtual activad
 - Las pruebas marcadas `real_mongo` (consultas geoespaciales por zona del mapa) se omiten salvo que
   definas `TEST_MONGODB_URI`. El CI de GitHub las ejecuta con un MongoDB real.
 - Cada prueba del frontend vive junto al componente que prueba (por ejemplo
-  `src/offline/connectivity.test.js`).
+  `src/offline/connectivity.test.js`). Lo que usa IndexedDB se prueba con `fake-indexeddb` (ya viene instalado) y
+  entre una prueba y otra el teléfono «se vacía» solo (`src/test/setup.js`).
+- El service worker no se prueba con Vitest (no corre en jsdom): se comprueba en un navegador real con
+  `npm run build && npm run preview` (ver «Sin conexión»).
 
 ## Datos iniciales
 
@@ -158,7 +162,8 @@ sectores son provisionales hasta confirmarlos con las familias de la zona.
 ## Contar una historia (fotos y audio)
 
 - La narradora cuenta su historia en tres pasos: *Cuéntala* (voz, texto, fotos), *Dónde y cuándo* (título,
-  lugar, época, etiquetas) y *Revisar y enviar*. Lo que escribe o graba vive en la página hasta que la envía.
+  lugar, época, etiquetas) y *Revisar y enviar*. Lo que escribe o graba se guarda **en el teléfono** mientras
+  lo cuenta (ver «Sin conexión»): si cierra la página a medias, la historia vuelve donde la dejó.
 - **Antes de subir**, el teléfono reduce cada foto (máximo 1280 px por lado y menos de 1 MB, y de paso borra
   los datos ocultos de la cámara, como la posición GPS) y graba el audio en mono a baja calidad
   (unos 180 KB por minuto). Así se sube rápido con poca señal.
@@ -170,7 +175,8 @@ sectores son provisionales hasta confirmarlos con las familias de la zona.
   mandar otro estado) y no aparece en el mapa hasta que un administrador la aprueba. El servidor decide el
   autor y el código (`HIS-AAAA-NNN`, consecutivo).
 - Cada borrador lleva un identificador propio (`client_id`). Si el envío se repite (se cortó la señal justo
-  al responder), el servidor reconoce la historia y no la duplica; y las fotos que ya subieron no se suben otra vez.
+  al responder, o se envió desde el teléfono y otra vez al volver la señal), el servidor reconoce la historia y no
+  la duplica; y las fotos que ya subieron no se suben otra vez.
 - Si no hay `BLOB_READ_WRITE_TOKEN`, subir un archivo responde 503 con el mensaje «Falta configurar…».
 - El lugar se elige tocando un sector, tocando el mapa o con el botón «Usar mi ubicación» (el GPS del
   teléfono funciona sin señal). Se guarda como un punto GeoJSON `[longitud, latitud]` con un índice `2dsphere`.
@@ -184,12 +190,13 @@ sectores son provisionales hasta confirmarlos con las familias de la zona.
   publicadas (una en revisión, rechazada o inexistente responde 404).
 - **La zona visible.** El mapa carga todas las publicadas de una vez, las agrupa cuando están cerca y la lista
   de al lado muestra solo las que están en la zona que se ve (se actualiza al mover o acercar el mapa). Así
-  también funciona sin conexión en el bloque 6, sin pedir datos al servidor cada vez que se mueve el mapa.
+  también funciona sin conexión, sin pedir datos al servidor cada vez que se mueve el mapa.
   El índice `2dsphere` de `ubicacion` queda listo por si algún día hace falta consultar por zona en el servidor.
 - **Fondo del mapa.** OpenStreetMap, en una sola constante (`src/config/map.js`) para cambiarlo después por un
   mapa de relieve sin tocar componentes. El servicio gratuito de OpenStreetMap tiene
   [normas de uso](https://operations.osmfoundation.org/policies/tiles/) para poco tráfico; si el proyecto crece
-  habrá que pasar a un proveedor propio.
+  habrá que pasar a un proveedor propio. Los pedazos que la persona ya vio se guardan para el modo sin conexión
+  (el proveedor debe permitir CORS; el de OpenStreetMap lo permite).
 - **El lugar puede ser cualquiera de la zona.** «Minca y sectores aledaños» es toda la zona, no solo los
   sectores. Al contar una historia se toca **cualquier punto del mapa** (o «Usar mi ubicación»); los botones de
   sector son atajos. Un punto fuera de la zona (`ZONE` en `src/config/map.js`, unos 90 km alrededor de Minca) no se
@@ -227,6 +234,75 @@ sectores son provisionales hasta confirmarlos con las familias de la zona.
   «Abrir en Apple Maps» abren el punto de la historia en esas aplicaciones (son enlaces normales: no usan llaves ni
   tienen costo). «Ver en el mapa» la marca en el mapa (`/?historia=HIS-2026-001`: ese enlace también se puede compartir). Las historias de ejemplo
   no tienen archivos: la ficha muestra los marcadores de posición del diseño y dice que no hay audio.
+
+## Sin conexión (F10)
+
+Está pensado para quien cuenta su historia en la finca, donde casi nunca hay señal.
+
+**Qué funciona sin señal** (después de haber abierto la página una vez con señal):
+
+- La aplicación abre, también si se recarga la página. Se puede **instalar** como una aplicación en el teléfono.
+- Se puede contar una historia completa: voz, texto, fotos y «Usar mi ubicación» (el GPS no necesita señal). Los
+  sectores, las etiquetas y las épocas son los de la última vez que hubo conexión.
+- Lo que se va escribiendo o grabando **se guarda en el teléfono** (cada vez que se hace una pausa, y al cambiar de
+  paso). Si se cierra la página a medias, al volver aparece «Recuperamos la historia que dejaste a medias» con la
+  opción «Empezar de nuevo». Cada narradora tiene la suya.
+- En el último paso, sin señal, el botón dice **«Guardar en el dispositivo»**. La historia queda como **borrador**
+  en «Mis historias» (con el código «Por asignar»: el código `HIS-AAAA-NNN` lo da el servidor al recibirla).
+- «Mis historias» muestra la última lista que se cargó, con los borradores arriba. El mapa muestra las historias
+  publicadas que ya se habían visto y los pedazos de mapa que ya se habían mirado.
+
+**Cómo se envían los borradores**, sin que la persona haga nada:
+
+- Cuando vuelve la señal, cuando se abre la aplicación con señal y cuando la persona ingresa. Sale el aviso
+  «Volvió la señal: se envió 1 borrador a revisión.».
+- Si el servidor falla o la conexión se cae a mitad del envío, el borrador se queda y se vuelve a intentar al
+  minuto. Es seguro repetirlo: cada historia lleva su `client_id`, así que **nunca se duplica**, y las fotos y el
+  audio que ya subieron no se suben otra vez (se recuerda cuáles).
+- Si el servidor **rechaza** una historia (por ejemplo un audio demasiado pesado), el borrador se queda con el
+  motivo escrito en «Qué sigue», sin reintentarse solo, y la persona elige **«Reintentar»** o **«Quitar»** (este
+  último pregunta antes: es la única copia).
+- Si la sesión venció, los borradores esperan y salen cuando la persona vuelva a ingresar.
+
+**Cómo está hecho** (tres piezas, cada una con un trabajo):
+
+| Pieza | Dónde | Qué guarda |
+|---|---|---|
+| Service worker (`vite-plugin-pwa`, ver `vite.config.js`) | Cache del navegador | La aplicación (páginas, scripts, estilos, tipografías, íconos) y los pedazos de mapa ya vistos (máx. 400, 30 días). Nunca respuestas de la API |
+| `src/offline/store.js` | IndexedDB (`idb`) | La historia en curso (`borrador`), los borradores terminados (`cola`) y las últimas respuestas públicas del servidor (`cache`) |
+| `src/offline/outbox.js` + `OutboxContext` | Memoria | Quién envía la cola, en qué momento y qué avisa |
+
+Las fotos y el audio se guardan como bytes (no como `Blob`): algunas versiones de Safari pierden los `Blob`
+guardados en IndexedDB. Si IndexedDB no está disponible (ventana privada, por ejemplo), todo sigue funcionando
+mientras la página esté abierta y la pantalla lo **dice** («solo mientras no cierres esta página»).
+
+**Límites que conviene conocer**
+
+- La primera visita necesita señal: de ahí salen la aplicación y la configuración.
+- **No se envía con la aplicación cerrada.** Los borradores salen cuando la persona abre la aplicación con señal
+  (el envío en segundo plano de los navegadores no existe en iPhone ni en Firefox). Por eso el aviso dice
+  «se envía sola cuando vuelva la señal» y no «aunque cierres la aplicación».
+- La ficha completa de una historia (audio, fotos) y la subida de archivos necesitan señal.
+- Solo se guardan los pedazos de mapa que la persona ya miró; no se descarga nada por adelantado (las
+  [normas de OpenStreetMap](https://operations.osmfoundation.org/policies/tiles/) lo prohíben).
+- Un iPhone puede borrar los datos de una página que no se usa en unas semanas; **instalada en la pantalla de
+  inicio** no sufre eso.
+- **Teléfono compartido.** La lista de «Mis historias» guardada se borra al salir. Los borradores y la historia
+  a medias **no**: son el único ejemplar de la historia. Solo los ve y los envía quien los escribió.
+
+**Instalar en el teléfono:** en Android (Chrome), menú ⋮ → «Instalar aplicación»; en iPhone (Safari), Compartir →
+«Agregar a pantalla de inicio».
+
+**Probarlo en el computador.** `npm run dev` no activa el service worker. Para probarlo de verdad:
+
+```bash
+npm run build
+npm run preview        # http://localhost:4173, con la API de la forma 2 corriendo en el puerto 8000
+```
+
+En el navegador, abre la página, espera unos segundos y en las herramientas de desarrollo (Network → «Offline»)
+corta la conexión y recarga. El interruptor «Simular conexión» del encabezado simula la falta de señal sin cortar
+nada (sirve para la demostración y para las pruebas).
 
 ## Administración (revisión, historias del proyecto y ajustes)
 
@@ -327,7 +403,8 @@ La versión 1 se construye por bloques (ver `docs/plan-v1.md`).
 - [x] Bloque 3: contar una historia con voz, texto y fotos; «Mis historias» (F3, F4, F5)
 - [x] Bloque 4: revisión, historias del proyecto, configuración y reinicio de ejemplo (F6, F7, F12)
 - [x] Bloque 5: mapa de historias y ficha (F1, F8)
-- [ ] Bloques 6 a 8: sin conexión, filtros, video y cierre
+- [x] Bloque 6: funciona sin conexión: aplicación instalable, borradores en el teléfono y envío al volver la señal (F10)
+- [ ] Bloques 7 y 8: filtros, video y cierre
 
 En `docs/comparacion/` hay capturas de cada bloque frente al diseño aprobado. Los pasos para
 desplegar en Vercel se documentan al cerrar el bloque 8.

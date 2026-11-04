@@ -86,7 +86,8 @@ Al cerrar cada bloque se compara el resultado con el diseño de referencia (qué
 | 3 Contar (F3, F4, F5) | Hecho. Pruebas: 123 de backend (+3 con Mongo real) y 153 de frontend. Comparación en `docs/comparacion/bloque-3/` |
 | 4 Administración (F6, F7, F12) | Hecho. Pruebas: 205 de backend (+4 con Mongo real) y 226 de frontend. Comparación en `docs/comparacion/bloque-4/` |
 | 5 Mapa y ficha (F1, F8) | Hecho. Pruebas: 218 de backend (+4 con Mongo real) y 276 de frontend. Comparación en `docs/comparacion/bloque-5/` |
-| 6 a 8 | Pendientes |
+| 6 Sin conexión (F10) | Hecho. Pruebas: 262 de backend (+4 con Mongo real; sin cambios en este bloque) y 376 de frontend. Comparación en `docs/comparacion/bloque-6/` |
+| 7 y 8 | Pendientes |
 
 ## Notas de construcción
 
@@ -145,9 +146,43 @@ Al cerrar cada bloque se compara el resultado con el diseño de referencia (qué
     abren desde la lista de administración) e «Historias del proyecto».
 - «Avisar al narrador si se rechaza» solo guarda la opción: todavía no hay aviso (correo, SMS o WhatsApp) que
   enviar; depende de lo que decida el profesor.
-- Temporal hasta el bloque 6 (sin conexión): el botón de enviar se desactiva sin señal y los textos de
-  «guardado en el dispositivo» se cambian por lo que hoy es cierto (lo escrito vive en la página mientras no se
-  cierre). En el bloque 6 vuelven los textos del diseño y el borrador se guarda de verdad.
+- Adiciones y decisiones del bloque 6 (sin conexión, F10; para revisar con el equipo):
+  - Vuelven los textos del diseño que habían quedado temporales: «Se guarda en este dispositivo hasta que la
+    envíes», la tarjeta «Todo se guarda en el dispositivo mientras la cuentas…», el aviso del último paso («Se
+    guarda en el dispositivo y se envía sola cuando vuelva la señal»), el botón **«Guardar en el dispositivo»** sin
+    señal, el aviso de «Mis historias» («Tus borradores están guardados en este dispositivo…») y el estado
+    «Borrador» con «Se envía cuando haya señal».
+  - **Los textos solo prometen lo que el teléfono cumple.** Si IndexedDB no está disponible (ventana privada), los
+    mismos textos dicen que la historia se queda solo en la página. Esa variante no está en el diseño.
+  - **Historia en curso guardada** (no estaba en el diseño, pero «todo se guarda en el dispositivo mientras la
+    cuentas» lo pide): al volver a «Contar una historia» aparece lo que quedó a medias, en el mismo paso, con un
+    aviso y el botón «Empezar de nuevo». Una por narradora.
+  - **Código «Por asignar»** en los borradores: el código `HIS-AAAA-NNN` es consecutivo y lo da el servidor; el
+    prototipo se lo inventaba en el teléfono, lo que habría producido códigos repetidos.
+  - **«Reintentar» y «Quitar»** en un borrador que el servidor rechazó (no estaba en el diseño). Quitar pregunta
+    antes. Un borrador rechazado no se reintenta solo, para no repetir el mismo error cada vez que vuelve la señal.
+  - **Reintento automático al minuto** si el servidor falla o la conexión se cae durante el envío. Es seguro porque
+    cada historia lleva su `client_id`.
+  - **No hay envío con la aplicación cerrada.** El envío en segundo plano (Background Sync) solo existe en Chrome y
+    Edge, no en iPhone ni en Firefox, y las narradoras usan de todo. Los borradores salen al abrir la aplicación con
+    señal. Si el equipo prefiere ofrecerlo donde exista, se puede añadir después sin cambiar nada de lo anterior.
+  - **El service worker guarda la aplicación y los pedazos de mapa vistos, nunca respuestas de la API.** Los datos
+    (configuración, historias publicadas, la lista de la narradora) los guarda la propia aplicación en IndexedDB:
+    así lo privado de una persona no queda en un caché que otra persona del mismo teléfono pueda leer, y se borra
+    al salir.
+  - Los pedazos de mapa se piden con CORS (`crossOrigin` en `src/config/map.js`) para poder guardarlos sin que el
+    navegador los cuente como varios MB cada uno. El servicio de OpenStreetMap lo permite; un proveedor nuevo debe
+    permitirlo también.
+  - **Actualizaciones de la aplicación:** el service worker nuevo se activa solo, sin recargar la página (para no
+    cortar a quien está grabando); la versión nueva se ve la siguiente vez que se abre.
+  - El indicador «Simular conexión» del encabezado se pone amarillo también cuando la señal se pierde de verdad (antes
+    solo lo hacía con el interruptor).
+  - Diferencia menor con el diseño: el aviso del último paso usa el ícono de «sin señal» cuando no hay señal (el
+    prototipo dejaba el de wifi).
+- No se pudo comprobar aquí: el comportamiento en un iPhone (Safari), el aviso de instalación de Chrome en un
+  teléfono real, el servicio de teselas de OpenStreetMap con CORS desde la red real (se comprobó con un servidor
+  de teselas de mentira), y que Vercel sirva `sw.js` y el manifiesto con los encabezados correctos (se revisa al
+  desplegar).
 - Temporal hasta el bloque 7: el paso 1 dice «Fotos» y no «Fotos y video», y no tiene el botón «Agregar video».
 - Convención de CSS: todo en `border-box`, salvo donde el diseño depende del `content-box` por defecto
   (por ejemplo la tarjeta «Depende de», los pasos del indicador, las etiquetas de fotos y formatos, la tarjeta del formulario y el mapa del paso 2). Al reproducir cada pantalla hay que revisar ese detalle.
