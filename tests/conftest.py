@@ -20,6 +20,7 @@ os.environ["ADMIN_USER"] = "admin-prueba"
 os.environ["ADMIN_PASSWORD"] = "clave-de-prueba-1234"
 os.environ.pop("SEED_DEMO_NARRATOR_PHONE", None)
 os.environ.pop("SEED_DEMO_NARRATOR_PIN", None)
+os.environ.pop("ALLOW_DEMO_RESET", None)
 
 import mongomock  # noqa: E402
 import pymongo  # noqa: E402
@@ -77,6 +78,11 @@ class FakeStorage:
 
     def __init__(self):
         self.saved = []
+        self.deleted = []
+
+    def delete(self, urls):
+        self.deleted.extend(urls)
+        return len(urls)
 
     def save(self, pathname, content, content_type):
         self.saved.append({"pathname": pathname, "bytes": len(content), "content_type": content_type})

@@ -18,6 +18,9 @@ class Storage(Protocol):
     def save(self, pathname: str, content: bytes, content_type: str) -> str:
         """Stores the file and returns its public URL."""
 
+    def delete(self, urls: list[str]) -> int:
+        """Deletes the files at those URLs. Returns how many were deleted."""
+
 
 class VercelBlobStorage:
     """Public Vercel Blob store. The SDK reads BLOB_READ_WRITE_TOKEN from the environment."""
@@ -42,6 +45,16 @@ class VercelBlobStorage:
             logger.error("Could not store a file (%s: %s)", type(exc).__name__, exc, exc_info=True)
             raise StorageUnavailableError("No pudimos guardar el archivo. Intenta de nuevo.") from None
         return result.url
+
+    def delete(self, urls: list[str]) -> int:
+        from vercel.blob import sync as blob
+
+        deleted = 0
+        for start in range(0, len(urls), 1000):  # the store deletes up to 1000 files per request
+            batch = urls[start : start + 1000]
+            blob.delete_blob(batch)
+            deleted += len(batch)
+        return deleted
 
 
 def get_storage() -> Storage:

@@ -18,3 +18,11 @@ DEFAULT_PORTAL = {
 def get_portal(db: Database) -> dict:
     doc = db[COLLECTION].find_one({"_id": PORTAL_ID}) or {}
     return {**DEFAULT_PORTAL, **{k: v for k, v in doc.items() if k in DEFAULT_PORTAL}}
+
+
+def update_portal(db: Database, changes: dict) -> dict:
+    """Changes only the options given (an upsert: the document may not exist yet)."""
+    allowed = {key: value for key, value in changes.items() if key in DEFAULT_PORTAL}
+    if allowed:
+        db[COLLECTION].update_one({"_id": PORTAL_ID}, {"$set": allowed}, upsert=True)
+    return get_portal(db)

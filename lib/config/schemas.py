@@ -5,6 +5,7 @@ class PortalPublico(BaseModel):
     nombre: str
     avisar_rechazo: bool
     datos_de_ejemplo: bool
+    reinicio_disponible: bool = False
 
 
 class Centro(BaseModel):

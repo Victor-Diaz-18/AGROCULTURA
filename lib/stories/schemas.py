@@ -7,7 +7,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-from lib.stories.constants import EPOCAS
+from lib.stories.constants import EPOCAS, NARRADOR_PROYECTO
 
 MAX_TAGS = 6
 MAX_PHOTOS = 6
@@ -118,11 +118,66 @@ class HistoriaIn(BaseModel):
         return self
 
 
+class HistoriaProyectoIn(HistoriaIn):
+    """A story the team uploads (F12). It is published at once; the place is the center of the sector unless given."""
+
+    ubicacion: UbicacionIn | None = None
+    ubicacion_origen: Literal["gps", "mapa", "sector"] = "sector"
+    narrador_nombre: str = NARRADOR_PROYECTO
+
+    @field_validator("narrador_nombre")
+    @classmethod
+    def clean_narrator(cls, value: str) -> str:
+        name = re.sub(r"\s+", " ", value).strip()
+        if not 2 <= len(name) <= 80:
+            raise ValueError("Escribe quién cuenta la historia (entre 2 y 80 letras).")
+        return name
+
+
 class HistoriaOut(BaseModel):
     codigo: str
     titulo: str
     estado: str
     enviada_en: str
+
+
+class MedioAdmin(BaseModel):
+    tipo: str
+    url: str | None = None  # the example stories have no real file
+    mime: str | None = None
+    bytes: int | None = None
+    duracion_s: int | None = None
+
+
+class HistoriaAdmin(BaseModel):
+    """A story as the administrators see it: all the content, to review or to read."""
+
+    codigo: str
+    titulo: str
+    texto: str
+    narrador_nombre: str
+    sector_id: str
+    epoca: str
+    etiquetas: list[str]
+    formatos: list[str]
+    medios: list[MedioAdmin]
+    estado: str
+    origen: str
+    ejemplo: bool
+    motivo_rechazo: str | None = None
+    enviada_en: str
+    revisada_en: str = ""
+    publicada_en: str = ""
+
+
+class AprobarIn(BaseModel):
+    """The checks the administrator marked ("tema", "territorio", "datos")."""
+
+    confirmaciones: list[str] = Field(default_factory=list, max_length=10)
+
+
+class RechazarIn(BaseModel):
+    motivo: str = Field(default="", max_length=60)  # the id of one of the rejection reasons
 
 
 class HistoriaMia(BaseModel):

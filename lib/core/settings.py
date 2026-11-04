@@ -45,6 +45,9 @@ class Settings:
     demo_narrator_phone: str | None = None
     demo_narrator_pin: str | None = None
 
+    # The "Reiniciar datos de ejemplo" button (deletes ALL stories). Off unless ALLOW_DEMO_RESET says so.
+    allow_demo_reset: bool = False
+
     # Password hashing and failed sign-in attempts
     bcrypt_rounds: int = 12
     login_max_attempts: int = 5
@@ -68,6 +71,13 @@ def _text(environ: Mapping[str, str], name: str) -> str | None:
     return value or None
 
 
+_TRUE = {"1", "true", "yes", "si", "sí", "on"}
+
+
+def _flag(environ: Mapping[str, str], name: str) -> bool:
+    return (environ.get(name) or "").strip().lower() in _TRUE
+
+
 def load_settings(environ: Mapping[str, str]) -> Settings:
     """Build settings from a mapping of environment variables."""
     # Vercel sets VERCEL=1; treat it as production unless APP_ENV says otherwise.
@@ -83,6 +93,7 @@ def load_settings(environ: Mapping[str, str]) -> Settings:
         "demo_narrator_name": _text(environ, "SEED_DEMO_NARRATOR_NAME") or "Ana Beltrán",
         "demo_narrator_phone": _text(environ, "SEED_DEMO_NARRATOR_PHONE"),
         "demo_narrator_pin": _text(environ, "SEED_DEMO_NARRATOR_PIN"),
+        "allow_demo_reset": _flag(environ, "ALLOW_DEMO_RESET"),
     }
 
     if env == "test":

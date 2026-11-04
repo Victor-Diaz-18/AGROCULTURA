@@ -23,3 +23,19 @@ def list_tags(db: Database) -> list[dict]:
 
 def get_sector(db: Database, sector_id: str) -> dict | None:
     return db[SECTORES].find_one({"_id": sector_id})
+
+
+def add_tag(db: Database, name: str) -> bool:
+    """Adds a tag at the end of the list. False if it already exists."""
+    from pymongo.errors import DuplicateKeyError
+
+    last = db[ETIQUETAS].find_one(sort=[("orden", -1)])
+    try:
+        db[ETIQUETAS].insert_one({"nombre": name, "orden": (last["orden"] + 1) if last else 1})
+    except DuplicateKeyError:
+        return False
+    return True
+
+
+def remove_tag(db: Database, name: str) -> bool:
+    return db[ETIQUETAS].delete_one({"nombre": name}).deleted_count == 1

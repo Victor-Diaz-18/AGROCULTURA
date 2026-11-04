@@ -72,3 +72,55 @@ def find_by_client_id(db: Database, author_id, client_id: str) -> dict | None:
 
 def list_by_author(db: Database, author_id) -> list[dict]:
     return list(collection(db).find({"autor_id": author_id}).sort("creada_en", DESCENDING))
+
+
+def find_by_code(db: Database, code: str) -> dict | None:
+    return collection(db).find_one({"codigo": code})
+
+
+def list_for_admin(db: Database, *, estado: str | None, origen: str | None, limit: int) -> list[dict]:
+    """Stories for the administrators. The review queue is oldest first; the rest, latest first."""
+    query: dict = {}
+    if estado:
+        query["estado"] = estado
+    if origen:
+        query["origen"] = origen
+    order = [("enviada_en", ASCENDING)] if estado == "revision" else [("creada_en", DESCENDING)]
+    return list(collection(db).find(query).sort(order).limit(limit))
+
+
+def decide(db: Database, code: str, changes: dict) -> dict | None:
+    """Moves a community story out of review, once. Returns it, or None if it was not waiting for review.
+
+    The state is part of the filter, so two administrators deciding at the same moment
+    cannot both succeed: the second one finds nothing in review.
+    """
+    return collection(db).find_one_and_update(
+        {"codigo": code, "estado": "revision", "origen": "comunidad"},
+        {"$set": changes},
+        return_document=ReturnDocument.AFTER,
+    )
+
+
+def media_urls(db: Database) -> list[str]:
+    """Every file the stories point to (used when all of them are deleted)."""
+    urls: list[str] = []
+    for story in collection(db).find({"medios.url": {"$type": "string"}}, {"medios": 1}):
+        urls.extend(medio["url"] for medio in story.get("medios", []) if isinstance(medio.get("url"), str))
+    return urls
+
+
+def delete_all(db: Database) -> int:
+    """Deletes EVERY story and the code counters. Only the demo reset calls this."""
+    deleted = collection(db).delete_many({}).deleted_count
+    db[COUNTERS].delete_many({"_id": {"$regex": "^historias-"}})
+    return deleted
+
+
+def set_counter(db: Database, year: int, value: int) -> None:
+    db[COUNTERS].update_one({"_id": f"historias-{year}"}, {"$set": {"seq": value}}, upsert=True)
+
+
+def insert_many(db: Database, documents: list[dict]) -> None:
+    if documents:
+        collection(db).insert_many(documents)

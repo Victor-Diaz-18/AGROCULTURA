@@ -35,3 +35,18 @@ def test_a_draft_identifier_is_unique_per_author_but_stories_without_one_can_rep
     # Example/project stories have no client_id: the partial index must not treat "missing" as a repeat.
     db.historias.insert_one(make_story(autor_id=author))
     db.historias.insert_one(make_story(autor_id=author))
+
+
+def test_the_example_stories_pass_the_geospatial_index_and_a_reset_leaves_no_old_counters(db, settings):
+    from lib.seed.demo import build_examples, reset_demo_data
+
+    class NoStorage:
+        def delete(self, urls):
+            return 0
+
+    db.historias.insert_many(build_examples(db, settings))  # 2dsphere rejects an invalid point
+
+    result = reset_demo_data(db, settings, NoStorage())
+
+    assert result["historias_de_ejemplo"] == 12
+    assert db.contadores.find_one({"_id": "historias-2026"})["seq"] == 12

@@ -35,3 +35,10 @@ MOTIVOS_RECHAZO = (
         "texto": "Expone datos personales de otras personas",
     },
 )
+
+# What the administrator confirms before approving a story (the three checks of the design).
+# The server asks for all of them, so an approval cannot skip the review even by calling the API directly.
+COMPROBACIONES = ("tema", "territorio", "datos")
+
+# Who "tells" a story the team uploads when nobody else is named.
+NARRADOR_PROYECTO = "Equipo AGROCULTURA"

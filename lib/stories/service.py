@@ -42,7 +42,7 @@ def _iso(moment: datetime | None) -> str:
     return moment.isoformat(timespec="seconds") + "Z" if moment else ""
 
 
-def _search_text(*parts: str) -> str:
+def search_text(*parts: str) -> str:
     """Lowercase, accent-free text used by the search box (F11)."""
     joined = " ".join(part for part in parts if part)
     return "".join(c for c in unicodedata.normalize("NFD", joined.lower()) if unicodedata.category(c) != "Mn")
@@ -60,6 +60,28 @@ def create_story(db: Database, *, user: dict, data: HistoriaIn, now: datetime | 
 
     Sending the same `client_id` again returns the story already created instead of a copy.
     """
+    return insert_story(
+        db,
+        user=user,
+        data=data,
+        origen="comunidad",
+        estado="revision",
+        narrador_nombre=user["nombre"],
+        now=now,
+    )
+
+
+def insert_story(
+    db: Database,
+    *,
+    user: dict,
+    data: HistoriaIn,
+    origen: str,
+    estado: str,
+    narrador_nombre: str,
+    now: datetime | None = None,
+) -> tuple[dict, bool]:
+    """Validates against the catalog and stores a story. The CALLER decides origin and state, never the client."""
     now = now or utcnow()
     author_id = user["_id"]
 
@@ -77,6 +99,12 @@ def create_story(db: Database, *, user: dict, data: HistoriaIn, now: datetime | 
     for medio in data.medios:
         check_media_url(medio.url, str(author_id))
 
+    if data.ubicacion is not None:
+        location = {"type": "Point", "coordinates": [round(data.ubicacion.lon, 6), round(data.ubicacion.lat, 6)]}
+    else:  # a team story without a point: the center of its sector
+        location = dict(sector["centro"])
+
+    published = estado == "publicada"
     document = {
         "client_id": data.client_id,
         "titulo": data.titulo,
@@ -85,22 +113,21 @@ def create_story(db: Database, *, user: dict, data: HistoriaIn, now: datetime | 
         "fecha_hechos": None,  # the design only asks for the epoch
         "sector_id": sector["_id"],
         "etiquetas": data.etiquetas,
-        "ubicacion": {"type": "Point", "coordinates": [round(data.ubicacion.lon, 6), round(data.ubicacion.lat, 6)]},
+        "ubicacion": location,
         "ubicacion_origen": data.ubicacion_origen,
         "medios": [medio.model_dump(exclude_none=True) for medio in data.medios],
         "autor_id": author_id,
-        "narrador_nombre": user["nombre"],
-        # Decided here, never by the client: nothing is published without an administrator.
-        "estado": "revision",
+        "narrador_nombre": narrador_nombre,
+        "estado": estado,
         "motivo_rechazo": None,
-        "origen": "comunidad",
+        "origen": origen,
         "ejemplo": False,
-        "busqueda": _search_text(data.titulo, user["nombre"], sector["nombre"], data.epoca, " ".join(data.etiquetas)),
+        "busqueda": search_text(data.titulo, narrador_nombre, sector["nombre"], data.epoca, " ".join(data.etiquetas)),
         "creada_en": now,
         "enviada_en": now,
         "revisada_en": None,
         "revisada_por": None,
-        "publicada_en": None,
+        "publicada_en": now if published else None,
     }
 
     for _ in range(3):  # a repeated code can only happen if someone edited the counter by hand

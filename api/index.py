@@ -21,6 +21,7 @@ from fastapi.responses import JSONResponse  # noqa: E402
 from pymongo.errors import ConnectionFailure  # noqa: E402
 
 from lib import __version__  # noqa: E402
+from lib.admin import demo_router, router as admin_router  # noqa: E402
 from lib.auth import router as auth_router  # noqa: E402
 from lib.config import router as config_router  # noqa: E402
 from lib.core import health  # noqa: E402
@@ -86,6 +87,8 @@ def create_app() -> FastAPI:
     app.include_router(config_router.router, prefix="/api")
     app.include_router(media_router.router, prefix="/api")
     app.include_router(stories_router.router, prefix="/api")
+    app.include_router(admin_router.router, prefix="/api")
+    app.include_router(demo_router.router, prefix="/api")  # removable: see lib/seed/demo.py
     return app
 
 
