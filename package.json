@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Plataforma de memoria histórica y patrimonio cultural de la cultura cafetera de Minca y sectores aledaños.",
   "engines": {
-    "node": ">=20"
+    "node": "22.x"
   },
   "scripts": {
     "dev": "vite",
