@@ -1,0 +1,6 @@
+# Development and test dependencies. Not installed on Vercel.
+-r requirements.txt
+uvicorn==0.54.0
+pytest==9.2.0
+httpx==0.28.1
+mongomock==4.3.0
