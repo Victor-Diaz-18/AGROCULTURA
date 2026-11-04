@@ -6,7 +6,8 @@
 export default function DataTable({ label, columns, template, minWidth, empty, children }) {
   const style = { '--table-columns': template, '--table-min': `${minWidth}px` }
   return (
-    <div className="ag-table-card__scroll">
+    // The table scrolls sideways on a phone: a keyboard can only scroll what it can focus, so the region takes focus.
+    <div className="ag-table-card__scroll" role="region" aria-label={`${label}, se desplaza de lado`} tabIndex={0}>
       <div className="ag-table" role="table" aria-label={label} style={style}>
         <div className="ag-table__head" role="row">
           {columns.map((column) => (

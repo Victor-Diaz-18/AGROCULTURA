@@ -211,12 +211,12 @@ describe('Mapa de historias: filtros y búsqueda (F11)', () => {
   it('a sector tab leaves only that sector, on the map and in the list', async () => {
     const user = userEvent.setup()
     await openFiltered()
-    expect(pins()).toBe(4)
+    await waitFor(() => expect(pins()).toBe(4))
 
     await user.click(bar().getByRole('button', { name: /^La Tagua/ }))
 
     expect(titles()).toEqual(['La primera cosecha'])
-    expect(pins()).toBe(1)
+    await waitFor(() => expect(pins()).toBe(1)) // the pins follow a moment after the list
     expect(bar().getByRole('button', { name: /^La Tagua/ })).toHaveAttribute('aria-pressed', 'true')
   })
 

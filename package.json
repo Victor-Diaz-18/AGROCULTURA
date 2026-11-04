@@ -14,7 +14,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:api": "python -m pytest"
+    "test:api": "python -m pytest",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "@fontsource/bricolage-grotesque": "^5.3.0",
@@ -29,6 +30,8 @@
     "react-router-dom": "^7.18.5"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@playwright/test": "^1.63.0",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.8",

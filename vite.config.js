@@ -4,9 +4,9 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import { TILE_PROVIDER } from './src/config/map.js'
 
-// In development the API runs separately (uvicorn on :8000) and Vite proxies
+// In development the API runs separately (uvicorn on :8000, or API_URL) and Vite proxies
 // /api to it, so the browser only ever talks to one origin, as in production.
-const api = { '/api': { target: 'http://127.0.0.1:8000', changeOrigin: true } }
+const api = { '/api': { target: process.env.API_URL ?? 'http://127.0.0.1:8000', changeOrigin: true } }
 
 // The map tiles the person has already looked at are kept for when there is no signal (F10).
 // Only those: nothing is downloaded ahead of time (OpenStreetMap's tile policy forbids that).
