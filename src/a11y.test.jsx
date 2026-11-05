@@ -76,6 +76,25 @@ describe('every page passes axe', () => {
     await user.click(screen.getByRole('button', { name: 'Siguiente' }))
     await screen.findByText('REVISA ANTES DE ENVIAR')
     await expectAccessible()
+
+    // the last step with its boxes in use: without the name, and the authorization ticked
+    await user.click(screen.getByRole('checkbox', { name: 'Publicar sin mi nombre' }))
+    await user.click(screen.getByRole('checkbox', { name: /^Autorizo que mi historia se publique sin mi nombre/ }))
+    await expectAccessible()
+  })
+
+  it('telling a story without a place: the two options and the reference instead of the map', async () => {
+    const user = userEvent.setup()
+    renderApp({ route: '/contar', user: NARRATOR, api: { '/historias/mias': [] } })
+    await user.type(await screen.findByLabelText('O escríbela'), 'Un recuerdo.')
+    await user.click(screen.getByRole('button', { name: 'Siguiente' }))
+    await screen.findByLabelText('Ponle un título')
+
+    await user.click(screen.getByRole('radio', { name: 'Sin ubicación' }))
+    await user.type(screen.getByLabelText(/Nombre de la finca o marca/), 'Café La Loma')
+
+    expect(screen.getByLabelText(/Nombre de referencia/)).toBeInTheDocument()
+    await expectAccessible()
   })
 
   it('"Mis historias", with its table', async () => {

@@ -476,3 +476,87 @@
 .ag-tell__recovered {
   margin: 0;
 }
+
+/* "¿Dónde ocurrió?": the two options, and the boxes of step 3 (publish without my name, authorization) */
+.ag-tell__where {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.ag-tell__where > legend {
+  display: flex;
+  width: 100%;
+  padding: 0;
+  margin-bottom: 8px;
+}
+.ag-tell__options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px;
+}
+.ag-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 56px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--borde-fuerte);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--texto);
+  cursor: pointer;
+}
+.ag-option--on {
+  border-color: var(--verde-oscuro);
+  background: var(--fondo);
+}
+.ag-option input {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin: 2px 0 0;
+  accent-color: var(--verde-oscuro);
+}
+.ag-option__body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 15px;
+}
+.ag-option__text {
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--texto-3);
+}
+.ag-consent {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  border: 2px solid var(--verde-oscuro);
+  border-radius: 14px;
+  background: #fff;
+}
+.ag-consent__box {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  cursor: pointer;
+}
+.ag-consent__box input {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  margin: 1px 0 0;
+  accent-color: var(--verde-oscuro);
+}
+.ag-consent__text {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+.ag-consent .ag-hint {
+  margin: 0;
+  padding-left: 40px;
+}

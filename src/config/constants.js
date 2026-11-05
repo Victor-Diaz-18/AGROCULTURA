@@ -23,6 +23,7 @@ export const DEFAULT_TAG = '#café'
 
 /** Same limits the server enforces (lib/stories/schemas.py): the form stops the person before the server has to. */
 export const MAX_PLACE_NAME = 80
+export const MAX_FARM_NAME = 80
 
 export const LIMITS = { tituloMin: 3, tituloMax: 120, textoMax: 5000, fotos: 6, etiquetas: 6 }
 

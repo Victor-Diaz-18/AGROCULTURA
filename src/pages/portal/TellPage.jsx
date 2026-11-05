@@ -7,7 +7,7 @@ import Stepper from '../../components/tell/Stepper.jsx'
 import StepRecord from '../../components/tell/StepRecord.jsx'
 import StepReview from '../../components/tell/StepReview.jsx'
 import StepWhereWhen from '../../components/tell/StepWhereWhen.jsx'
-import { DEFAULT_TAG, LIMITS } from '../../config/constants.js'
+import { DEFAULT_TAG, LIMITS, NARRADOR_ANONIMO, NO_LOCATION } from '../../config/constants.js'
 import { codeNote } from '../../config/flags.js'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { useMyStories } from '../../context/MyStoriesContext.jsx'
@@ -20,16 +20,18 @@ import { clearWorkingDraft, loadWorkingDraft, saveWorkingDraft } from '../../off
 import { ApiError, OfflineError } from '../../services/http.js'
 import { sendStory } from '../../services/stories.js'
 import { formatDuration } from '../../utils/format.js'
+import { acceptConsent, consentText, isAccepted } from '../../utils/consent.js'
 import { newId } from '../../utils/id.js'
 import { placeLine } from '../../utils/geo.js'
 
 const SUBTITLE = 'Con tu voz, una foto, un video o por escrito. Nadie la ve hasta que un administrador la aprueba.'
 
-/** What "Escuchar instrucciones" reads on each step (F9). */
+/** What "Escuchar instrucciones" reads on each step (F9). The last one also reads the authorization, so it can be heard before it is given. */
 const READ_ALOUD = {
   1: 'Contar una historia. Paso 1 de 3: cuéntala. Toca el botón rojo para grabarla con tu voz, o escríbela. Si tienes fotos, puedes agregarlas.',
-  2: 'Contar una historia. Paso 2 de 3: dónde y cuándo. Ponle un título, toca en el mapa el sector donde ocurrió y elige la época.',
-  3: 'Contar una historia. Paso 3 de 3: revisa tu historia y tócala enviar. Un administrador la revisa antes de publicarla.',
+  2: 'Contar una historia. Paso 2 de 3: dónde y cuándo. Ponle un título. Elige si en el mapa se ve un lugar aproximado o si va sin ubicación; con lugar aproximado, toca el lugar en el mapa. Elige la época.',
+  3: (consent) =>
+    `Contar una historia. Paso 3 de 3: revisa tu historia. Si quieres, márcala para publicarla sin tu nombre. Para enviarla tienes que marcar la autorización. Dice así: ${consent.texto} ${consent.aviso} Un administrador la revisa antes de publicarla.`,
 }
 
 export const SEND_MESSAGES = {
@@ -50,6 +52,7 @@ const isBlank = (draft) =>
   !draft.texto.trim() &&
   !draft.titulo.trim() &&
   !draft.lugar.trim() &&
+  !draft.finca.trim() &&
   !draft.audio &&
   !draft.video &&
   !draft.location &&
@@ -90,7 +93,11 @@ export default function TellPage() {
   const [video, setVideo] = useState(null) // { id, name, blob, mime }: one at most; it goes up after the story
   const [titulo, setTitulo] = useState('')
   const [location, setLocation] = useState(null)
+  const [modo, setModo] = useState('aproximada') // "aproximada": a point on the map (about 500 m for the public); "ninguna": no place on the map
   const [lugar, setLugar] = useState('')
+  const [finca, setFinca] = useState('')
+  const [anonima, setAnonima] = useState(false) // "publicar sin mi nombre"
+  const [consent, setConsent] = useState(null) // what was kept when the authorization was ticked (see utils/consent.js)
   const [epoca, setEpoca] = useState('')
   const [etiquetas, setEtiquetas] = useState([])
   const [sending, setSending] = useState(false)
@@ -108,7 +115,24 @@ export default function TellPage() {
   const recorder = useRecorder({ onRecorded: ({ blob, seconds, mime }) => setAudio({ blob, seconds, mime }) })
 
   // Everything the person has put in so far: what is kept on the phone while they tell it (F10).
-  const draft = { clientId, step, texto, titulo, location, lugar, epoca, etiquetas, audio, fotos, video, photoNumber: photoNumber.current }
+  const draft = {
+    clientId,
+    step,
+    texto,
+    titulo,
+    location,
+    ubicacionModo: modo,
+    lugar,
+    finca,
+    anonima,
+    consentimiento: consent,
+    epoca,
+    etiquetas,
+    audio,
+    fotos,
+    video,
+    photoNumber: photoNumber.current,
+  }
   const latest = useRef(draft)
   latest.current = draft
   const savedRef = useRef(false)
@@ -131,7 +155,11 @@ export default function TellPage() {
           setVideo(found.video ?? null)
           setTitulo(found.titulo)
           setLocation(found.location)
+          setModo(found.ubicacionModo ?? 'aproximada') // a story left half told before these options existed has a point
           setLugar(found.lugar)
+          setFinca(found.finca ?? '')
+          setAnonima(Boolean(found.anonima))
+          setConsent(found.consentimiento ?? null)
           setEpoca(found.epoca)
           setEtiquetas(found.etiquetas)
           photoNumber.current = found.photoNumber ?? found.fotos.length + 1
@@ -156,7 +184,7 @@ export default function TellPage() {
     if (!saved) return undefined
     const timer = setTimeout(keepDraft, SAVE_DELAY_MS)
     return () => clearTimeout(timer)
-  }, [saved, keepDraft, clientId, texto, titulo, location, lugar, epoca, etiquetas, audio, fotos, video])
+  }, [saved, keepDraft, clientId, texto, titulo, location, modo, lugar, finca, anonima, consent, epoca, etiquetas, audio, fotos, video])
 
   useEffect(() => {
     if (saved) keepDraft()
@@ -187,16 +215,25 @@ export default function TellPage() {
   }, [step])
 
   const recording = recorder.status === 'recording'
+  // The authorization was given for one text (name or not, place or not): it only counts while the choices are the same.
+  const choice = { anonima, modo }
+  const accepted = isAccepted(consent, choice)
+  const authorization = consentText(choice)
+  const placed = modo === 'ninguna' || Boolean(location) // without a place on the map there is no point to wait for
   const canContinue = {
     1: Boolean(audio) || recording || texto.trim().length > 0,
-    2: titulo.trim().length >= LIMITS.tituloMin && Boolean(location) && Boolean(epoca),
-    3: !sending, // without signal the story is kept on the phone
+    2: titulo.trim().length >= LIMITS.tituloMin && placed && Boolean(epoca),
+    3: !sending && accepted, // without signal the story is kept on the phone; without the authorization it goes nowhere
   }[step]
 
   const help = {
     1: canContinue ? 'Puedes agregar fotos o un video si los tienes.' : 'Graba un audio o escribe la historia para seguir.',
-    2: canContinue ? 'Todo listo para revisar.' : 'Falta el título, el sector o la época.',
-    3: online ? `Al enviarla pasa a revisión${codeNote('F6')}.` : 'Sin señal: quedará como borrador.',
+    2: canContinue ? 'Todo listo para revisar.' : 'Falta el título, el lugar o la época.',
+    3: !accepted
+      ? 'Marca la autorización para poder enviarla.'
+      : online
+        ? `Al enviarla pasa a revisión${codeNote('F6')}.`
+        : 'Sin señal: quedará como borrador.',
   }[step]
 
   const startRecording = () => recorder.start()
@@ -229,7 +266,11 @@ export default function TellPage() {
     setVideo(null)
     setTitulo('')
     setLocation(null)
+    setModo('aproximada')
     setLugar('')
+    setFinca('')
+    setAnonima(false)
+    setConsent(null)
     setEpoca('')
     setEtiquetas([])
     setSendError('')
@@ -243,9 +284,11 @@ export default function TellPage() {
   if (video) formats.push('Video')
   const summary = {
     titulo: titulo.trim() || 'Sin título todavía',
-    lugar: location ? placeLine({ sector_id: location.sectorId, lugar_nombre: lugar.trim() }, config.sectores) : 'Sin elegir',
+    // Without a place on the map the name of reference is not said: it is not public, and the page may be read aloud or shown to others.
+    lugar: modo === 'ninguna' ? NO_LOCATION : location ? placeLine({ sector_id: location.sectorId, lugar_nombre: lugar.trim() }, config.sectores) : 'Sin elegir',
     epoca: epoca || 'Sin elegir',
-    narrador: user?.nombre ?? '',
+    narrador: anonima ? NARRADOR_ANONIMO : (user?.nombre ?? ''),
+    finca: finca.trim(),
     texto:
       texto.trim() ||
       (audio ? 'Historia contada en audio. La transcripción se agrega después.' : 'Todavía no has grabado ni escrito la historia.'),
@@ -260,7 +303,11 @@ export default function TellPage() {
     texto: texto.trim(),
     epoca,
     location,
+    ubicacionModo: modo,
     lugar: lugar.trim(),
+    finca: finca.trim(),
+    anonima,
+    consentimiento: accepted ? consent : null,
     etiquetas: sentTags,
     audio,
     fotos,
@@ -291,6 +338,7 @@ export default function TellPage() {
   }
 
   const send = async () => {
+    if (!accepted) return // nothing leaves without the authorization (the button is disabled; this is for the keyboard and for tests)
     setSending(true)
     setSendError('')
     if (!online) {
@@ -342,7 +390,13 @@ export default function TellPage() {
       <PageHeader
         title="Contar una historia"
         subtitle={SUBTITLE}
-        actions={<ListenButton title="Contar una historia" text={() => READ_ALOUD[step]} label="Escuchar instrucciones" />}
+        actions={
+          <ListenButton
+            title="Contar una historia"
+            text={() => (step === 3 ? READ_ALOUD[3](authorization) : READ_ALOUD[step])}
+            label="Escuchar instrucciones"
+          />
+        }
       />
       <Stepper ref={stepper} current={step} />
 
@@ -373,17 +427,32 @@ export default function TellPage() {
               config={config}
               titulo={titulo}
               onTitulo={setTitulo}
+              modo={modo}
+              onModo={setModo}
               location={location}
               onLocation={setLocation}
               lugar={lugar}
               onLugar={setLugar}
+              finca={finca}
+              onFinca={setFinca}
               epoca={epoca}
               onEpoca={setEpoca}
               etiquetas={etiquetas}
               onToggleTag={toggleTag}
             />
           )}
-          {step === 3 && <StepReview summary={summary} online={online} sendError={sendError} />}
+          {step === 3 && (
+            <StepReview
+              summary={summary}
+              online={online}
+              sendError={sendError}
+              anonima={anonima}
+              onAnonima={setAnonima}
+              consent={authorization}
+              accepted={accepted}
+              onAccept={(checked) => setConsent(checked ? acceptConsent(choice) : null)}
+            />
+          )}
 
           <div className="ag-tell__footer">
             <span className="ag-tell__help">{help}</span>

@@ -28,10 +28,19 @@ export const ZOOM_LIMITS = { min: 9, max: 17 }
 export const SECTOR_LABELS_MIN_ZOOM = 13
 
 /**
- * The zone of the project: "Minca y sectores aledaños". A story can be placed anywhere inside it (the sectors are
- * only references); the form does not let the pin go outside. About 90 km wide, around Minca.
+ * THE area the map for choosing a place covers: the only constant to change to widen or narrow it. A story can be placed anywhere
+ * inside it (the sectors are only names of reference, never a boundary); the map cannot be moved out of it and a point outside is
+ * not accepted. Whoever is further away can still tell a story with «Sin ubicación».
+ *
+ * It covers the Magdalena side of the Sierra Nevada de Santa Marta with room to spare, not only the surroundings of Minca:
+ *  - north 11.50: the Caribbean coast (Santa Marta, Minca and Tayrona are around 11.1 to 11.3);
+ *  - south 10.15: below the foot of the sierra (Aracataca is at 10.59, Fundación at 10.52, Pueblo Bello at 10.42);
+ *  - west -74.70: the whole Ciénaga Grande de Santa Marta and the banana plain (Ciénaga is at -74.25);
+ *  - east -73.20: beyond the crest (Pico Cristóbal Colón is at -73.69) and the coast of Palomino (-73.57).
+ * About 150 km from north to south by 164 km from east to west (some 24,600 km², about one and a half times the area of the
+ * massif). A rectangle because that is what the map takes (its limits) and what a point is checked against.
  */
-export const ZONE = { south: 10.74, west: -74.52, north: 11.54, east: -73.72 }
+export const ZONE = { south: 10.15, west: -74.7, north: 11.5, east: -73.2 }
 
 /**
  * A story belongs to a sector when its point is within this distance of the sector's center, and to none otherwise

@@ -28,6 +28,18 @@ const uploadAnswer = (init) => {
 
 const nextButton = () => screen.getByRole('button', { name: /^(Siguiente|Enviar historia|Enviando…)$/ })
 
+/** The authorization to publish: the box of step 3. A story cannot be sent without it. */
+const authorizationBox = () => screen.getByRole('checkbox', { name: /^Autorizo que mi historia se publique/ })
+async function authorize(user) {
+  if (!authorizationBox().checked) await user.click(authorizationBox())
+}
+
+/** Taps the main button. On the last step the person first ticks the authorization, as they have to. */
+async function proceed(user) {
+  if (screen.queryByRole('checkbox', { name: /^Autorizo que mi historia se publique/ })) await authorize(user)
+  await user.click(nextButton())
+}
+
 function open(api = {}) {
   return renderApp({
     route: '/contar',
@@ -38,7 +50,7 @@ function open(api = {}) {
 
 async function writeStory(user, text = 'Antes de que hubiera carretera, el café bajaba en mula.') {
   await user.type(screen.getByLabelText('O escríbela'), text)
-  await user.click(nextButton())
+  await proceed(user)
 }
 
 async function fillWhereAndWhen(user, { title = 'El camino de mulas', sector = 'Minca', epoca = 'Antes de 1960' } = {}) {
@@ -85,7 +97,7 @@ describe('Contar una historia: steps and gating (F3)', () => {
     expect(screen.getByText('Dónde y cuándo').closest('li')).toHaveAttribute('aria-current', 'step')
     expect(screen.getByText('Cuéntala').closest('li')).toHaveTextContent('✓')
     expect(nextButton()).toBeDisabled()
-    expect(screen.getByText('Falta el título, el sector o la época.')).toBeInTheDocument()
+    expect(screen.getByText('Falta el título, el lugar o la época.')).toBeInTheDocument()
 
     await user.type(screen.getByLabelText('Ponle un título'), 'El camino de mulas')
     await user.selectOptions(screen.getByRole('combobox', { name: /Cuándo ocurrió/ }), 'Antes de 1960')
@@ -150,9 +162,9 @@ describe('Contar una historia: el lugar puede ser cualquiera de la zona', () => 
 
     expect(nextButton()).toBeEnabled() // no sector needed
     expect(screen.getByRole('complementary', { name: 'Resumen de tu historia' })).toHaveTextContent('Lugar: Otro lugar de la zona')
-    await user.click(nextButton())
+    await proceed(user)
     expect(screen.getByText(/Otro lugar de la zona · Antes de 1960/)).toBeInTheDocument()
-    await user.click(nextButton())
+    await proceed(user)
 
     await screen.findByRole('heading', { name: 'Mis historias' })
     expect(sentBody(fetchMock)).toMatchObject({ ubicacion: { lat: 11.2, lon: -73.95 }, ubicacion_origen: 'gps' })
@@ -171,8 +183,8 @@ describe('Contar una historia: el lugar puede ser cualquiera de la zona', () => 
     await user.type(screen.getByLabelText(/Nombre del lugar/), '  Finca La Esperanza ')
 
     expect(screen.getByRole('complementary', { name: 'Resumen de tu historia' })).toHaveTextContent('Lugar: Finca La Esperanza, La Tagua')
-    await user.click(nextButton())
-    await user.click(nextButton())
+    await proceed(user)
+    await proceed(user)
     await screen.findByRole('heading', { name: 'Mis historias' })
     expect(sentBody(fetchMock)).toMatchObject({ lugar_nombre: 'Finca La Esperanza' })
   })
@@ -186,8 +198,8 @@ describe('Contar una historia: el lugar puede ser cualquiera de la zona', () => 
     await user.click(screen.getByRole('button', { name: /Usar mi ubicación/ }))
     await user.selectOptions(screen.getByRole('combobox', { name: /Cuándo ocurrió/ }), 'Antes de 1960')
 
-    await user.click(nextButton())
-    await user.click(nextButton())
+    await proceed(user)
+    await proceed(user)
 
     await screen.findByRole('heading', { name: 'Mis historias' })
     expect(sentBody(fetchMock)).not.toHaveProperty('lugar_nombre')
@@ -223,7 +235,8 @@ describe('Contar una historia: el lugar puede ser cualquiera de la zona', () => 
 
     await user.click(screen.getByRole('button', { name: /Usar mi ubicación/ }))
 
-    expect(screen.getByText(/queda lejos de Minca y sus sectores/)).toBeInTheDocument()
+    expect(screen.getByText(/queda fuera del área del mapa/)).toBeInTheDocument()
+    expect(screen.getByText(/elige «Sin ubicación»/)).toBeInTheDocument()
     expect(nextButton()).toBeDisabled()
   })
 })
@@ -234,12 +247,12 @@ describe('Contar una historia: sending (F3, F5, F4)', () => {
     const { fetchMock } = open()
     await writeStory(user)
     await fillWhereAndWhen(user)
-    await user.click(nextButton())
+    await proceed(user)
 
     expect(screen.getByText('REVISA ANTES DE ENVIAR')).toBeInTheDocument()
     expect(screen.getByText('Hay señal')).toBeInTheDocument()
     expect(callsTo(fetchMock, '/historias')).toHaveLength(0) // nothing leaves the phone before the last button
-    await user.click(nextButton())
+    await proceed(user)
 
     expect(await screen.findByRole('heading', { name: 'Mis historias' })).toBeInTheDocument()
     expect(screen.getByText(SEND_MESSAGES.done)).toBeInTheDocument()
@@ -264,8 +277,8 @@ describe('Contar una historia: sending (F3, F5, F4)', () => {
     await fillWhereAndWhen(user)
     await user.click(screen.getByRole('button', { name: '#familia' }))
     await user.click(screen.getByRole('button', { name: '#cosecha' }))
-    await user.click(nextButton())
-    await user.click(nextButton())
+    await proceed(user)
+    await proceed(user)
 
     await screen.findByRole('heading', { name: 'Mis historias' })
     expect(sentBody(fetchMock).etiquetas).toEqual(['#familia', '#cosecha'])
@@ -281,11 +294,11 @@ describe('Contar una historia: sending (F3, F5, F4)', () => {
     expect(nextButton()).toBeEnabled() // recording counts: Siguiente stops it
     await user.click(screen.getByRole('button', { name: 'Terminar de grabar' }))
     expect(await screen.findByText(/^Audio grabado/)).toBeInTheDocument()
-    await user.click(nextButton())
+    await proceed(user)
     await fillWhereAndWhen(user)
-    await user.click(nextButton())
+    await proceed(user)
     expect(screen.getByText('Historia contada en audio. La transcripción se agrega después.')).toBeInTheDocument()
-    await user.click(nextButton())
+    await proceed(user)
 
     await screen.findByRole('heading', { name: 'Mis historias' })
     const uploads = callsTo(fetchMock, '/medios')
@@ -304,7 +317,7 @@ describe('Contar una historia: sending (F3, F5, F4)', () => {
 
     await user.click(screen.getByRole('button', { name: 'Grabar tu historia' }))
     await screen.findByText(/^Grabando…/)
-    await user.click(nextButton())
+    await proceed(user)
 
     expect(tracksStop).toHaveBeenCalled()
     expect(screen.getByRole('complementary', { name: 'Resumen de tu historia' })).toHaveTextContent(/Formatos: Audio 0:0\d/)
@@ -324,11 +337,11 @@ describe('Contar una historia: sending (F3, F5, F4)', () => {
     expect(screen.queryByText(/^foto_02\.jpg/)).not.toBeInTheDocument()
 
     await user.type(screen.getByLabelText('O escríbela'), 'Las fotos de la finca.')
-    await user.click(nextButton())
+    await proceed(user)
     await fillWhereAndWhen(user)
-    await user.click(nextButton())
+    await proceed(user)
     expect(screen.getAllByText('1 foto')).toHaveLength(2) // the format chip and the side summary
-    await user.click(nextButton())
+    await proceed(user)
 
     await screen.findByRole('heading', { name: 'Mis historias' })
     expect(callsTo(fetchMock, '/medios')).toHaveLength(1)
@@ -345,16 +358,16 @@ describe('Contar una historia: sending (F3, F5, F4)', () => {
 
     await user.click(screen.getByRole('button', { name: 'Grabar tu historia' }))
     await user.click(await screen.findByRole('button', { name: 'Terminar de grabar' }))
-    await user.click(nextButton())
+    await proceed(user)
     await fillWhereAndWhen(user)
-    await user.click(nextButton())
-    await user.click(nextButton())
+    await proceed(user)
+    await proceed(user)
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Algo falló en el servidor.')
     expect(screen.getByRole('button', { name: 'Enviar historia' })).toBeEnabled()
     expect(screen.queryByRole('heading', { name: 'Mis historias' })).not.toBeInTheDocument()
 
-    await user.click(nextButton())
+    await proceed(user)
 
     await screen.findByRole('heading', { name: 'Mis historias' })
     expect(callsTo(fetchMock, '/medios')).toHaveLength(1) // the audio went up once
@@ -369,9 +382,9 @@ describe('Contar una historia: sending (F3, F5, F4)', () => {
     const { fetchMock } = open({ '/historias': () => gate.then(() => created) })
     await writeStory(user)
     await fillWhereAndWhen(user)
-    await user.click(nextButton())
+    await proceed(user)
 
-    await user.click(nextButton())
+    await proceed(user)
     const sending = await screen.findByRole('button', { name: 'Enviando…' })
     expect(sending).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Atrás' })).toBeDisabled()
@@ -386,11 +399,12 @@ describe('Contar una historia: sending (F3, F5, F4)', () => {
     const { fetchMock } = open()
     await writeStory(user)
     await fillWhereAndWhen(user)
-    await user.click(nextButton())
+    await proceed(user)
 
     act(() => toggleSimulatedOffline())
 
     expect(await screen.findByText('Se guarda en el dispositivo y se envía sola cuando vuelva la señal.')).toBeInTheDocument()
+    await authorize(user)
     expect(screen.getByRole('button', { name: 'Guardar en el dispositivo' })).toBeEnabled()
     expect(screen.getByText('Sin señal: quedará como borrador.')).toBeInTheDocument()
     expect(callsTo(fetchMock, '/historias')).toHaveLength(0)
@@ -404,8 +418,8 @@ describe('Contar una historia: sending (F3, F5, F4)', () => {
     open({ '/historias': () => reply({ detail: 'Tu sesión venció.' }, 401) })
     await writeStory(user)
     await fillWhereAndWhen(user)
-    await user.click(nextButton())
-    await user.click(nextButton())
+    await proceed(user)
+    await proceed(user)
 
     expect(await screen.findByRole('alert')).toHaveTextContent(SEND_MESSAGES.expired)
     expect(await screen.findByRole('dialog')).toBeInTheDocument()
@@ -449,7 +463,7 @@ describe('Contar una historia: sin señal (F10)', () => {
   const finishAndSave = async (user) => {
     await writeStory(user)
     await fillWhereAndWhen(user)
-    await user.click(nextButton())
+    await proceed(user)
   }
 
   it('keeps the finished story on the device, tells it, and shows it as a draft in "Mis historias"', async () => {
@@ -459,6 +473,7 @@ describe('Contar una historia: sin señal (F10)', () => {
     await finishAndSave(user)
     act(() => toggleSimulatedOffline())
 
+    await authorize(user)
     await user.click(await screen.findByRole('button', { name: 'Guardar en el dispositivo' }))
 
     expect(await screen.findByRole('heading', { name: 'Mis historias' })).toBeInTheDocument()
@@ -476,6 +491,7 @@ describe('Contar una historia: sin señal (F10)', () => {
     const { fetchMock } = open(server.api)
     await finishAndSave(user)
     act(() => toggleSimulatedOffline())
+    await authorize(user)
     await user.click(await screen.findByRole('button', { name: 'Guardar en el dispositivo' }))
     await screen.findByText('Por asignar')
 
@@ -498,10 +514,11 @@ describe('Contar una historia: sin señal (F10)', () => {
     await user.click(await screen.findByRole('button', { name: 'Terminar de grabar' }))
     await user.upload(screen.getByLabelText('Elegir fotos'), new File(['x'], 'p.jpg', { type: 'image/jpeg' }))
     await screen.findByText(/foto_01\.jpg/)
-    await user.click(nextButton())
+    await proceed(user)
     await fillWhereAndWhen(user)
-    await user.click(nextButton())
+    await proceed(user)
     act(() => toggleSimulatedOffline())
+    await authorize(user)
     await user.click(await screen.findByRole('button', { name: 'Guardar en el dispositivo' }))
     await screen.findByText('Por asignar')
     expect(callsTo(fetchMock, '/medios')).toHaveLength(0)
@@ -528,10 +545,11 @@ describe('Contar una historia: sin señal (F10)', () => {
     })
     await user.click(screen.getByRole('button', { name: 'Grabar tu historia' }))
     await user.click(await screen.findByRole('button', { name: 'Terminar de grabar' }))
-    await user.click(nextButton())
+    await proceed(user)
     await fillWhereAndWhen(user)
-    await user.click(nextButton())
+    await proceed(user)
     signal = false
+    await authorize(user)
 
     await user.click(screen.getByRole('button', { name: 'Enviar historia' }))
 
@@ -557,6 +575,7 @@ describe('Contar una historia: sin señal (F10)', () => {
     await finishAndSave(user)
     act(() => toggleSimulatedOffline())
 
+    await authorize(user)
     await user.click(await screen.findByRole('button', { name: 'Guardar en el dispositivo' }))
 
     expect(await screen.findByText(SEND_MESSAGES.queuedLoose)).toBeInTheDocument()
@@ -568,7 +587,7 @@ describe('Contar una historia: lo que queda a medias se guarda en el dispositivo
     const user = userEvent.setup()
     const first = open()
     await user.type(screen.getByLabelText('O escríbela'), 'Mi abuelo sembró el primer cafetal.')
-    await user.click(nextButton())
+    await proceed(user)
     await user.type(screen.getByLabelText('Ponle un título'), 'El primer cafetal')
     await user.click(screen.getByRole('button', { name: 'Minca' }))
     first.unmount() // closing the page
@@ -627,8 +646,8 @@ describe('Contar una historia: lo que queda a medias se guarda en el dispositivo
     open(server.api)
     await writeStory(user)
     await fillWhereAndWhen(user)
-    await user.click(nextButton())
-    await user.click(nextButton())
+    await proceed(user)
+    await proceed(user)
     await screen.findByRole('heading', { name: 'Mis historias' })
 
     expect(await loadWorkingDraft(NARRATOR.id)).toBeNull()
@@ -672,9 +691,9 @@ describe('Contar una historia: el video (F13)', () => {
   const reachReview = async (user) => {
     await user.type(screen.getByLabelText('O escríbela'), 'Antes de que hubiera carretera, el café bajaba en mula.')
     await addVideo(user)
-    await user.click(nextButton())
+    await proceed(user)
     await fillWhereAndWhen(user)
-    await user.click(nextButton())
+    await proceed(user)
   }
   const postsTo = (fetchMock, path) => callsTo(fetchMock, path).filter(([, init]) => init?.method === 'POST')
 
@@ -733,7 +752,7 @@ describe('Contar una historia: el video (F13)', () => {
     const { fetchMock } = open(videoApi(server))
     await reachReview(user)
 
-    await user.click(nextButton())
+    await proceed(user)
 
     expect(await screen.findByRole('heading', { name: 'Mis historias' })).toBeInTheDocument()
     const body = sentBody(fetchMock)
@@ -755,7 +774,7 @@ describe('Contar una historia: el video (F13)', () => {
     const { fetchMock } = open(videoApi(server))
     await reachReview(user)
 
-    await user.click(nextButton())
+    await proceed(user)
 
     expect(await screen.findByRole('heading', { name: 'Mis historias' })).toBeInTheDocument()
     expect(await screen.findByText('Se subió el video de «El camino de mulas».', undefined, { timeout: 3000 })).toBeInTheDocument()
@@ -770,6 +789,7 @@ describe('Contar una historia: el video (F13)', () => {
     const { fetchMock } = open(videoApi(server))
     await reachReview(user)
     act(() => toggleSimulatedOffline())
+    await authorize(user)
     await user.click(await screen.findByRole('button', { name: 'Guardar en el dispositivo' }))
     await screen.findByText('Por asignar')
     expect(put).not.toHaveBeenCalled()
@@ -815,9 +835,329 @@ describe('Contar una historia: el video (F13)', () => {
     open(videoApi(server))
     await reachReview(user)
 
-    await user.click(nextButton())
+    await proceed(user)
     await screen.findByRole('heading', { name: 'Mis historias' })
 
     expect(await loadWorkingDraft(NARRATOR.id)).toBeNull()
   })
 })
+
+// ---- privacy and consent: where, whose name, and the authorization --------------------------------------------------
+
+const place = (name) => screen.getByRole('radio', { name })
+const authorizationText = () => screen.getByRole('checkbox', { name: /^Autorizo que mi historia se publique/ })
+
+async function reachStep3(user, options = {}) {
+  await writeStory(user)
+  await fillWhereAndWhen(user, options)
+  await user.click(nextButton()) // not `proceed`: nothing is ticked on the way
+}
+
+describe('Contar una historia: la autorización para publicar', () => {
+  it('cannot be sent without it: the button stays disabled and says why', async () => {
+    const user = userEvent.setup()
+    const { fetchMock } = open()
+    await reachStep3(user)
+
+    expect(authorizationText()).not.toBeChecked()
+    expect(nextButton()).toBeDisabled()
+    expect(screen.getByText('Marca la autorización para poder enviarla.')).toBeInTheDocument()
+    await user.click(nextButton())
+    expect(callsTo(fetchMock, '/historias')).toHaveLength(0) // nothing left the phone
+
+    await user.click(authorizationText())
+
+    expect(nextButton()).toBeEnabled()
+    expect(screen.queryByText('Marca la autorización para poder enviarla.')).not.toBeInTheDocument()
+  })
+
+  it('cannot be kept on the device without it either (a story kept would be sent later without it)', async () => {
+    const user = userEvent.setup()
+    open()
+    await reachStep3(user)
+    act(() => toggleSimulatedOffline())
+
+    expect(await screen.findByRole('button', { name: 'Guardar en el dispositivo' })).toBeDisabled()
+
+    await user.click(authorizationText())
+    expect(screen.getByRole('button', { name: 'Guardar en el dispositivo' })).toBeEnabled()
+  })
+
+  it('goes with the story: its version and the moment it was ticked', async () => {
+    const user = userEvent.setup()
+    const { fetchMock } = open()
+    await reachStep3(user)
+
+    await user.click(authorizationText())
+    await user.click(nextButton())
+
+    await screen.findByRole('heading', { name: 'Mis historias' })
+    const { consentimiento } = sentBody(fetchMock)
+    expect(consentimiento).toEqual({ aceptado: true, version: expect.stringMatching(/^\d{4}-\d{2}-\d+$/), aceptado_en: expect.stringMatching(/Z$/) })
+    expect(Math.abs(Date.now() - new Date(consentimiento.aceptado_en).getTime())).toBeLessThan(60_000)
+  })
+
+  it('says what was chosen: with the name and an approximate place', async () => {
+    const user = userEvent.setup()
+    open()
+    await reachStep3(user)
+
+    expect(authorizationText()).toHaveAccessibleName('Autorizo que mi historia se publique con mi nombre y con un lugar aproximado en el mapa (a unos 500 metros).')
+    expect(screen.getByText('El equipo de AGROCULTURA sí ve tu nombre y el lugar exacto, para poder revisarla.')).toBeInTheDocument()
+  })
+
+  it('changes with "Publicar sin mi nombre", and has to be ticked again', async () => {
+    const user = userEvent.setup()
+    open()
+    await reachStep3(user)
+    await user.click(authorizationText())
+    expect(nextButton()).toBeEnabled()
+
+    await user.click(screen.getByRole('checkbox', { name: 'Publicar sin mi nombre' }))
+
+    expect(authorizationText()).toHaveAccessibleName(/sin mi nombre \(saldrá como «Narrador anónimo»\) y con un lugar aproximado/)
+    expect(authorizationText()).not.toBeChecked() // it was given for another text
+    expect(nextButton()).toBeDisabled()
+
+    await user.click(authorizationText())
+    expect(nextButton()).toBeEnabled()
+  })
+
+  it('changes with the place, and a choice made on step 2 asks again on step 3', async () => {
+    const user = userEvent.setup()
+    open()
+    await writeStory(user)
+    await fillWhereAndWhen(user)
+    await user.click(nextButton())
+    await user.click(authorizationText())
+    await user.click(screen.getByRole('button', { name: 'Atrás' }))
+
+    await user.click(place('Sin ubicación'))
+    await user.click(nextButton())
+
+    expect(authorizationText()).toHaveAccessibleName('Autorizo que mi historia se publique con mi nombre y sin ubicación en el mapa.')
+    expect(authorizationText()).not.toBeChecked()
+    expect(screen.getByText('El equipo de AGROCULTURA sí ve tu nombre y el lugar de referencia que escribas, para poder revisarla.')).toBeInTheDocument()
+  })
+
+  it('has its four texts, one for each way of publishing', async () => {
+    const user = userEvent.setup()
+    open()
+    await writeStory(user)
+    await fillWhereAndWhen(user)
+    await user.click(place('Sin ubicación'))
+    await user.click(nextButton())
+
+    expect(authorizationText()).toHaveAccessibleName('Autorizo que mi historia se publique con mi nombre y sin ubicación en el mapa.')
+    await user.click(screen.getByRole('checkbox', { name: 'Publicar sin mi nombre' }))
+    expect(authorizationText()).toHaveAccessibleName('Autorizo que mi historia se publique sin mi nombre (saldrá como «Narrador anónimo») y sin ubicación en el mapa.')
+  })
+
+  it('can be heard before it is given: the instructions of the last step read it', async () => {
+    const spoken = []
+    vi.stubGlobal('speechSynthesis', { speak: (u) => spoken.push(u.text), cancel: () => {}, getVoices: () => [], addEventListener: () => {}, removeEventListener: () => {} })
+    vi.stubGlobal('SpeechSynthesisUtterance', function (text) { this.text = text })
+    const user = userEvent.setup()
+    open()
+    await reachStep3(user)
+
+    await user.click(screen.getByRole('button', { name: 'Escuchar instrucciones' }))
+
+    expect(spoken.join(' ')).toContain('Autorizo que mi historia se publique con mi nombre y con un lugar aproximado en el mapa')
+    vi.unstubAllGlobals()
+  })
+
+  it('is kept with the draft the person leaves half told, and a story kept on the device sends it', async () => {
+    const user = userEvent.setup()
+    const { fetchMock } = open()
+    await reachStep3(user)
+    await user.click(authorizationText())
+    act(() => toggleSimulatedOffline())
+    await user.click(await screen.findByRole('button', { name: 'Guardar en el dispositivo' }))
+    await screen.findByRole('heading', { name: 'Mis historias' })
+
+    act(() => toggleSimulatedOffline())
+
+    await screen.findByText(/se envió 1 borrador a revisión/)
+    expect(sentBody(fetchMock).consentimiento).toMatchObject({ aceptado: true })
+  })
+})
+
+describe('Contar una historia: «Publicar sin mi nombre»', () => {
+  it('sends the choice, and the summary says how the name will read', async () => {
+    const user = userEvent.setup()
+    const { fetchMock } = open()
+    await reachStep3(user)
+
+    expect(screen.getByText(/Narra Ana Beltrán/)).toBeInTheDocument()
+    await user.click(screen.getByRole('checkbox', { name: 'Publicar sin mi nombre' }))
+    expect(screen.getByText(/Narra Narrador anónimo/)).toBeInTheDocument()
+    expect(screen.getByText(/tampoco escribas tu nombre en el título ni en la historia/)).toBeInTheDocument()
+    await user.click(authorizationText())
+    await user.click(nextButton())
+
+    await screen.findByRole('heading', { name: 'Mis historias' })
+    expect(sentBody(fetchMock).anonima).toBe(true)
+  })
+
+  it('sends false when the name stays', async () => {
+    const user = userEvent.setup()
+    const { fetchMock } = open()
+    await reachStep3(user)
+    await user.click(authorizationText())
+    await user.click(nextButton())
+
+    await screen.findByRole('heading', { name: 'Mis historias' })
+    expect(sentBody(fetchMock).anonima).toBe(false)
+  })
+})
+
+describe('Contar una historia: dónde ocurrió (lugar aproximado o sin ubicación)', () => {
+  it('offers only two options, and starts with the approximate place', async () => {
+    const user = userEvent.setup()
+    open()
+    await writeStory(user)
+
+    expect(screen.getAllByRole('radio')).toHaveLength(2)
+    expect(place('Lugar aproximado')).toBeChecked()
+    expect(place('Sin ubicación')).not.toBeChecked()
+    expect(screen.getByRole('application', { name: 'Mapa para elegir dónde ocurrió' })).toBeInTheDocument()
+  })
+
+  it('with «Sin ubicación» there is no map, and nothing about where is needed to go on', async () => {
+    const user = userEvent.setup()
+    open()
+    await writeStory(user)
+    await user.type(screen.getByLabelText('Ponle un título'), 'Lo que contaba mi abuela')
+    await user.selectOptions(screen.getByRole('combobox', { name: /Cuándo ocurrió/ }), 'Antes de 1960')
+    expect(nextButton()).toBeDisabled() // with a place, a place is needed
+
+    await user.click(place('Sin ubicación'))
+
+    expect(screen.queryByRole('application', { name: 'Mapa para elegir dónde ocurrió' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Usar mi ubicación/ })).not.toBeInTheDocument()
+    expect(nextButton()).toBeEnabled()
+  })
+
+  it('names the reference as something only the team sees, and the farm as something public', async () => {
+    const user = userEvent.setup()
+    open()
+    await writeStory(user)
+
+    expect(screen.getByLabelText(/Nombre del lugar/)).toHaveAccessibleDescription('Se verá en la ficha pública de la historia.')
+    await user.click(place('Sin ubicación'))
+
+    expect(screen.getByLabelText(/Nombre de referencia/)).toHaveAccessibleDescription('Solo lo ve el equipo, para revisar la historia. El público no lo ve.')
+    expect(screen.getByLabelText(/Nombre de la finca o marca/)).toHaveAccessibleDescription(/Se verá en la ficha pública.*Piensa si el nombre de la finca dice dónde queda/)
+  })
+
+  it('sends no point at all for a story without a place, only the reference', async () => {
+    const user = userEvent.setup()
+    const { fetchMock } = open()
+    await writeStory(user)
+    await user.type(screen.getByLabelText('Ponle un título'), 'Lo que contaba mi abuela')
+    await user.selectOptions(screen.getByRole('combobox', { name: /Cuándo ocurrió/ }), 'Antes de 1960')
+    await user.click(place('Sin ubicación'))
+    await user.type(screen.getByLabelText(/Nombre de referencia/), 'Cerca de San Lorenzo')
+    await user.click(nextButton())
+    await user.click(authorizationText())
+
+    await user.click(nextButton())
+
+    await screen.findByRole('heading', { name: 'Mis historias' })
+    const body = sentBody(fetchMock)
+    expect(body.ubicacion_modo).toBe('ninguna')
+    expect(body).not.toHaveProperty('ubicacion')
+    expect(body).not.toHaveProperty('ubicacion_origen')
+    expect(body.lugar_nombre).toBe('Cerca de San Lorenzo')
+  })
+
+  it('does not send a point chosen before changing to «Sin ubicación»', async () => {
+    const user = userEvent.setup()
+    const { fetchMock } = open()
+    await writeStory(user)
+    await fillWhereAndWhen(user, { sector: 'Minca' }) // a point was chosen...
+    await user.click(place('Sin ubicación')) // ...and then the person thought better of it
+    await user.click(nextButton())
+    await user.click(authorizationText())
+
+    await user.click(nextButton())
+
+    await screen.findByRole('heading', { name: 'Mis historias' })
+    expect(JSON.stringify(sentBody(fetchMock))).not.toContain('11.14')
+    expect(sentBody(fetchMock)).not.toHaveProperty('ubicacion')
+  })
+
+  it('does not say the reference in the summary of a story without a place', async () => {
+    const user = userEvent.setup()
+    open()
+    await writeStory(user)
+    await fillWhereAndWhen(user, { sector: null })
+    await user.click(place('Sin ubicación'))
+    await user.type(screen.getByLabelText(/Nombre de referencia/), 'Finca Los Mangos')
+
+    const summary = screen.getByRole('complementary', { name: 'Resumen de tu historia' })
+    expect(summary).toHaveTextContent('Lugar: Sin ubicación en el mapa')
+    expect(summary).not.toHaveTextContent('Los Mangos')
+    await user.click(nextButton())
+    expect(screen.queryByText(/Los Mangos/)).not.toBeInTheDocument()
+  })
+
+  it('comes back to the approximate place with the point that was chosen', async () => {
+    const user = userEvent.setup()
+    open()
+    await writeStory(user)
+    await fillWhereAndWhen(user, { sector: 'La Tagua' })
+
+    await user.click(place('Sin ubicación'))
+    await user.click(place('Lugar aproximado'))
+
+    expect(screen.getByRole('application', { name: 'Mapa para elegir dónde ocurrió' })).toBeInTheDocument()
+    expect(nextButton()).toBeEnabled()
+    expect(screen.getByRole('complementary', { name: 'Resumen de tu historia' })).toHaveTextContent('Lugar: La Tagua')
+  })
+
+  it('a draft left half told remembers the options, the farm and the authorization', async () => {
+    const user = userEvent.setup()
+    open()
+    await writeStory(user)
+    await user.type(screen.getByLabelText('Ponle un título'), 'Una historia a medias')
+    await user.click(place('Sin ubicación'))
+    await user.type(screen.getByLabelText(/Nombre de la finca o marca/), 'Café La Loma')
+
+    await waitFor(async () => expect((await loadWorkingDraft(NARRATOR.id))?.finca).toBe('Café La Loma'), { timeout: 3000 })
+    const kept = await loadWorkingDraft(NARRATOR.id)
+    expect(kept.ubicacionModo).toBe('ninguna')
+    expect(kept.anonima).toBe(false)
+  })
+})
+
+describe('Contar una historia: el nombre de la finca o marca', () => {
+  it('is optional: nothing is sent when it is left empty', async () => {
+    const user = userEvent.setup()
+    const { fetchMock } = open()
+    await reachStep3(user)
+    await user.click(authorizationText())
+    await user.click(nextButton())
+
+    await screen.findByRole('heading', { name: 'Mis historias' })
+    expect(sentBody(fetchMock)).not.toHaveProperty('finca_nombre')
+  })
+
+  it('goes with the story and shows in the summary', async () => {
+    const user = userEvent.setup()
+    const { fetchMock } = open()
+    await writeStory(user)
+    await fillWhereAndWhen(user)
+    await user.type(screen.getByLabelText(/Nombre de la finca o marca/), '  Café Don Aurelio ')
+    await user.click(nextButton())
+
+    expect(screen.getByText(/Finca o marca: Café Don Aurelio/)).toBeInTheDocument()
+    await user.click(authorizationText())
+    await user.click(nextButton())
+
+    await screen.findByRole('heading', { name: 'Mis historias' })
+    expect(sentBody(fetchMock).finca_nombre).toBe('Café Don Aurelio')
+  })
+})
+

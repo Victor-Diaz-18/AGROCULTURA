@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { ZONE } from '../config/map.js'
 import { CONFIG, mapStory, storyWithoutPlace } from '../test/fixtures.js'
 import { appleMapsUrl, distanceKm, googleMapsUrl, hasLocation, inBounds, inZone, placeLine, placeName, pointsOf, sectorAt } from './geo.js'
 
@@ -44,10 +45,29 @@ describe('inZone', () => {
     expect(inZone({ lat: 11.24, lon: -74.2 })).toBe(true) // Santa Marta
   })
 
+  it('covers the whole Magdalena side of the Sierra Nevada de Santa Marta, not only the surroundings of Minca', () => {
+    expect(inZone({ lat: 10.838, lon: -73.686 })).toBe(true) // Pico Cristóbal Colón, on the crest
+    expect(inZone({ lat: 10.59, lon: -74.19 })).toBe(true) // Aracataca, at the south foot
+    expect(inZone({ lat: 10.52, lon: -74.19 })).toBe(true) // Fundación
+    expect(inZone({ lat: 11.0, lon: -74.25 })).toBe(true) // Ciénaga
+    expect(inZone({ lat: 10.85, lon: -74.5 })).toBe(true) // the Ciénaga Grande
+    expect(inZone({ lat: 11.25, lon: -73.57 })).toBe(true) // Palomino, on the other side of the coast
+    expect(inZone({ lat: 11.31, lon: -74.02 })).toBe(true) // Tayrona
+  })
+
   it('leaves out what is far away', () => {
     expect(inZone({ lat: 4.7, lon: -74.07 })).toBe(false) // Bogotá
     expect(inZone({ lat: 0, lon: 0 })).toBe(false)
     expect(inZone({ lat: 11.14, lon: -72 })).toBe(false)
+    expect(inZone({ lat: 10.96, lon: -74.8 })).toBe(false) // Barranquilla
+    expect(inZone({ lat: 11.54, lon: -72.9 })).toBe(false) // Riohacha
+  })
+
+  it('is a single rectangle, written once, that the map and the check both use', () => {
+    expect(ZONE.south).toBeLessThan(ZONE.north)
+    expect(ZONE.west).toBeLessThan(ZONE.east)
+    expect(inZone({ lat: ZONE.south, lon: ZONE.west })).toBe(true) // its edges are inside
+    expect(inZone({ lat: ZONE.north + 0.001, lon: ZONE.east })).toBe(false)
   })
 })
 

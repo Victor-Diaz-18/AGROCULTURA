@@ -6,12 +6,12 @@ import Button from '../ui/Button.jsx'
 
 /**
  * Where did it happen? (F3, F1)
- * A story can be anywhere in the zone ("Minca y sectores aledaños"); the sectors are only shortcuts.
+ * A story can be anywhere in the area of the map (see ZONE in config/map.js); the sectors are only shortcuts.
  * Three ways, all giving { lat, lon, origen, sectorId }:
  *  - tap a sector button on the map: the story goes to the center of that sector ("sector");
  *  - tap any point of the map ("mapa");
  *  - "Usar mi ubicación", the phone's GPS ("gps"). GPS works without signal.
- * `sectorId` is the sector the point falls in, or null for "another place of the zone". A point outside the zone
+ * `sectorId` is the sector the point falls in, or null for "another place of the zone". A point outside the area
  * is not accepted. Without map tiles (no signal, nothing cached) the sector buttons and the GPS still work.
  */
 
@@ -20,17 +20,20 @@ const PIN_SVG =
 const SECTOR_SVG =
   '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>'
 
+/** The widest view that still shows nothing but the area of the map (see ZONE): it depends on the size of the map, so it is worked out. */
+const zoneBounds = () => L.latLngBounds([ZONE.south, ZONE.west], [ZONE.north, ZONE.east])
+
 export const GPS_MESSAGES = {
   searching: 'Buscando tu ubicación…',
   found: 'Listo: usamos tu ubicación.',
   denied: 'No pudimos ver tu ubicación. Permite la ubicación o elige un sector en el mapa.',
   unavailable: 'No pudimos ubicarte ahora. Toca el mapa o elige un sector.',
   unsupported: 'Este dispositivo no puede darnos tu ubicación. Toca el mapa o elige un sector.',
-  outside: 'Tu ubicación queda lejos de Minca y sus sectores. Toca en el mapa el lugar donde ocurrió.',
+  outside: 'Tu ubicación queda fuera del área del mapa. Toca en el mapa el lugar donde ocurrió, o elige «Sin ubicación».',
 }
 
 export const TAP_MESSAGES = {
-  outside: 'Ese punto queda fuera de la zona de Minca y sus alrededores. Elige uno dentro de la zona.',
+  outside: 'Ese punto queda fuera del área del mapa. Elige otro lugar, o elige «Sin ubicación».',
 }
 
 const escapeHtml = (text) => text.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
@@ -60,9 +63,9 @@ export default function LocationPicker({ sectors, value, onChange }) {
   // The map itself, created once.
   useEffect(() => {
     const map = L.map(elementRef.current, {
-      minZoom: 10, // the whole zone fits at this zoom: going further out only shows what is not accepted
+      minZoom: ZOOM_LIMITS.min - 1, // until the size of the map is known (below): going further out would only show what is not accepted
       maxZoom: ZOOM_LIMITS.max,
-      maxBounds: L.latLngBounds([ZONE.south, ZONE.west], [ZONE.north, ZONE.east]),
+      maxBounds: zoneBounds(),
       maxBoundsViscosity: 1,
       scrollWheelZoom: false, // the page must keep scrolling when the mouse passes over the map
     })
@@ -84,9 +87,18 @@ export default function LocationPicker({ sectors, value, onChange }) {
     })
     mapRef.current = map
 
+    // The widest view is the one that shows the whole area: whatever the size of the map, no further out.
+    const limitZoomOut = () => {
+      const size = map.getSize()
+      if (size.x > 0 && size.y > 0) map.setMinZoom(Math.min(map.getBoundsZoom(zoneBounds()), ZOOM_LIMITS.max))
+    }
+    limitZoomOut()
     let observer
     if (typeof ResizeObserver !== 'undefined') {
-      observer = new ResizeObserver(() => map.invalidateSize())
+      observer = new ResizeObserver(() => {
+        map.invalidateSize()
+        limitZoomOut()
+      })
       observer.observe(elementRef.current)
     }
     return () => {
