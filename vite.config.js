@@ -44,7 +44,7 @@ const pwa = VitePWA({
   },
   includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
   workbox: {
-    globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+    globPatterns: ['**/*.{js,css,html,svg,png,woff2}', 'assets/ref-*.webp'], // the small reference images: the list reads the same with no signal
     navigateFallback: '/index.html', // any page of the app opens offline...
     navigateFallbackDenylist: [/^\/api\//], // ...but the API is never answered with the page
     cleanupOutdatedCaches: true,

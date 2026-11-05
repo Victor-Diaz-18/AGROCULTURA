@@ -639,10 +639,13 @@
 .ag-vmaphead {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
-  gap: 2px 14px;
+  align-items: center;
+  gap: 2px 12px;
   margin-bottom: -8px;
   scroll-margin-top: 12px;
+}
+.ag-vmaphead .ag-vtile {
+  align-self: center;
 }
 .ag-vmaphead h2 {
   font-family: var(--font-title);
@@ -653,6 +656,176 @@
 .ag-vmaphead p {
   font-size: 14.5px;
   color: var(--texto-3);
+}
+
+/* A small colored square with an icon, the same in every section */
+.ag-vtile {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--verde-claro);
+  color: var(--verde-oscuro);
+}
+
+/* The animated landscape: mules with their load go along the ridge, clouds drift, birds fly, the plants move with the wind */
+.ag-vscene {
+  grid-column: 1 / -1;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #cfe6df;
+}
+.ag-vscene svg {
+  display: block;
+  width: 100%;
+  height: 190px;
+}
+.ag-vscene--paused * {
+  animation-play-state: paused !important;
+}
+.ag-vscene__cloud {
+  animation: ag-drift 70s linear infinite;
+}
+.ag-vscene__cloud--slow {
+  animation-duration: 110s;
+  animation-delay: -40s;
+}
+.ag-vscene__mules {
+  animation: ag-walk 58s linear infinite;
+  animation-delay: -28s; /* they are already on their way when the scene comes into view */
+}
+.ag-vscene__bob {
+  animation: ag-bob 0.9s ease-in-out infinite;
+}
+.ag-vscene__leg {
+  transform-box: fill-box;
+  transform-origin: top center;
+  animation: ag-step 0.9s ease-in-out infinite;
+}
+.ag-vscene__leg--b {
+  animation-delay: -0.45s;
+}
+.ag-vscene__plant {
+  transform-box: fill-box;
+  transform-origin: bottom center;
+  animation: ag-sway 5s ease-in-out infinite;
+}
+.ag-vscene__plant:nth-child(2n) {
+  animation-delay: -2s;
+}
+.ag-vscene__plant:nth-child(3n) {
+  animation-delay: -3.400s;
+}
+.ag-vscene__birds {
+  animation: ag-fly 46s linear infinite;
+  animation-delay: -12s;
+}
+.ag-vscene__wing {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  animation: ag-flap 0.7s ease-in-out infinite;
+}
+@keyframes ag-drift {
+  from { transform: translateX(-320px); }
+  to { transform: translateX(1300px); }
+}
+@keyframes ag-walk {
+  from { transform: translateX(-480px); }
+  to { transform: translateX(980px); }
+}
+@keyframes ag-bob {
+  50% { transform: translateY(-1.2px); }
+}
+@keyframes ag-step {
+  0%, 100% { transform: rotate(16deg); }
+  50% { transform: rotate(-16deg); }
+}
+@keyframes ag-sway {
+  0%, 100% { transform: rotate(-1.6deg); }
+  50% { transform: rotate(1.8deg); }
+}
+@keyframes ag-fly {
+  from { transform: translate(1260px, 12px); }
+  to { transform: translate(-120px, -8px); }
+}
+@keyframes ag-flap {
+  50% { transform: scaleY(0.25); }
+}
+
+/* Things that rise softly when they come into view. Only armed when the browser can tell (see Reveal.jsx). */
+.ag-reveal--waiting {
+  opacity: 0;
+  transform: translateY(18px);
+}
+.ag-reveal--shown {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+/* From the plant to the cup */
+.ag-vjourney {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 20px;
+}
+.ag-vjourney h2 {
+  font-family: var(--font-title);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--verde-oscuro);
+}
+.ag-vjourney__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ag-vjourney ol {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ag-vjourney li {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--verde-claro);
+}
+.ag-vjourney img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s ease;
+}
+.ag-vjourney li:hover img {
+  transform: scale(1.06);
+}
+.ag-vjourney__label {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  padding: 44px 14px 14px;
+  background: linear-gradient(180deg, rgba(14, 32, 24, 0) 0%, rgba(14, 32, 24, 0.88) 55%);
+  color: #fff;
+  font-size: 13.5px;
+  line-height: 1.4;
+}
+.ag-vjourney__label b {
+  display: block;
+  margin-bottom: 2px;
+  font-family: var(--font-title);
+  font-size: 18px;
+  font-weight: 700;
 }
 
 /* The first farms, and facts about the zone */
@@ -690,6 +863,17 @@
   padding-bottom: 22px;
 }
 /* The line joining one date to the next */
+.ag-vhist__line li::after {
+  content: '';
+  position: absolute;
+  top: 7px;
+  left: 87px;
+  width: 12px;
+  height: 12px;
+  border: 3px solid var(--fondo);
+  border-radius: 50%;
+  background: var(--rojo);
+}
 .ag-vhist__line li::before {
   content: '';
   position: absolute;
@@ -702,8 +886,26 @@
 .ag-vhist__line li:last-child::before {
   bottom: 22px;
 }
-.ag-vhist__line li > div {
+.ag-vhist__entry {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 150px;
+  gap: 16px;
+  align-items: start;
   padding-left: 18px;
+}
+.ag-vhist__entry img {
+  display: block;
+  width: 150px;
+  height: 104px;
+  border-radius: 12px;
+  object-fit: cover;
+  background: var(--verde-claro);
+}
+.ag-vhist__note {
+  max-width: 62ch;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--texto-3);
 }
 .ag-vhist__when {
   font-family: var(--font-title);
@@ -731,6 +933,26 @@
   border-radius: 16px;
   background: #fff;
 }
+.ag-vhist__facts li {
+  display: flex;
+  gap: 12px;
+}
+.ag-vhist__bird {
+  margin: 18px 0 0;
+}
+.ag-vhist__bird img {
+  display: block;
+  width: 100%;
+  height: 170px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+.ag-vhist__bird figcaption {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--texto-3);
+}
 .ag-vhist__facts ul {
   display: flex;
   flex-direction: column;
@@ -753,6 +975,10 @@
   grid-column: 1 / -1;
   font-size: 13.5px;
   color: var(--texto-3);
+}
+.ag-vhist__sources summary svg {
+  vertical-align: -3px;
+  margin-right: 4px;
 }
 .ag-vhist__sources summary {
   min-height: 32px;
@@ -794,15 +1020,53 @@
   flex-direction: column;
   gap: 8px;
 }
+.ag-vhow__steps li {
+  padding: 20px;
+  border: 1px solid var(--borde);
+  border-radius: 16px;
+  background: #fff;
+}
 .ag-vhow__icon {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 4px;
+  border-radius: 16px;
   background: var(--verde-claro);
   color: var(--verde-oscuro);
+}
+.ag-vhow__number {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: var(--rojo);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+}
+.ag-vhow__inviteicon {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #fff;
+  color: #6b4226;
+}
+.ag-vhow__invite > div {
+  flex: 1 1 260px;
 }
 .ag-vhow h3 {
   font-size: 16px;
@@ -923,10 +1187,35 @@
     grid-template-columns: 68px minmax(0, 1fr);
     gap: 8px;
   }
+  .ag-vhist__line li::after {
+    left: 67px;
+  }
+  .ag-vhist__entry {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ag-vhist__entry img {
+    order: -1;
+    width: 100%;
+    height: 150px;
+  }
+  .ag-vscene svg {
+    height: 150px;
+  }
+  .ag-vjourney ol {
+    display: flex;
+    margin-inline: calc(var(--v-margen) * -1);
+    padding-inline: var(--v-margen);
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+  }
+  .ag-vjourney li {
+    flex: 0 0 62%;
+    scroll-snap-align: center;
+  }
   .ag-vhist__line li::before {
     left: 72px;
   }
-  .ag-vhist__line li > div {
+  .ag-vhist__entry {
     padding-left: 14px;
   }
   .ag-vhist__when {

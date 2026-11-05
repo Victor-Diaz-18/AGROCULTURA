@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import MapFilters from '../../components/map/MapFilters.jsx'
 import StoryList from '../../components/map/StoryList.jsx'
 import StoryMap from '../../components/map/StoryMap.jsx'
+import CoffeeJourney from '../../components/map/CoffeeJourney.jsx'
 import VisitorHistory from '../../components/map/VisitorHistory.jsx'
 import VisitorIntro, { VisitorHowItWorks } from '../../components/map/VisitorIntro.jsx'
 import PageHeader from '../../components/layout/PageHeader.jsx'
 import { StoryCardLoader } from '../../components/story/StoryCard.jsx'
 import Button from '../../components/ui/Button.jsx'
+import Icon from '../../components/ui/Icon.jsx'
 import ListenButton from '../../components/ui/ListenButton.jsx'
 import StatCard from '../../components/ui/StatCard.jsx'
 import { SHOW_CODES, codeNote } from '../../config/flags.js'
@@ -171,6 +173,9 @@ export default function MapPage() {
 
       {isVisitor && (
         <div className="ag-vmaphead" id="mapa">
+          <span className="ag-vtile">
+            <Icon name="mapa" size={22} />
+          </span>
           <h2>Mapa de historias</h2>
           <p>Toca un punto del mapa o una historia de la lista para abrir su ficha.</p>
         </div>
@@ -217,10 +222,14 @@ export default function MapPage() {
             {isVisitor ? '' : `Toca un punto del mapa o una historia de la lista para abrir su ficha${SHOW_CODES ? ' (F8)' : ''}.`}
             {withoutPlace > 0 ? ' Las historias sin ubicación en el mapa salen siempre en la lista.' : ''}
           </span>
+          <span>
+            Si una historia no tiene foto propia, ves una imagen de referencia. <Link to="/creditos">Créditos de las imágenes</Link>
+          </span>
         </div>
       </div>
 
       {isVisitor && <VisitorHistory />}
+      {isVisitor && <CoffeeJourney />}
       {isVisitor && <VisitorHowItWorks />}
 
       {openCode && <StoryCardLoader key={openCode} code={openCode} onClose={() => setOpenCode(null)} />}

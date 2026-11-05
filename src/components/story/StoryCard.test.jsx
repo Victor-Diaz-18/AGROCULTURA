@@ -23,6 +23,13 @@ async function openCard(card, { list = [mapStory()], extra = {}, as = null } = {
 }
 
 describe('Ficha de la historia (F8)', () => {
+  it('a story with a photo of its own never says it is a reference image', async () => {
+    const { dialog } = await openCard(storyCard({ medios: [{ tipo: 'foto', url: PHOTO1 }] }))
+
+    expect(await within(dialog).findByRole('img', { name: /Foto 1 de 1/ })).toBeInTheDocument()
+    expect(within(dialog).queryByText(/Imagen de referencia/)).not.toBeInTheDocument()
+  })
+
   it('shows the title, when, where, who tells it, when it was published and the text', async () => {
     const { dialog } = await openCard(storyCard(), { as: NARRATOR })
 
@@ -120,7 +127,8 @@ describe('Ficha de la historia (F8)', () => {
   it('an example story has placeholders where its files would be, and says why the audio is off', async () => {
     const { dialog } = await openCard(storyCard({ medios: [{ tipo: 'foto' }, { tipo: 'audio', duracion_s: 188 }, { tipo: 'video' }] }))
 
-    expect(await within(dialog).findByText('Foto de la historia')).toBeInTheDocument()
+    expect(await within(dialog).findByText(/Imagen de referencia: esta historia aún no tiene foto propia/)).toBeInTheDocument()
+    expect(within(dialog).queryByText('Foto de la historia')).not.toBeInTheDocument()
     expect(within(dialog).getByText(/Video de la historia/)).toBeInTheDocument()
     expect(within(dialog).getByRole('button', { name: 'Escuchar el audio' })).toBeDisabled()
     expect(within(dialog).getByText('Historia de ejemplo: no tiene archivo de audio.')).toBeInTheDocument()

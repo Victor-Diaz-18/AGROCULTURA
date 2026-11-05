@@ -7,6 +7,7 @@ import ProjectStoriesPage from './pages/admin/ProjectStoriesPage.jsx'
 import ReviewPage from './pages/admin/ReviewPage.jsx'
 import SettingsPage from './pages/admin/SettingsPage.jsx'
 import SummaryPage from './pages/admin/SummaryPage.jsx'
+import CreditsPage from './pages/portal/CreditsPage.jsx'
 import FuturePage from './pages/portal/FuturePage.jsx'
 import MapPage from './pages/portal/MapPage.jsx'
 import MyStoriesPage from './pages/portal/MyStoriesPage.jsx'
@@ -31,6 +32,7 @@ export default function AppRoutes() {
         <Route path="historias-propias" element={<RequireRole role="administrador"><ProjectStoriesPage variant="portal" /></RequireRole>} />
         <Route path="configuracion" element={<RequireRole role="administrador"><SettingsPage variant="portal" /></RequireRole>} />
         <Route path="proximamente/:id" element={<FuturePage variant="portal" />} />
+        <Route path="creditos" element={<CreditsPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
 

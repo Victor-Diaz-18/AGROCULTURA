@@ -69,10 +69,13 @@ export function VisitorHowItWorks() {
     <section className="ag-vhow" aria-labelledby="como-funciona">
       <h2 id="como-funciona">¿Cómo llega una historia al mapa?</h2>
       <ol className="ag-vhow__steps">
-        {STEPS.map(([icon, title, text]) => (
+        {STEPS.map(([icon, title, text], index) => (
           <li key={title}>
             <span className="ag-vhow__icon">
-              <Icon name={icon} size={20} />
+              <Icon name={icon} size={26} />
+              <span className="ag-vhow__number" aria-hidden="true">
+                {index + 1}
+              </span>
             </span>
             <h3>{title}</h3>
             <p>{text}</p>
@@ -80,6 +83,9 @@ export function VisitorHowItWorks() {
         ))}
       </ol>
       <div className="ag-vhow__invite">
+        <span className="ag-vhow__inviteicon">
+          <Icon name="grano" size={28} />
+        </span>
         <div>
           <h3>¿Tienes una historia del café?</h3>
           <p>Solo necesitas un nombre de usuario y una contraseña. Sin correo ni celular.</p>

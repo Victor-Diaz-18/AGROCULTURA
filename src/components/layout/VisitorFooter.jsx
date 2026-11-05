@@ -16,7 +16,7 @@ export default function VisitorFooter() {
         <a href="https://creativecommons.org/licenses/by-sa/3.0/deed.es" target="_blank" rel="noopener noreferrer">
           CC BY-SA 3.0
         </a>
-        .
+        . <Link to="/creditos">Créditos de las demás imágenes</Link>.
       </p>
       <nav aria-label="Próximamente" className="ag-vfooter__next">
         <span>Próximamente:</span>

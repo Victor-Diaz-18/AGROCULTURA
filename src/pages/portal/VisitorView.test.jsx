@@ -136,6 +136,29 @@ describe('La vista de un visitante sin cuenta', () => {
     expect(spoken).toContain('Datos de la zona.')
   })
 
+  it('shows the way of the coffee in pictures, each described', async () => {
+    visit()
+
+    const journey = await screen.findByRole('region', { name: 'De la mata a la taza' })
+    expect(within(journey).getAllByRole('img')).toHaveLength(5)
+    expect(within(journey).getAllByRole('img').every((image) => image.getAttribute('alt'))).toBe(true)
+  })
+
+  it('credits the images on a page anyone can open', async () => {
+    renderApp({ route: '/creditos' })
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Créditos de las imágenes' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Fincas cafeteras - Sierra Nevada' })).toHaveAttribute('href', expect.stringContaining('commons.wikimedia.org'))
+    expect(screen.getByText(/Roger Burger/)).toBeInTheDocument()
+  })
+
+  it('the animated landscape is decoration: a screen reader does not go through it', async () => {
+    visit()
+
+    await screen.findByRole('region', { name: 'Las primeras fincas' })
+    expect(document.querySelector('.ag-vscene')).toHaveAttribute('aria-hidden', 'true')
+  })
+
   it('signing in brings the working frame back, on the same page', async () => {
     renderApp({ user: NARRATOR, api: { '/estadisticas': stats, '/historias': [mapStory()] } })
 

@@ -1,15 +1,10 @@
 import { useEffect, useRef } from 'react'
+import { referenceImageFor } from '../../config/referenceImages.js'
 import { hasLocation } from '../../utils/geo.js'
 import Icon from '../ui/Icon.jsx'
 import OriginBadge from '../ui/OriginBadge.jsx'
 
-/** A story with no photo shows how it is told (its voice, its video), instead of a picture that seems to be missing. */
-function thumbIcon(story) {
-  if (story.formatos.includes('Audio')) return 'mic'
-  if (story.formatos.includes('Video')) return 'video'
-  if (story.formatos.includes('Foto')) return 'foto'
-  return 'lista'
-}
+const FORMAT_ICONS = { Audio: 'mic', Foto: 'foto', Video: 'video', Texto: 'lista' }
 
 /**
  * The stories in the visible zone of the map, as in the design: a thumbnail, code, origin, title,
@@ -38,7 +33,7 @@ export default function StoryList({ stories, selectedCode, placeOf, onOpen, show
               onClick={() => onOpen(story)}
             >
               <span className="ag-storyitem__thumb" aria-hidden="true">
-                {story.foto_url ? <img src={story.foto_url} alt="" loading="lazy" /> : <Icon name={thumbIcon(story)} size={22} />}
+                <img src={story.foto_url || referenceImageFor(story).small} alt="" loading="lazy" />
               </span>
               <span className="ag-storyitem__text">
                 <span className="ag-storyitem__top">
@@ -52,7 +47,10 @@ export default function StoryList({ stories, selectedCode, placeOf, onOpen, show
                 </span>
                 <span className="ag-storyitem__formats">
                   {story.formatos.map((format) => (
-                    <span key={format}>{format}</span>
+                    <span key={format}>
+                      <Icon name={FORMAT_ICONS[format] ?? 'lista'} size={13} />
+                      {format}
+                    </span>
                   ))}
                 </span>
               </span>

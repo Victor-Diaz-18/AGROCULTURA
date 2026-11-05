@@ -73,6 +73,7 @@ export default function MapFilters({ filters, onChange, stories, sectors, epocas
         </button>
         <div className="ag-mapfilters__more">
         <label className="ag-mapfilters__select">
+          <Icon name="reloj" size={16} />
           Época
           <select value={filters.epoca} onChange={(event) => onChange({ epoca: event.target.value })}>
             <option value={NO_FILTERS.epoca}>Todas</option>
@@ -84,6 +85,7 @@ export default function MapFilters({ filters, onChange, stories, sectors, epocas
           </select>
         </label>
         <label className="ag-mapfilters__select">
+          <Icon name="camara" size={16} />
           Formato
           <select value={filters.formato} onChange={(event) => onChange({ formato: event.target.value })}>
             <option value={NO_FILTERS.formato}>Todos</option>

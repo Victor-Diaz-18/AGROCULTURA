@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { NARRADOR_ANONIMO, NO_LOCATION } from '../../config/constants.js'
+import { referenceImageFor } from '../../config/referenceImages.js'
 import { SHOW_CODES } from '../../config/flags.js'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { usePortalData } from '../../context/PortalDataContext.jsx'
@@ -41,6 +42,9 @@ export default function StoryCard({ story, onClose }) {
   const hidesName = story.anonima && story.narrador_nombre !== NARRADOR_ANONIMO
   const published = story.estado === undefined || story.estado === 'publicada'
   const photos = story.medios.filter((medio) => medio.tipo === 'foto')
+  // In the public card a story with no photo of its own shows a reference one, and says so; the team sees what really is there.
+  const realPhotos = photos.filter((medio) => medio.url)
+  const referenceImage = story.estado === undefined && realPhotos.length === 0 ? referenceImageFor(story) : null
   const audios = story.medios.filter((medio) => medio.tipo === 'audio')
   const videos = story.medios.filter((medio) => medio.tipo === 'video')
 
@@ -76,7 +80,14 @@ export default function StoryCard({ story, onClose }) {
 
       <div className="ag-card-story__body">
         <div className="ag-card-story__media">
-          <PhotoGallery photos={photos} />
+          {referenceImage ? (
+            <figure className="ag-card-story__refimg">
+              <img src={referenceImage.large} alt={referenceImage.alt} />
+              <figcaption>Imagen de referencia: esta historia aún no tiene foto propia.</figcaption>
+            </figure>
+          ) : (
+            <PhotoGallery photos={photos} />
+          )}
           {videos.map((medio, index) =>
             medio.url ? (
               // eslint-disable-next-line jsx-a11y/media-has-caption

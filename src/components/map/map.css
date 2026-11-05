@@ -235,6 +235,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
   width: 44px;
   height: 44px;
   padding: 0;
@@ -424,4 +425,45 @@
     border-left: 0;
     border-top: 1px solid var(--linea);
   }
+}
+
+/* The groups of stories breathe, so the map invites to touch them. */
+.ag-cluster::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border: 2px solid var(--verde-oscuro);
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+  animation: ag-pulse 2.8s ease-out infinite;
+}
+@keyframes ag-pulse {
+  0% { opacity: 0.55; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.7); }
+}
+
+/* The formats of a story, with their small icon */
+.ag-storyitem__formats span {
+  gap: 4px;
+}
+.ag-storyitem {
+  transition: background-color 0.2s ease;
+}
+.ag-storyitem:hover {
+  background: #f4f8f3;
+}
+.ag-storyitem__thumb {
+  width: 84px;
+  height: 84px;
+}
+.ag-storyitem:hover .ag-storyitem__thumb img {
+  transform: scale(1.07);
+}
+.ag-storyitem__thumb img {
+  transition: transform 0.4s ease;
+}
+.ag-mapcard__foot a {
+  color: var(--verde-azulado);
+  font-weight: 800;
 }
