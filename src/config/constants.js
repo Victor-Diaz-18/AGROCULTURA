@@ -26,6 +26,9 @@ export const MAX_PLACE_NAME = 80
 
 export const LIMITS = { tituloMin: 3, tituloMax: 120, textoMax: 5000, fotos: 6, etiquetas: 6 }
 
+/** What the public reads where the name of a narrator who asked not to be named would be. The server writes it; this is for the one place the app has to tell it apart. */
+export const NARRADOR_ANONIMO = 'Narrador anónimo'
+
 /** What the list and the card say of a story published without a place on the map (nothing about where it is is public). */
 export const NO_LOCATION = 'Sin ubicación en el mapa'
 
@@ -57,5 +60,6 @@ export const EMPTY_STATS = {
   por_origen: { comunidad: 0, proyecto: 0 },
   sectores_con_historias: 0,
   total_sectores: 4,
+  sin_ubicacion: 0,
   formatos: { foto: 0, audio: 0, video: 0 },
 }

@@ -289,6 +289,10 @@
   gap: 10px;
   margin-top: auto;
 }
+.ag-card-story__reference {
+  color: var(--texto-3);
+  font-weight: 600;
+}
 .ag-card-story__approx {
   flex-basis: 100%;
   margin: 0;

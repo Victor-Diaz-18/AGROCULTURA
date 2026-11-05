@@ -40,11 +40,12 @@ export default function SummaryPage() {
         </button>
 
         <div className="ag-stat ag-stat--tight">
-          <span className="ag-stat__title">Publicadas en el mapa</span>
+          <span className="ag-stat__title">Historias publicadas</span>
           <span className="ag-stat__value">{stats.publicadas}</span>
           <span className="ag-stat__note">
             {stats.aprobadas_comunidad} de la comunidad · {stats.por_origen.proyecto} del proyecto
           </span>
+          {stats.sin_ubicacion > 0 && <span className="ag-stat__note">{stats.sin_ubicacion} sin ubicación en el mapa</span>}
         </div>
 
         <div className="ag-stat ag-stat--tight">

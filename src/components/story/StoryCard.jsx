@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { NARRADOR_ANONIMO, NO_LOCATION } from '../../config/constants.js'
 import { SHOW_CODES } from '../../config/flags.js'
 import { usePortalData } from '../../context/PortalDataContext.jsx'
 import { fetchStory } from '../../services/stories.js'
 import { ApiError, OfflineError } from '../../services/http.js'
 import { formatDate } from '../../utils/format.js'
-import { appleMapsUrl, googleMapsUrl, placeLine, placeName } from '../../utils/geo.js'
+import { appleMapsUrl, googleMapsUrl, hasLocation, placeLine, placeName } from '../../utils/geo.js'
 import FCode from '../ui/FCode.jsx'
 import Icon from '../ui/Icon.jsx'
 import ListenButton from '../ui/ListenButton.jsx'
@@ -18,7 +19,9 @@ import PhotoGallery from './PhotoGallery.jsx'
  * The card (ficha) of a story (F8): its photos, video and audio, who tells it, where and when, and its text.
  *
  * `story` is what /api/historias/{codigo} answers (published stories) or what the administrators' list has;
- * both carry the same fields. "Ver en el mapa" only exists for published stories: the rest are not on the map.
+ * both carry the same fields. "Ver en el mapa" only exists for published stories that have a place on the map: the rest are
+ * not on it. A story published without a place says so, and shows no place at all; the administrators' list also carries the
+ * reference its narrator wrote (the public never gets it) and the real name of a story published without it.
  */
 export default function StoryCard({ story, onClose }) {
   const { config } = usePortalData()
@@ -26,8 +29,13 @@ export default function StoryCard({ story, onClose }) {
   // As in the design: the sectors other than Minca are "zona de Minca".
   const sector = placeName(story.sector_id, config.sectores)
   const sectorName = story.sector_id && story.sector_id !== 'minca' ? `${sector}, zona de Minca` : sector
+  // Without a place on the map (what the public gets, or what the administrators' list says of such a story) there is none to say.
+  const noPlace = story.con_ubicacion === false || story.ubicacion_modo === 'ninguna'
+  const reference = noPlace ? story.lugar_nombre : null // only the administrators' answers have it
   // With a name given by the narrator ("Finca La Esperanza, La Tagua") that is what is said; otherwise the sector.
-  const whereText = story.lugar_nombre ? placeLine(story, config.sectores) : sectorName
+  const whereText = noPlace ? NO_LOCATION : story.lugar_nombre ? placeLine(story, config.sectores) : sectorName
+  // Published without the name: the public reads the label; the administrators' list has the real one, and says how it will read.
+  const hidesName = story.anonima && story.narrador_nombre !== NARRADOR_ANONIMO
   const published = story.estado === undefined || story.estado === 'publicada'
   const photos = story.medios.filter((medio) => medio.tipo === 'foto')
   const audios = story.medios.filter((medio) => medio.tipo === 'audio')
@@ -36,8 +44,9 @@ export default function StoryCard({ story, onClose }) {
   const readAloud = () =>
     [
       story.titulo,
-      `Ocurrió ${story.epoca}, en ${whereText}.`,
-      story.narrador_nombre ? `Narra ${story.narrador_nombre}.` : '',
+      noPlace ? `Ocurrió ${story.epoca}.` : `Ocurrió ${story.epoca}, en ${whereText}.`,
+      story.finca_nombre ? `Finca o marca: ${story.finca_nombre}.` : '',
+      story.anonima && !hidesName ? 'Narra un narrador anónimo.' : story.narrador_nombre ? `Narra ${story.narrador_nombre}.` : '',
       story.texto || 'Esta historia está contada en audio.',
     ]
       .filter(Boolean)
@@ -101,11 +110,23 @@ export default function StoryCard({ story, onClose }) {
             </div>
             <div>
               <dt>Lugar</dt>
-              <dd>{whereText}</dd>
+              <dd>
+                {whereText}
+                {reference && <span className="ag-card-story__reference"> · Referencia para el equipo: {reference}</span>}
+              </dd>
             </div>
+            {story.finca_nombre && (
+              <div>
+                <dt>Finca o marca</dt>
+                <dd>{story.finca_nombre}</dd>
+              </div>
+            )}
             <div>
               <dt>Narra</dt>
-              <dd>{story.narrador_nombre || '—'}</dd>
+              <dd>
+                {story.narrador_nombre || '—'}
+                {hidesName && <span className="ag-card-story__reference"> · Se publica como «{NARRADOR_ANONIMO}»</span>}
+              </dd>
             </div>
             <div>
               <dt>Publicada</dt>
@@ -122,13 +143,18 @@ export default function StoryCard({ story, onClose }) {
               ))}
             </div>
           )}
-          {published && (
+          {published && noPlace && (
+            <div className="ag-card-story__where">
+              <p className="ag-hint ag-card-story__approx">Esta historia no tiene ubicación en el mapa.</p>
+            </div>
+          )}
+          {published && !noPlace && (
             <div className="ag-card-story__where">
               <button type="button" className="ag-card-story__map" onClick={showOnMap}>
                 <Icon name="pin" size={18} />
                 Ver en el mapa
               </button>
-              {Number.isFinite(story.lat) && Number.isFinite(story.lon) && (
+              {hasLocation(story) && (
                 <>
                   <a className="ag-card-story__map" href={googleMapsUrl(story)} target="_blank" rel="noopener noreferrer">
                     <Icon name="enlace-externo" size={16} />

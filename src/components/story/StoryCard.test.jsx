@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { STATS, adminStory, mapStory, storyCard } from '../../test/fixtures.js'
+import { STATS, adminStory, mapStory, storyCard, storyWithoutPlace } from '../../test/fixtures.js'
 import { mockMapSize } from '../../test/layout.js'
 import { ADMIN } from '../../test/auth.js'
 import { renderApp, reply } from '../../test/renderApp.jsx'
@@ -218,5 +218,84 @@ describe('Ficha en el panel de administración', () => {
     expect(within(dialog).getByText('Sin publicar')).toBeInTheDocument()
     expect(within(dialog).queryByRole('button', { name: 'Ver en el mapa' })).not.toBeInTheDocument()
     expect(within(dialog).queryByRole('link', { name: /Abrir en/ })).not.toBeInTheDocument()
+  })
+})
+
+describe('Ficha de una historia publicada sin ubicación, sin nombre o con finca', () => {
+  const card = (overrides = {}) => storyCard({ ...storyWithoutPlace({ codigo: 'HIS-2026-001', titulo: 'El camino de mulas' }), texto: 'Mi abuela decía que...', medios: [], ...overrides })
+
+  it('says it has no place on the map, shows no place and offers no map', async () => {
+    const { dialog } = await openCard(card())
+
+    const facts = dialog.querySelector('dl')
+    expect(facts).toHaveTextContent('LugarSin ubicación en el mapa')
+    expect(facts).not.toHaveTextContent('Otro lugar')
+    expect(within(dialog).getByText('Esta historia no tiene ubicación en el mapa.')).toBeInTheDocument()
+    expect(within(dialog).queryByRole('button', { name: 'Ver en el mapa' })).not.toBeInTheDocument()
+    expect(within(dialog).queryByRole('link', { name: /Google Maps|Apple Maps/ })).not.toBeInTheDocument()
+    expect(within(dialog).queryByText(/aproximado/)).not.toBeInTheDocument()
+  })
+
+  it('reads the name the public gets, "Narrador anónimo"', async () => {
+    const { dialog } = await openCard(card({ narrador_nombre: 'Narrador anónimo', anonima: true }))
+
+    expect(dialog.querySelector('dl')).toHaveTextContent('NarraNarrador anónimo')
+    expect(dialog).not.toHaveTextContent('Se publica como') // that note is for the administrators, who have the real name
+  })
+
+  it('shows the name of the farm or brand when there is one', async () => {
+    const { dialog } = await openCard(storyCard({ finca_nombre: 'Café Don Aurelio' }))
+
+    expect(dialog.querySelector('dl')).toHaveTextContent('Finca o marcaCafé Don Aurelio')
+  })
+
+  it('has no farm line when there is none', async () => {
+    const { dialog } = await openCard(storyCard())
+
+    expect(dialog.querySelector('dl')).not.toHaveTextContent('Finca o marca')
+  })
+
+  it('reads aloud without a place and without a name that is not there', async () => {
+    const spoken = []
+    vi.stubGlobal('speechSynthesis', { speak: (u) => spoken.push(u.text), cancel: () => {}, getVoices: () => [], addEventListener: () => {}, removeEventListener: () => {} })
+    vi.stubGlobal('SpeechSynthesisUtterance', function (text) { this.text = text })
+    const { user, dialog } = await openCard(card({ narrador_nombre: 'Narrador anónimo', anonima: true, finca_nombre: 'Café La Loma' }))
+
+    await user.click(within(dialog).getByRole('button', { name: /Escuchar/ }))
+
+    expect(spoken.join(' ')).toContain('Ocurrió Antes de 1960.')
+    expect(spoken.join(' ')).not.toContain(' en Sin ubicación')
+    expect(spoken.join(' ')).toContain('Finca o marca: Café La Loma.')
+    expect(spoken.join(' ')).toContain('Narra un narrador anónimo.')
+  })
+})
+
+describe('Ficha de una historia sin ubicación o sin nombre, en la lista del equipo', () => {
+  const open = async (story) => {
+    const user = userEvent.setup()
+    renderApp({ route: '/admin/revision', user: ADMIN, api: { '/estadisticas': STATS, '/admin/historias': (_i, url) => (url.includes('estado=publicada') ? [story] : []) } })
+    await user.click(await screen.findByRole('button', { name: /Aprobadas/ }))
+    await user.click(await screen.findByRole('button', { name: 'Ver ficha' }))
+    return screen.findByRole('dialog', { name: 'Ficha de la historia' })
+  }
+
+  it('shows the administrators the reference that the public does not get, and how the name will read', async () => {
+    const dialog = await open(
+      adminStory({ codigo: 'HIS-2026-030', titulo: 'Una historia con reserva', estado: 'publicada', ubicacion_modo: 'ninguna', lat: null, lon: null, lugar_nombre: 'Finca Los Mangos', sector_id: null, narrador_nombre: 'Ana Beltrán', anonima: true }),
+    )
+
+    const facts = dialog.querySelector('dl')
+    expect(facts).toHaveTextContent('LugarSin ubicación en el mapa')
+    expect(facts).toHaveTextContent('Referencia para el equipo: Finca Los Mangos')
+    expect(facts).toHaveTextContent('Ana Beltrán')
+    expect(facts).toHaveTextContent('Se publica como «Narrador anónimo»')
+    expect(within(dialog).queryByRole('link', { name: /Abrir en/ })).not.toBeInTheDocument()
+  })
+
+  it('a story with a place and a name shows neither note', async () => {
+    const dialog = await open(adminStory({ codigo: 'HIS-2026-031', titulo: 'Con lugar y con nombre', estado: 'publicada', lat: 11.1, lon: -74.05 }))
+
+    expect(dialog.querySelector('dl')).not.toHaveTextContent('Referencia para el equipo')
+    expect(dialog.querySelector('dl')).not.toHaveTextContent('Se publica como')
   })
 })

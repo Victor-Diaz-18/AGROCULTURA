@@ -71,42 +71,63 @@ def test_it_needs_an_explicit_confirmation(client, db, admin, reset_on, body):
 # ---- what it does ------------------------------------------------------------------
 
 
-def test_it_deletes_every_story_including_real_ones_and_loads_the_twelve_examples(client, db, admin, narrator, reset_on):
+def test_it_deletes_every_story_including_real_ones_and_loads_the_fourteen_examples(client, db, admin, narrator, reset_on):
     client.post("/api/historias", headers=narrator["headers"], json=story_payload(titulo="Una historia real de una familia"))
     db.historias.insert_one(make_story(codigo="HIS-2026-200", titulo="Otra historia real", estado="publicada", ejemplo=False))
 
     response = reset(client, admin)
 
     assert response.status_code == 200
-    assert response.json() == {"historias_borradas": 2, "historias_de_ejemplo": 12, "archivos_borrados": 0}
+    assert response.json() == {"historias_borradas": 2, "historias_de_ejemplo": 14, "archivos_borrados": 0}
     titles = {story["titulo"] for story in db.historias.find()}
     assert "Una historia real de una familia" not in titles
     assert "Otra historia real" not in titles
-    assert db.historias.count_documents({}) == 12
-    assert db.historias.count_documents({"ejemplo": True}) == 12
+    assert db.historias.count_documents({}) == 14
+    assert db.historias.count_documents({"ejemplo": True}) == 14
 
 
-def test_the_examples_give_the_numbers_of_the_approved_design(client, admin, reset_on):
+def test_the_examples_give_the_numbers_of_the_approved_design_plus_the_two_that_show_the_privacy_options(client, admin, reset_on):
     reset(client, admin)
 
     stats = client.get("/api/estadisticas").json()
 
-    assert stats["publicadas"] == 7
+    # The design's twelve gave 7 published (5 of the community), 4 sectors and 4 photos / 5 audios / 2 videos; the two more
+    # are published too, with audio (and a photo the second one).
+    assert stats["publicadas"] == 9
     assert stats["en_revision"] == 4
     assert stats["rechazadas"] == 1
-    assert stats["aprobadas_comunidad"] == 5
-    assert stats["por_origen"] == {"comunidad": 5, "proyecto": 2}
-    assert stats["sectores_con_historias"] == 4
-    assert stats["formatos"] == {"foto": 4, "audio": 5, "video": 2}
+    assert stats["aprobadas_comunidad"] == 7
+    assert stats["por_origen"] == {"comunidad": 7, "proyecto": 2}
+    assert stats["sectores_con_historias"] == 4  # the hidden sector of the story without a place does not count: San Lorenzo has another
+    assert stats["sin_ubicacion"] == 1
+    assert stats["formatos"] == {"foto": 5, "audio": 7, "video": 2}
+
+
+def test_the_examples_show_the_options_without_giving_anything_away(client, admin, reset_on):
+    reset(client, admin)
+    listed = {story["codigo"]: story for story in client.get("/api/historias").json()}
+
+    without_place, anonymous = listed["HIS-2026-013"], listed["HIS-2026-014"]
+
+    assert without_place["con_ubicacion"] is False
+    assert without_place["lat"] is None and without_place["sector_id"] is None and without_place["lugar_nombre"] is None
+    assert anonymous["narrador_nombre"] == "Narrador anónimo" and anonymous["anonima"] is True
+    assert anonymous["finca_nombre"] == "Café La Loma"
+    raw = client.get("/api/historias").text + client.get("/api/historias/HIS-2026-013").text + client.get("/api/historias/HIS-2026-014").text
+    for secret in ("Gilberto", "Mejía", "mis abuelos", "San Lorenzo"):
+        assert secret not in raw, secret
 
 
 def test_the_examples_are_consistent(db, settings):
     examples = build_examples(db, settings)
 
-    assert len({story["codigo"] for story in examples}) == 12
+    assert len({story["codigo"] for story in examples}) == 14
     for story in examples:
         assert story["ejemplo"] is True
         assert story["estado"] in ("publicada", "revision", "rechazada")
+        if story["ubicacion_modo"] == "ninguna":
+            assert "ubicacion" not in story and story["sector_id"] is None  # the story without a place has no point at all
+            continue
         lon, lat = story["ubicacion"]["coordinates"]
         assert -180 <= lon <= 180 and -90 <= lat <= 90
         assert (story["estado"] == "rechazada") == bool(story["motivo_rechazo"])
@@ -116,9 +137,10 @@ def test_the_examples_are_consistent(db, settings):
 
 
 def test_the_examples_are_spread_around_their_sector_and_not_piled_on_one_point(db, settings):
-    points = [tuple(story["ubicacion"]["coordinates"]) for story in build_examples(db, settings)]
+    points = [tuple(story["ubicacion"]["coordinates"]) for story in build_examples(db, settings) if "ubicacion" in story]
 
-    assert len(set(points)) == 12
+    assert len(points) == 13  # all but the story published without a place
+    assert len(set(points)) == 13
 
 
 def test_the_next_real_story_continues_after_the_examples(client, admin, narrator, reset_on):
@@ -126,16 +148,16 @@ def test_the_next_real_story_continues_after_the_examples(client, admin, narrato
 
     sent = client.post("/api/historias", headers=narrator["headers"], json=story_payload()).json()
 
-    expected = "013" if CURRENT_YEAR == 2026 else "001"  # the example codes belong to 2026
+    expected = "015" if CURRENT_YEAR == 2026 else "001"  # the example codes belong to 2026
     assert sent["codigo"] == f"HIS-{CURRENT_YEAR}-{expected}"
 
 
-def test_doing_it_twice_leaves_the_same_twelve(client, db, admin, reset_on):
+def test_doing_it_twice_leaves_the_same_fourteen(client, db, admin, reset_on):
     reset(client, admin)
     second = reset(client, admin)
 
-    assert second.json()["historias_borradas"] == 12
-    assert db.historias.count_documents({}) == 12
+    assert second.json()["historias_borradas"] == 14
+    assert db.historias.count_documents({}) == 14
 
 
 def test_it_turns_on_the_example_data_label(client, admin, reset_on):
@@ -164,7 +186,7 @@ def test_a_file_that_cannot_be_deleted_does_not_undo_the_reset(client, db, admin
 
     assert response.status_code == 200
     assert response.json()["archivos_borrados"] == 0
-    assert db.historias.count_documents({}) == 12
+    assert db.historias.count_documents({}) == 14
 
 
 def test_the_accounts_are_not_touched(client, db, admin, narrator, reset_on):

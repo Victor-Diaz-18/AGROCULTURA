@@ -3,7 +3,7 @@ import L from 'leaflet'
 import 'leaflet.markercluster'
 import 'leaflet.markercluster/dist/MarkerCluster.css'
 import { DEFAULT_CENTER, DEFAULT_ZOOM, SECTOR_LABELS_MIN_ZOOM, TILE_PROVIDER, ZOOM_LIMITS } from '../../config/map.js'
-import { pointsOf } from '../../utils/geo.js'
+import { hasLocation, pointsOf } from '../../utils/geo.js'
 import FCode from '../ui/FCode.jsx'
 
 /**
@@ -191,7 +191,8 @@ export default function StoryMap({ stories, sectors, selectedCode, focus, fitKey
     if (!cluster || !map) return
     cluster.clearLayers()
     markers.current = new Map()
-    const layers = stories.map((story) => {
+    // A story published without a place has no pin: it is in the list and in its card, not on the map.
+    const layers = stories.filter(hasLocation).map((story) => {
       const marker = L.marker([story.lat, story.lon], { icon: pinIcon(story, false), keyboard: false })
       marker.on('click', () => onSelectRef.current?.(story))
       markers.current.set(story.codigo, { marker, story })
@@ -200,7 +201,8 @@ export default function StoryMap({ stories, sectors, selectedCode, focus, fitKey
     cluster.addLayers(layers)
 
     if (!fitted.current) {
-      const points = stories.length > 0 ? pointsOf(stories) : sectors.map((sector) => [sector.centro.lat, sector.centro.lon])
+      const placed = pointsOf(stories)
+      const points = placed.length > 0 ? placed : sectors.map((sector) => [sector.centro.lat, sector.centro.lon])
       if (points.length > 0) {
         fitted.current = true
         const size = map.getSize()
@@ -219,8 +221,9 @@ export default function StoryMap({ stories, sectors, selectedCode, focus, fitKey
     if (fitKey === lastFit.current) return
     lastFit.current = fitKey
     const map = mapRef.current
-    if (!map || stories.length === 0 || map.getSize().x === 0) return
-    map.fitBounds(L.latLngBounds(pointsOf(stories)), { padding: [40, 40], maxZoom: 13 })
+    const points = pointsOf(stories)
+    if (!map || points.length === 0 || map.getSize().x === 0) return
+    map.fitBounds(L.latLngBounds(points), { padding: [40, 40], maxZoom: 13 })
   }, [fitKey, stories])
 
   // The marked story: dark, bigger, with its title above.

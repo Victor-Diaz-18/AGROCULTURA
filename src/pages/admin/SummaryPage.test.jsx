@@ -17,8 +17,8 @@ describe('Resumen del administrador', () => {
   it('shows how the archive is going', async () => {
     open()
 
-    expect(await screen.findByText('Publicadas en el mapa')).toBeInTheDocument()
-    const published = screen.getByText('Publicadas en el mapa').closest('.ag-stat')
+    expect(await screen.findByText('Historias publicadas')).toBeInTheDocument()
+    const published = screen.getByText('Historias publicadas').closest('.ag-stat')
     expect(within(published).getByText('7')).toBeInTheDocument()
     expect(within(published).getByText('5 de la comunidad · 2 del proyecto')).toBeInTheDocument()
     const formats = screen.getByText('Formatos publicados').closest('.ag-stat')

@@ -40,7 +40,7 @@ export default function DemoResetDialog({ onClose }) {
       <h2 className="ag-project-modal__title">¿Borrar todas las historias?</h2>
       <p className="ag-reset__warning">
         Esto borra <b>todas las historias de la plataforma, incluidas las reales</b> que hayan enviado las familias, con sus fotos y audios.
-        No se puede deshacer. Después se cargan las 12 historias de ejemplo.
+        No se puede deshacer. Después se cargan las 14 historias de ejemplo.
       </p>
       <label className="ag-project-modal__field">
         Para confirmar, escribe {CONFIRM_WORD}

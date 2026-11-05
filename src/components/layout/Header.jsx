@@ -40,7 +40,7 @@ export default function Header() {
         <div className="ag-hchip">
           <Icon name="pin" size={16} />
           <div className="ag-hchip__text">
-            <span className="ag-hchip__label">Historias en el mapa</span>
+            <span className="ag-hchip__label">Historias en el portal</span>
             <span className="ag-hchip__value">{stats.publicadas} publicadas</span>
           </div>
         </div>

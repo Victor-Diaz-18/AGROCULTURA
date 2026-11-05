@@ -65,5 +65,5 @@ def test_the_example_stories_pass_the_geospatial_index_and_a_reset_leaves_no_old
 
     result = reset_demo_data(db, settings, NoStorage())
 
-    assert result["historias_de_ejemplo"] == 12
-    assert db.contadores.find_one({"_id": "historias-2026"})["seq"] == 12
+    assert result["historias_de_ejemplo"] == 14
+    assert db.contadores.find_one({"_id": "historias-2026"})["seq"] == 14

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { CONFIG, mapStory } from '../../test/fixtures.js'
+import { CONFIG, mapStory, storyWithoutPlace } from '../../test/fixtures.js'
 import { SECTOR_LABELS_MIN_ZOOM, ZOOM_LIMITS } from '../../config/map.js'
 import { mockMapSize } from '../../test/layout.js'
 import StoryMap from './StoryMap.jsx'
@@ -34,6 +34,20 @@ describe('StoryMap (F1)', () => {
       expect(screen.getByRole('button', { name: `Ver ${title}` })).toBeInTheDocument()
     }
     expect(screen.getByRole('application', { name: 'Mapa de historias' })).toBeInTheDocument()
+  })
+
+  it('draws no pin for a story that has no place, and does not break', () => {
+    setup({ stories: [...far, storyWithoutPlace()] })
+
+    expect(screen.getAllByRole('button', { name: /^Ver / })).toHaveLength(3)
+    expect(screen.queryByRole('button', { name: 'Ver Lo que contaba mi abuela' })).not.toBeInTheDocument()
+  })
+
+  it('shows the sectors when the only stories it has are without a place', () => {
+    const { onViewChange } = setup({ stories: [storyWithoutPlace()] })
+
+    expect(screen.queryAllByRole('button', { name: /^Ver / })).toHaveLength(0)
+    expect(onViewChange).toHaveBeenCalled()
   })
 
   it('paints the community in red and the project in teal', () => {

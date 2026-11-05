@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { toggleSimulatedOffline } from '../../offline/connectivity.js'
-import { STATS, mapStory, storyCard } from '../../test/fixtures.js'
+import { STATS, mapStory, storyCard, storyWithoutPlace } from '../../test/fixtures.js'
 import { mockMapSize } from '../../test/layout.js'
 import { callsTo, renderApp, reply } from '../../test/renderApp.jsx'
 
@@ -319,5 +319,104 @@ describe('Mapa de historias: filtros y búsqueda (F11)', () => {
     await user.click(bar().getByRole('button', { name: /^Tijereras/ }))
 
     expect(titles()).toEqual(['El patio donde se secaba el café'])
+  })
+})
+
+describe('Historias publicadas sin ubicación en el mapa', () => {
+  const NO_PLACE = storyWithoutPlace({ codigo: 'HIS-2026-040', titulo: 'Lo que contaba mi abuela', narrador_nombre: 'Narrador anónimo', anonima: true, formatos: ['Audio'], etiquetas: ['#cocina'] })
+  const WITH_NO_PLACE = [...NEAR, NO_PLACE]
+  const noPlaceStats = { ...stats, publicadas: 4, sin_ubicacion: 1 }
+  const openMixed = (extra = {}, route = '/') =>
+    open(WITH_NO_PLACE, { '/estadisticas': noPlaceStats, '/historias/HIS-2026-040': storyCard({ ...NO_PLACE, texto: 'Mi abuela decía que...', medios: [] }), ...extra }, route)
+
+  it('are on the list, and say in so many words that they are not on the map', async () => {
+    openMixed()
+
+    const item = await screen.findByRole('button', { name: /Lo que contaba mi abuela/ })
+    expect(item).toHaveTextContent('HIS-2026-040')
+    expect(item).toHaveTextContent('Sin ubicación en el mapa')
+    expect(item).toHaveTextContent('Narrador anónimo · Antes de 1960') // the label says it once, not twice
+    expect(within(listOf()).getAllByRole('listitem')).toHaveLength(4)
+  })
+
+  it('have no pin on the map: there is one pin per story that has a place', async () => {
+    openMixed()
+
+    await screen.findByRole('button', { name: /Lo que contaba mi abuela/ })
+    expect(await screen.findByRole('button', { name: 'Ver El camino de mulas' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Ver Lo que contaba mi abuela' })).not.toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /^Ver / })).toHaveLength(3)
+  })
+
+  it('stay on the list whatever part of the map is in view', async () => {
+    openMixed()
+    await screen.findByRole('button', { name: /Lo que contaba mi abuela/ })
+
+    // The map looks somewhere else: the stories with a place leave the list, the one without it stays.
+    const map = screen.getByRole('application', { name: 'Mapa de historias' })
+    expect(map).toBeInTheDocument()
+    await waitFor(() => expect(within(listOf()).getByRole('button', { name: /Lo que contaba mi abuela/ })).toBeInTheDocument())
+  })
+
+  it('"Todos" does not hide them, a sector does (they are in none), and the other filters work on them', async () => {
+    const user = userEvent.setup()
+    openMixed()
+    await screen.findByRole('button', { name: /Lo que contaba mi abuela/ })
+
+    const sectors = within(screen.getByRole('group', { name: 'Filtrar por sector' }))
+    await user.click(sectors.getByRole('button', { name: /La Tagua/ }))
+    expect(within(listOf()).queryByRole('button', { name: /Lo que contaba mi abuela/ })).not.toBeInTheDocument()
+    await user.click(sectors.getByRole('button', { name: /^Todos/ }))
+    expect(within(listOf()).getByRole('button', { name: /Lo que contaba mi abuela/ })).toBeInTheDocument()
+
+    await user.selectOptions(screen.getByLabelText('Formato'), 'Audio')
+    expect(within(listOf()).getByRole('button', { name: /Lo que contaba mi abuela/ })).toBeInTheDocument()
+    await user.selectOptions(screen.getByLabelText('Formato'), 'Video')
+    expect(await screen.findByText('No hay historias con estos filtros')).toBeInTheDocument()
+  })
+
+  it('are found by the search (title, tag, the name the public reads)', async () => {
+    const user = userEvent.setup()
+    openMixed()
+    await screen.findByRole('button', { name: /Lo que contaba mi abuela/ })
+
+    await user.type(screen.getByRole('searchbox', { name: 'Buscar historias' }), 'abuela')
+
+    await waitFor(() => expect(within(listOf()).queryByRole('button', { name: /El camino de mulas/ })).not.toBeInTheDocument()) // the search waits for a pause in the typing
+    expect(within(listOf()).getByRole('button', { name: /Lo que contaba mi abuela/ })).toBeInTheDocument()
+  })
+
+  it('are counted: the published stories include them and the card says how many are not on the map', async () => {
+    openMixed()
+
+    expect(await screen.findByText('Mostrando 4 de 4 historias publicadas')).toBeInTheDocument()
+    expect(screen.getByText('1 sin ubicación en el mapa')).toBeInTheDocument()
+    expect(screen.getByText(/Las historias sin ubicación en el mapa salen siempre en la lista/)).toBeInTheDocument()
+  })
+
+  it('do not add "Otro lugar" to the sector tabs', async () => {
+    openMixed()
+    await screen.findByRole('button', { name: /Lo que contaba mi abuela/ })
+
+    expect(screen.queryByRole('button', { name: /Otro lugar/ })).not.toBeInTheDocument()
+  })
+
+  it('open their card from the list, which has no "Ver en el mapa" and no point', async () => {
+    const user = userEvent.setup()
+    openMixed()
+
+    await user.click(await screen.findByRole('button', { name: /Lo que contaba mi abuela/ }))
+
+    expect(await screen.findByText('Esta historia no tiene ubicación en el mapa.')).toBeInTheDocument()
+    const card = screen.getByRole('dialog', { name: 'Ficha de la historia' })
+    expect(within(card).queryByRole('button', { name: 'Ver en el mapa' })).not.toBeInTheDocument()
+    expect(within(card).queryByRole('link', { name: /Google Maps|Apple Maps/ })).not.toBeInTheDocument()
+  })
+
+  it('open their card from a link that names them (there is no point to go to)', async () => {
+    openMixed({}, '/?historia=HIS-2026-040')
+
+    expect(await screen.findByRole('heading', { name: 'Lo que contaba mi abuela' })).toBeInTheDocument() // once the card has loaded
+    expect(screen.getByText('Esta historia no tiene ubicación en el mapa.')).toBeInTheDocument()
   })
 })

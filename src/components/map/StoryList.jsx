@@ -1,10 +1,12 @@
 import { useEffect, useRef } from 'react'
+import { hasLocation } from '../../utils/geo.js'
 import Icon from '../ui/Icon.jsx'
 import OriginBadge from '../ui/OriginBadge.jsx'
 
 /**
  * The stories in the visible zone of the map, as in the design: a thumbnail, code, origin, title,
  * who tells it, where, when, and its formats. Tapping one opens its card.
+ * A story published without a place is never "in a zone": it is always listed, and says in so many words that it is not on the map.
  */
 export default function StoryList({ stories, selectedCode, placeOf, onOpen }) {
   const selected = useRef(null)
@@ -36,8 +38,9 @@ export default function StoryList({ stories, selectedCode, placeOf, onOpen }) {
                   <OriginBadge origen={story.origen} size="sm" />
                 </span>
                 <span className="ag-storyitem__title">{story.titulo}</span>
+                {!hasLocation(story) && <span className="ag-storyitem__noplace">Sin ubicación en el mapa</span>}
                 <span className="ag-storyitem__meta">
-                  {[story.narrador_nombre, placeOf(story), story.epoca].filter(Boolean).join(' · ')}
+                  {[story.narrador_nombre, hasLocation(story) ? placeOf(story) : null, story.epoca].filter(Boolean).join(' · ')}
                 </span>
                 <span className="ag-storyitem__formats">
                   {story.formatos.map((format) => (

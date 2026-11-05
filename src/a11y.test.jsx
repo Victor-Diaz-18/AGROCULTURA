@@ -3,7 +3,7 @@ import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ADMIN, NARRATOR } from './test/auth.js'
 import { expectAccessible } from './test/axe.js'
-import { adminStory, mapStory, storyCard } from './test/fixtures.js'
+import { adminStory, mapStory, storyCard, storyWithoutPlace } from './test/fixtures.js'
 import { mockMapSize } from './test/layout.js'
 import { renderApp } from './test/renderApp.jsx'
 
@@ -32,6 +32,19 @@ describe('every page passes axe', () => {
 
     await user.click(within(screen.getByRole('list', { name: 'Historias en esta zona del mapa' })).getAllByRole('button')[0])
     await screen.findByRole('dialog')
+    await expectAccessible()
+  })
+
+  it('the map with a story that has no place: its list item and its card', async () => {
+    const user = userEvent.setup()
+    const noPlace = storyWithoutPlace({ codigo: 'HIS-2026-040', titulo: 'Lo que contaba mi abuela', narrador_nombre: 'Narrador anónimo', anonima: true, finca_nombre: 'Café La Loma' })
+    renderApp({ api: { '/historias': [...STORIES, noPlace], '/historias/HIS-2026-040': storyCard({ ...noPlace, texto: 'Mi abuela decía que...', medios: [] }) } })
+    const list = await screen.findByRole('list', { name: 'Historias en esta zona del mapa' })
+    expect(within(list).getByText('Sin ubicación en el mapa')).toBeInTheDocument()
+    await expectAccessible()
+
+    await user.click(within(list).getByRole('button', { name: /Lo que contaba mi abuela/ }))
+    await screen.findByText('Esta historia no tiene ubicación en el mapa.')
     await expectAccessible()
   })
 

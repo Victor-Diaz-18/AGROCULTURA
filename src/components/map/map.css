@@ -343,6 +343,15 @@
   font-size: 13px;
   color: var(--texto-3);
 }
+.ag-storyitem__noplace {
+  align-self: flex-start;
+  padding: 1px 8px;
+  border: 1px dashed var(--borde-fuerte);
+  border-radius: 6px;
+  color: var(--texto-2);
+  font-size: 12px;
+  font-weight: 700;
+}
 .ag-storyitem__formats {
   display: flex;
   flex-wrap: wrap;
