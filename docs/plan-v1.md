@@ -203,7 +203,7 @@ Al cerrar cada bloque se compara el resultado con el diseño de referencia (qué
     como un solo botón. Resultado en navegador real (axe, WCAG 2.2 AA, escritorio y móvil, todas las pantallas y diálogos): 0 violaciones.
   - **Recorrido de punta a punta** con Playwright (`npm run e2e`): API real sobre una base en memoria, sin servicios externos. No corre en el CI
     (necesita un navegador y tarda); se corre a mano.
-  - La lista «Antes de usarla con las familias» del README reúne lo que hay que apagar o cambiar para pasar de demostración a uso real.
+  - La lista «Antes de usarla con las familias» de `docs/despliegue.md` reúne lo que hay que apagar o cambiar para pasar de demostración a uso real.
     Ojo: «Reiniciar datos de ejemplo» **vuelve a cargar** los ejemplos; no limpia. Quitarlos es borrar en Atlas las historias con `ejemplo: true`.
 - Adiciones y decisiones del bloque 7 (filtros y video; para revisar con el equipo):
   - **Filtros (F11):** la barra del diseño, con estas diferencias: la búsqueda **no distingue tildes ni mayúsculas** y pide
@@ -212,7 +212,7 @@ Al cerrar cada bloque se compara el resultado con el diseño de referencia (qué
     el mapa **se acerca a lo que queda** (si no, la lista, que muestra solo la zona visible, parecería vacía); y el
     «sin resultados» ofrece «Quitar los filtros». La lista pública del mapa trae ahora las etiquetas.
   - **Video (F13):** «Fotos y video» y «Agregar video» como en el diseño (hasta 25 MB; MP4, MOV o WebM), con subida directa
-    a Blob y la función `api/blob-token.js` (ver README). El tope son **25 000 000 bytes** (como los cuenta el teléfono y
+    a Blob y la función `api/blob-token.js` (ver `docs/funcionamiento.md`). El tope son **25 000 000 bytes** (como los cuenta el teléfono y
     `formatBytes`), igual en la función, la API y la pantalla.
   - **La historia no espera al video** (decidido con el equipo: «si el video falla por mala conexión, no bloquea el envío del
     resto»). Para que el video no se pierda en ese caso se agregó, **sin que estuviera en el plan**, una ruta
