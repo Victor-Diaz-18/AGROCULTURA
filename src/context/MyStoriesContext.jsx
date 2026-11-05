@@ -59,7 +59,7 @@ export function MyStoriesProvider({ children }) {
     if (!narratorId) return Promise.resolve()
     if (pending.current) return pending.current // one request at a time
     const settle = (next) => {
-      if (activeId.current === narratorId) setState(next) // another person may have signed in meanwhile
+      if (mounted.current && activeId.current === narratorId) setState(next) // not after the page is gone, nor if another person signed in meanwhile
     }
     const request = fetchMyStories()
       .then((stories) => {

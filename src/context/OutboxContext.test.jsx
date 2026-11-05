@@ -80,6 +80,29 @@ describe('stories waiting on the phone (F10)', () => {
     expect(second).toBe(first)
   })
 
+  it('stop working when the app is closed in the middle of a send: nothing is asked of the server for a page that is gone', async () => {
+    let release
+    const gate = new Promise((resolve) => {
+      release = resolve
+    })
+    const { fetchMock, unmount } = await openWith([queuedDraft()], {
+      '/historias': async (init) => {
+        await gate
+        return created(init)
+      },
+    })
+    await waitFor(() => expect(callsTo(fetchMock, '/historias')).toHaveLength(1)) // the story is on its way
+    const before = fetchMock.mock.calls.length
+
+    unmount()
+    release()
+    await new Promise((resolve) => setTimeout(resolve, 80))
+
+    // It used to carry on: update the screen, tell the person and reload the public counters, after the page was gone
+    // (and in a test run, after the environment was too: "window is not defined").
+    expect(fetchMock.mock.calls.length).toBe(before)
+  })
+
   it('a story the server refuses stays, with its reason, and the person is told', async () => {
     await openWith([queuedDraft()], { '/historias': () => reply({ detail: 'El audio pesa demasiado.' }, 413) })
 

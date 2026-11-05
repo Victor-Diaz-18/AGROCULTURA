@@ -37,13 +37,14 @@ export function PortalDataProvider({ children }) {
   const reload = useCallback(async () => {
     try {
       const [nextConfig, nextStats] = await Promise.all([fetchConfig(), fetchStats()])
+      if (!mounted.current) return // the answer came after the page was gone
       fresh.current = true
       setConfig(nextConfig)
       setStats(nextStats)
       setStatus('ready')
-      if (mounted.current) cacheSet('portal', { config: nextConfig, stats: nextStats })
+      cacheSet('portal', { config: nextConfig, stats: nextStats })
     } catch (error) {
-      setStatus(error instanceof OfflineError ? 'offline' : 'error')
+      if (mounted.current) setStatus(error instanceof OfflineError ? 'offline' : 'error')
     }
   }, [])
 

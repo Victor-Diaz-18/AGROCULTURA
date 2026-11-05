@@ -62,6 +62,8 @@ export function OutboxProvider({ children }) {
   const [persistent, setPersistent] = useState(true)
   const [sentVersion, setSentVersion] = useState(0)
   const [progress, setProgress] = useState({}) // clientId -> percent of the video that is going up
+  // Whose stories this provider is working for right now. `null` once it is gone (the page closed, or someone else
+  // signed in): whatever is still in flight then must not touch the screen, the toasts or the server any more.
   const active = useRef(narratorId)
   const flushing = useRef(false)
   const retryTimer = useRef(null)
@@ -75,11 +77,15 @@ export function OutboxProvider({ children }) {
 
   const flush = useCallback(
     async (afterReconnect = false) => {
-      if (!narratorId || flushing.current || !isOnline()) return
+      if (!narratorId || active.current !== narratorId || flushing.current || !isOnline()) return
       flushing.current = true
       let result
       try {
-        result = await flushQueue(narratorId, { onVideoProgress: (clientId, percent) => setProgress((current) => ({ ...current, [clientId]: percent })) })
+        result = await flushQueue(narratorId, {
+          onVideoProgress: (clientId, percent) => {
+            if (active.current === narratorId) setProgress((current) => ({ ...current, [clientId]: percent }))
+          },
+        })
       } catch {
         return // the phone's storage failed: the stories stay where they are
       } finally {
@@ -90,6 +96,7 @@ export function OutboxProvider({ children }) {
       const { sent, videos, failed, stopped } = result
       setProgress({})
       await refresh()
+      if (active.current !== narratorId) return // closed while the list was being read
       if (sent.length > 0) {
         toast(sentMessage(sent.length, afterReconnect))
         reloadPortal() // the public counters change when a story enters review
@@ -114,11 +121,20 @@ export function OutboxProvider({ children }) {
     clearTimeout(retryTimer.current)
     setItems([])
     refresh()
-    return () => clearTimeout(retryTimer.current)
+    return () => {
+      active.current = null
+      clearTimeout(retryTimer.current)
+    }
   }, [narratorId, refresh])
 
   useEffect(() => {
-    deviceStorage().then(setPersistent)
+    let gone = false
+    deviceStorage().then((durable) => {
+      if (!gone) setPersistent(durable)
+    })
+    return () => {
+      gone = true
+    }
   }, [])
 
   // With signal (when the app opens, when it comes back, when someone signs in): send what is waiting.
