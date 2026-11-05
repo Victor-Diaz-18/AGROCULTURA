@@ -5,12 +5,13 @@ import Icon from '../../components/ui/Icon.jsx'
 import ListenButton from '../../components/ui/ListenButton.jsx'
 import Switch from '../../components/ui/Switch.jsx'
 import { usePortalData } from '../../context/PortalDataContext.jsx'
+import { codeNote } from '../../config/flags.js'
 import { useToast } from '../../context/ToastContext.jsx'
 import { addTag, removeTag, updatePortal } from '../../services/admin.js'
 import { ApiError, OfflineError } from '../../services/http.js'
 
 const TEXT = {
-  portal: 'Lo que puede cambiar el administrador (F7).',
+  portal: `Lo que puede cambiar el administrador${codeNote('F7')}.`,
   admin: 'Ajustes que solo puede cambiar un administrador.',
 }
 

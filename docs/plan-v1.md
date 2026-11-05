@@ -189,6 +189,11 @@ Al cerrar cada bloque se compara el resultado con el diseño de referencia (qué
 - No se pudo comprobar aquí: el comportamiento en un iPhone (Safari), el aviso de instalación de Chrome en un
   teléfono real, y el servicio de teselas de OpenStreetMap con CORS desde la red real (se comprobó con un servidor
   de teselas de mentira: las teselas se piden con CORS, se guardan y se dibujan sin conexión).
+- **Códigos F1…F15 del diseño: apagados por defecto** (corregido tras el cierre del bloque 8). Eran notas para revisar las pantallas contra el
+  diseño y se veían para todos (menú, encabezado, pasos, fichas, diálogos, textos como «pasa a revisión (F6)»). Ahora no sale ninguno en
+  ninguna pantalla salvo que se compile con `VITE_SHOW_CODES=true`; una prueba (`src/codes.test.jsx`) y un recorrido por 42 pantallas en
+  navegador real lo comprueban, mirando también lo que lee un lector de pantalla. Los códigos que iban dentro de frases se quitan junto con
+  su paréntesis, y en «Próximamente» ya no hay lista de códigos de los que depende.
 - Adiciones y decisiones del bloque 8 (accesibilidad y cierre; para revisar con el equipo):
   - **Dos grises del prototipo se oscurecieron** para cumplir el contraste AA (4,5:1) en los textos pequeños: `--texto-4` de `#6b776f` a
     `#5f6c64` y `--texto-5` (los códigos F del menú) de `#8a968e` a `#5f6c64`, y el color de los nombres de sector sobre el mapa de `#5e7a66` a

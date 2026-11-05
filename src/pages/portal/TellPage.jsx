@@ -8,6 +8,7 @@ import StepRecord from '../../components/tell/StepRecord.jsx'
 import StepReview from '../../components/tell/StepReview.jsx'
 import StepWhereWhen from '../../components/tell/StepWhereWhen.jsx'
 import { DEFAULT_TAG, LIMITS } from '../../config/constants.js'
+import { codeNote } from '../../config/flags.js'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { useMyStories } from '../../context/MyStoriesContext.jsx'
 import { useOutbox } from '../../context/OutboxContext.jsx'
@@ -195,7 +196,7 @@ export default function TellPage() {
   const help = {
     1: canContinue ? 'Puedes agregar fotos o un video si los tienes.' : 'Graba un audio o escribe la historia para seguir.',
     2: canContinue ? 'Todo listo para revisar.' : 'Falta el título, el sector o la época.',
-    3: online ? 'Al enviarla pasa a revisión (F6).' : 'Sin señal: quedará como borrador.',
+    3: online ? `Al enviarla pasa a revisión${codeNote('F6')}.` : 'Sin señal: quedará como borrador.',
   }[step]
 
   const startRecording = () => recorder.start()

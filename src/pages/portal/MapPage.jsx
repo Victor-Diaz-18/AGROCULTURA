@@ -8,7 +8,7 @@ import { StoryCardLoader } from '../../components/story/StoryCard.jsx'
 import Button from '../../components/ui/Button.jsx'
 import ListenButton from '../../components/ui/ListenButton.jsx'
 import StatCard from '../../components/ui/StatCard.jsx'
-import { SHOW_CODES } from '../../config/flags.js'
+import { SHOW_CODES, codeNote } from '../../config/flags.js'
 import { usePortalData } from '../../context/PortalDataContext.jsx'
 import usePublishedStories from '../../hooks/usePublishedStories.js'
 import { plural } from '../../utils/plural.js'
@@ -140,7 +140,7 @@ export default function MapPage() {
 
         <StatCard icon="reloj" title="En revisión" tone="aviso">
           <div className="ag-stat__value">{stats.en_revision}</div>
-          <div className="ag-stat__note">No salen en el mapa hasta que un administrador las aprueba (F6).</div>
+          <div className="ag-stat__note">No salen en el mapa hasta que un administrador las aprueba{codeNote('F6')}.</div>
         </StatCard>
       </div>
 

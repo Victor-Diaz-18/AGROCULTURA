@@ -69,7 +69,7 @@ Están descritas en [`.env.example`](.env.example). Las principales:
 | `SEED_DEMO_NARRATOR_*` | Narradora de ejemplo (opcional) |
 | `BLOB_READ_WRITE_TOKEN` | Token de Vercel Blob, donde se guardan las fotos, los audios y los videos. Aparece solo al conectar un *Blob store* al proyecto (Storage → Create → Blob, con acceso **Public**) |
 | `ALLOW_DEMO_RESET` | Muestra y permite el botón «Reiniciar datos de ejemplo» (**borra todas las historias**). Sin esta variable (o con `false`) el botón no existe. Se quita antes de usar la plataforma con familias reales |
-| `VITE_SHOW_CODES` | Muestra los códigos F1, F2… del diseño |
+| `VITE_SHOW_CODES` | Opcional. Con `true` se ven los códigos F1, F2… del diseño (notas para el equipo al comparar pantallas). **Sin ella no se ve ninguno**, en ninguna pantalla. Se lee al compilar: en Vercel, un cambio pide volver a desplegar |
 
 Para generar un `JWT_SECRET` (con Node, que ya tienes instalado):
 
@@ -508,8 +508,6 @@ La plataforma nace con datos y avisos de **demostración**. Antes de recibir his
 - [ ] **Quitar `ALLOW_DEMO_RESET`** (o ponerlo en `false`) y volver a desplegar. Con la variable puesta, un administrador puede **borrar
   todas las historias**, también las reales, con el botón «Reiniciar datos de ejemplo» (pide escribir `REINICIAR`, pero conviene
   que el botón no exista). Desaparece de la pantalla de Configuración.
-- [ ] **Ocultar los códigos F1, F2…** poniendo `VITE_SHOW_CODES=false` en Vercel y desplegando de nuevo. Son anotaciones del diseño
-  para el equipo; las familias no deben verlas. (Es una variable de *compilación*: hace falta volver a desplegar.)
 - [ ] **Quitar «datos de ejemplo»** del encabezado: *Configuración → Portal → «Mostrar “datos de ejemplo”»* en apagado.
 - [ ] **Sin historias de ejemplo.** Si en algún momento se pulsó «Reiniciar datos de ejemplo», hay 12 historias de ejemplo (`HIS-2026-001` a
   `012`, marcadas `ejemplo: true`) mezcladas con las reales en el mapa. Se quitan en Atlas: *Browse Collections → `agrocultura` → `historias`*,

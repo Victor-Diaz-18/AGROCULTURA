@@ -75,7 +75,8 @@ export default defineConfig(({ mode }) => ({
       // The app, in a browser-like environment.
       {
         extends: true,
-        test: { name: 'app', environment: 'jsdom', setupFiles: ['./src/test/setup.js'], include: ['src/**/*.test.{js,jsx}'] },
+        // The design's feature codes are shown here so the tests can name things as the design does; src/codes.test.jsx checks them hidden.
+        test: { name: 'app', environment: 'jsdom', setupFiles: ['./src/test/setup.js'], include: ['src/**/*.test.{js,jsx}'], env: { VITE_SHOW_CODES: 'true' } },
       },
       // The Vercel functions written in Node (api/*.js), run in Node as Vercel runs them.
       { extends: true, test: { name: 'functions', environment: 'node', include: ['api/**/*.test.js'] } },
