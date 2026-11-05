@@ -3,7 +3,7 @@ import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { STATS, adminStory, mapStory, storyCard, storyWithoutPlace } from '../../test/fixtures.js'
 import { mockMapSize } from '../../test/layout.js'
-import { ADMIN } from '../../test/auth.js'
+import { ADMIN, NARRATOR } from '../../test/auth.js'
 import { renderApp, reply } from '../../test/renderApp.jsx'
 
 const AUDIO = 'https://s.public.blob.vercel-storage.com/historias/u/a.webm'
@@ -13,10 +13,10 @@ const PHOTO2 = 'https://s.public.blob.vercel-storage.com/historias/u/2.jpg'
 afterEach(() => vi.restoreAllMocks())
 
 /** Opens a card the way a person does: from the map list. */
-async function openCard(card, { list = [mapStory()], extra = {} } = {}) {
+async function openCard(card, { list = [mapStory()], extra = {}, as = null } = {}) {
   const user = userEvent.setup()
   const restore = mockMapSize()
-  const view = renderApp({ route: '/', api: { '/estadisticas': { ...STATS, publicadas: 1 }, '/historias': list, '/historias/HIS-2026-001': card, ...extra } })
+  const view = renderApp({ route: '/', user: as, api: { '/estadisticas': { ...STATS, publicadas: 1 }, '/historias': list, '/historias/HIS-2026-001': card, ...extra } })
   await user.click(await screen.findByRole('button', { name: /El camino de mulas/ }))
   const dialog = await screen.findByRole('dialog', { name: 'Ficha de la historia' }, { timeout: 3000 })
   return { user, dialog, restore, ...view }
@@ -24,7 +24,7 @@ async function openCard(card, { list = [mapStory()], extra = {} } = {}) {
 
 describe('Ficha de la historia (F8)', () => {
   it('shows the title, when, where, who tells it, when it was published and the text', async () => {
-    const { dialog } = await openCard(storyCard())
+    const { dialog } = await openCard(storyCard(), { as: NARRATOR })
 
     expect(await within(dialog).findByRole('heading', { name: 'El camino de mulas hasta Santa Marta' })).toBeInTheDocument()
     const facts = dialog.querySelector('dl')
@@ -151,8 +151,17 @@ describe('Ficha de la historia (F8)', () => {
     expect(spoken).toContain('Antes de que hubiera carretera')
   })
 
-  it('keeps 360° and augmented reality for the future, switched off', async () => {
+  it('shows a visitor the story, without its internal code or buttons that do nothing yet', async () => {
     const { dialog } = await openCard(storyCard())
+
+    expect(await within(dialog).findByRole('heading', { name: 'El camino de mulas hasta Santa Marta' })).toBeInTheDocument()
+    expect(within(dialog).queryByText('HIS-2026-001')).not.toBeInTheDocument()
+    expect(within(dialog).queryByRole('button', { name: /Ver en 360°/ })).not.toBeInTheDocument()
+    expect(within(dialog).queryByRole('button', { name: /Avatar en RA/ })).not.toBeInTheDocument()
+  })
+
+  it('keeps 360° and augmented reality for the future, switched off', async () => {
+    const { dialog } = await openCard(storyCard(), { as: NARRATOR })
 
     expect(await within(dialog).findByRole('button', { name: /Ver en 360°/ })).toBeDisabled()
     expect(within(dialog).getByRole('button', { name: /Avatar en RA/ })).toBeDisabled()

@@ -3,12 +3,14 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import MapFilters from '../../components/map/MapFilters.jsx'
 import StoryList from '../../components/map/StoryList.jsx'
 import StoryMap from '../../components/map/StoryMap.jsx'
+import VisitorIntro, { VisitorHowItWorks } from '../../components/map/VisitorIntro.jsx'
 import PageHeader from '../../components/layout/PageHeader.jsx'
 import { StoryCardLoader } from '../../components/story/StoryCard.jsx'
 import Button from '../../components/ui/Button.jsx'
 import ListenButton from '../../components/ui/ListenButton.jsx'
 import StatCard from '../../components/ui/StatCard.jsx'
 import { SHOW_CODES, codeNote } from '../../config/flags.js'
+import { useAuth } from '../../context/AuthContext.jsx'
 import { usePortalData } from '../../context/PortalDataContext.jsx'
 import usePublishedStories from '../../hooks/usePublishedStories.js'
 import { plural } from '../../utils/plural.js'
@@ -18,6 +20,8 @@ import { hasLocation, inBounds, placeLine } from '../../utils/geo.js'
 /** Map of published stories (F1) with the list of the ones in the visible zone, and their cards (F8). */
 export default function MapPage() {
   const { config, stats } = usePortalData()
+  const { user } = useAuth()
+  const isVisitor = !user
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const { stories, status, reload } = usePublishedStories()
@@ -81,7 +85,7 @@ export default function MapPage() {
         : '',
       `${stats.sectores_con_historias} de ${stats.total_sectores} sectores tienen historias.`,
       `En la zona que ves hay ${plural(visible.length, 'historia', 'historias')}.`,
-      `Hay ${plural(stats.en_revision, 'historia esperando revisión', 'historias esperando revisión')}.`,
+      isVisitor ? '' : `Hay ${plural(stats.en_revision, 'historia esperando revisión', 'historias esperando revisión')}.`,
       'Para contar tu historia, toca el botón rojo «Contar una historia».',
     ]
       .filter(Boolean)
@@ -105,6 +109,10 @@ export default function MapPage() {
 
   return (
     <>
+      {isVisitor ? (
+        <VisitorIntro sectors={config.sectores} stats={stats} readAloud={readAloud} />
+      ) : (
+        <>
       <PageHeader
         title="Mapa de historias"
         subtitle="Historias aprobadas de la cultura cafetera, con un lugar aproximado en el mapa cuando su narrador lo permite."
@@ -157,6 +165,15 @@ export default function MapPage() {
           <div className="ag-stat__note">No salen en el mapa hasta que un administrador las aprueba{codeNote('F6')}.</div>
         </StatCard>
       </div>
+        </>
+      )}
+
+      {isVisitor && (
+        <div className="ag-vmaphead" id="mapa">
+          <h2>Mapa de historias</h2>
+          <p>Toca un punto del mapa o una historia de la lista para abrir su ficha.</p>
+        </div>
+      )}
 
       <div className="ag-mapcard">
         <MapFilters filters={filters} onChange={changeFilters} stories={stories} sectors={config.sectores} epocas={config.epocas} />
@@ -187,7 +204,7 @@ export default function MapPage() {
                 )}
               </div>
             ) : (
-              <StoryList stories={visible} selectedCode={selected} placeOf={placeOf} onOpen={open} />
+              <StoryList stories={visible} selectedCode={selected} placeOf={placeOf} onOpen={open} showCodes={!isVisitor} />
             )}
           </div>
         </div>
@@ -196,11 +213,13 @@ export default function MapPage() {
             Mostrando {visible.length} de {stats.publicadas} historias publicadas
           </span>
           <span>
-            Toca un punto del mapa o una historia de la lista para abrir su ficha{SHOW_CODES ? ' (F8)' : ''}.
+            {isVisitor ? '' : `Toca un punto del mapa o una historia de la lista para abrir su ficha${SHOW_CODES ? ' (F8)' : ''}.`}
             {withoutPlace > 0 ? ' Las historias sin ubicación en el mapa salen siempre en la lista.' : ''}
           </span>
         </div>
       </div>
+
+      {isVisitor && <VisitorHowItWorks />}
 
       {openCode && <StoryCardLoader key={openCode} code={openCode} onClose={() => setOpenCode(null)} />}
     </>

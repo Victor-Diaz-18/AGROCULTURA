@@ -16,14 +16,14 @@ const newVersionArrives = () => act(() => pwa.options.onNeedRefresh())
 describe('"Hay una versión nueva"', () => {
   it('is not shown while there is no new version', async () => {
     renderApp()
-    await screen.findByText('0 publicadas')
+    await screen.findByRole('heading', { name: 'Mapa de historias' })
 
     expect(screen.queryByText('Hay una versión nueva.')).not.toBeInTheDocument()
   })
 
   it('appears when a new version is waiting, and says what updating does', async () => {
     renderApp()
-    await screen.findByText('0 publicadas')
+    await screen.findByRole('heading', { name: 'Mapa de historias' })
 
     newVersionArrives()
 

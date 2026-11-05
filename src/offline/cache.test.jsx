@@ -17,7 +17,7 @@ describe('opening the app without signal', () => {
     })
     setSimulatedOffline(true)
 
-    renderApp({ route: '/' })
+    renderApp({ route: '/', user: NARRATOR })
 
     expect(await screen.findByText('Memoria de Minca')).toBeInTheDocument()
     expect(await screen.findByText('9 publicadas')).toBeInTheDocument()
@@ -69,7 +69,7 @@ describe('with signal', () => {
   it('shows what the server says, not an older copy', async () => {
     await cacheSet('portal', { config: CONFIG, stats: { ...STATS, publicadas: 1 } })
 
-    renderApp({ route: '/', api: { '/estadisticas': { ...STATS, publicadas: 6 } } })
+    renderApp({ route: '/', user: NARRATOR, api: { '/estadisticas': { ...STATS, publicadas: 6 } } })
 
     expect(await screen.findByText('6 publicadas')).toBeInTheDocument()
     await new Promise((resolve) => setTimeout(resolve, 50))

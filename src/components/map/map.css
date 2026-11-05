@@ -307,8 +307,8 @@
   height: 64px;
   overflow: hidden;
   border-radius: 10px;
-  background: repeating-linear-gradient(135deg, #d7e0d6, #d7e0d6 7px, #e1e8e0 7px, #e1e8e0 14px);
-  color: #4f6857;
+  background: var(--verde-claro);
+  color: var(--verde-oscuro);
 }
 .ag-storyitem__thumb img {
   display: block;
@@ -369,4 +369,59 @@
   color: var(--texto-2);
   font-size: 12px;
   font-weight: 700;
+}
+
+/* ---------- The filters that wait behind «Más filtros» on a phone ---------- */
+.ag-mapfilters__more {
+  display: contents; /* on a wide screen they sit in the row as if this box were not there */
+}
+.ag-mapfilters__toggle {
+  display: none;
+  flex: none;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--verde-oscuro);
+  font-size: 14px;
+  font-weight: 800;
+}
+.ag-mapfilters__toggle[aria-expanded='true'] {
+  border-color: var(--verde-oscuro);
+  background: var(--verde-claro);
+}
+
+@media (max-width: 720px) {
+  .ag-mapfilters {
+    padding: 12px;
+    gap: 10px;
+  }
+  .ag-mapfilters__search {
+    flex: 1 1 150px;
+    height: 44px;
+  }
+  .ag-mapfilters__toggle {
+    display: block;
+  }
+  .ag-mapfilters__more {
+    display: none;
+  }
+  .ag-mapfilters--open .ag-mapfilters__more {
+    display: flex;
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  /* The map fits with room to see the list below it, and the page scrolls: no list scrolling inside the page. */
+  .ag-storymap {
+    flex-basis: 100%;
+    height: 340px;
+  }
+  .ag-mapcard__list {
+    flex-basis: 100%;
+    max-height: none;
+    border-left: 0;
+    border-top: 1px solid var(--linea);
+  }
 }

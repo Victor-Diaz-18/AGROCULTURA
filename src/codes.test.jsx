@@ -35,6 +35,13 @@ describe('without VITE_SHOW_CODES the people who use the platform never see the 
     await screen.findByRole('list', { name: 'Historias en esta zona del mapa' })
 
     expect(within(screen.getByRole('navigation', { name: 'Secciones' })).getByRole('link', { name: /Mapa de historias/ })).toBeInTheDocument()
+    noCodes()
+  })
+
+  it('the counters of the map, for someone signed in', async () => {
+    renderApp({ user: NARRATOR, api: { '/historias': [mapStory()] } })
+    await screen.findByRole('list', { name: 'Historias en esta zona del mapa' })
+
     expect(screen.getByText(/No salen en el mapa hasta que un administrador las aprueba\./)).toBeInTheDocument()
     noCodes()
   })

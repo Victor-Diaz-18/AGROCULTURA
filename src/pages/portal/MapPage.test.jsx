@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { toggleSimulatedOffline } from '../../offline/connectivity.js'
+import { NARRATOR } from '../../test/auth.js'
 import { STATS, mapStory, storyCard, storyWithoutPlace } from '../../test/fixtures.js'
 import { mockMapSize } from '../../test/layout.js'
 import { callsTo, renderApp, reply } from '../../test/renderApp.jsx'
@@ -39,9 +40,9 @@ describe('Mapa de historias (F1)', () => {
     const list = await screen.findByRole('list', { name: 'Historias en esta zona del mapa' })
     const items = within(list).getAllByRole('listitem')
     expect(items).toHaveLength(3)
-    expect(items[0]).toHaveTextContent('HIS-2026-004') // newest code first, as in the design
+    expect(items[0]).toHaveTextContent('El patio donde se secaba el café') // newest first, as in the design
     const first = within(list).getByRole('button', { name: /El camino de mulas/ })
-    expect(first).toHaveTextContent('HIS-2026-001')
+    expect(first).not.toHaveTextContent('HIS-2026-001') // a code is for the team, not for a visitor
     expect(first).toHaveTextContent('Comunidad')
     expect(first).toHaveTextContent('Aurelio Martínez · Minca · Antes de 1960')
     expect(first).toHaveTextContent('AudioFoto')
@@ -152,8 +153,10 @@ describe('Mapa de historias (F1)', () => {
     expect(await screen.findByText('Las historias se cargan cuando vuelva la conexión.')).toBeInTheDocument()
   })
 
-  it('keeps the live counters of the design', async () => {
-    open()
+  it('keeps the live counters of the design for someone signed in, with their codes in the list', async () => {
+    renderApp({ user: NARRATOR, api: { '/estadisticas': stats, '/historias': NEAR } })
+
+    expect(await within(await screen.findByRole('list', { name: 'Historias en esta zona del mapa' })).findByRole('button', { name: /El camino de mulas/ })).toHaveTextContent('HIS-2026-001')
 
     expect(await screen.findByText('Historias publicadas')).toBeInTheDocument()
     expect(await screen.findByText('5 de la comunidad · 2 del proyecto')).toBeInTheDocument()
@@ -333,7 +336,6 @@ describe('Historias publicadas sin ubicación en el mapa', () => {
     openMixed()
 
     const item = await screen.findByRole('button', { name: /Lo que contaba mi abuela/ })
-    expect(item).toHaveTextContent('HIS-2026-040')
     expect(item).toHaveTextContent('Sin ubicación en el mapa')
     expect(item).toHaveTextContent('Narrador anónimo · Antes de 1960') // the label says it once, not twice
     expect(within(listOf()).getAllByRole('listitem')).toHaveLength(4)
@@ -390,7 +392,6 @@ describe('Historias publicadas sin ubicación en el mapa', () => {
     openMixed()
 
     expect(await screen.findByText('Mostrando 4 de 4 historias publicadas')).toBeInTheDocument()
-    expect(screen.getByText('1 sin ubicación en el mapa')).toBeInTheDocument()
     expect(screen.getByText(/Las historias sin ubicación en el mapa salen siempre en la lista/)).toBeInTheDocument()
   })
 

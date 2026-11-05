@@ -47,11 +47,16 @@
   flex: none;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
+  padding: 4px;
   border-radius: 10px;
-  background: var(--rojo);
-  color: #fff;
+  background: #fff; /* the temporary logo is brown: it needs a light ground on the dark header */
+}
+.ag-brand__logo img {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
 }
 .ag-brand__text {
   display: flex;
@@ -337,10 +342,9 @@
   flex: 1 1 260px;
 }
 .ag-header--admin .ag-brand__logo {
-  width: 34px;
-  height: 34px;
+  width: 38px;
+  height: 38px;
   border-radius: 9px;
-  background: var(--verde-azulado);
 }
 .ag-header--admin .ag-brand__name {
   font-size: 15px;
@@ -479,4 +483,330 @@
   border: 1px solid var(--amarillo);
   background: transparent;
   color: inherit;
+}
+
+/* ---------- The portal for someone without an account: no side menu, room to breathe ---------- */
+.ag-app--visitor {
+  --v-ancho: 1200px;
+  --v-margen: 28px;
+}
+.ag-app--visitor .ag-main {
+  padding-bottom: 56px;
+}
+.ag-app--visitor .ag-main > * {
+  width: 100%;
+  max-width: var(--v-ancho);
+  margin-inline: auto;
+}
+.ag-header--visitor {
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  padding-inline: max(var(--v-margen), calc((100% - var(--v-ancho)) / 2));
+}
+.ag-brand--link {
+  color: inherit;
+  text-decoration: none;
+}
+.ag-vnav {
+  display: flex;
+  gap: 4px;
+}
+.ag-vnav__item {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 10px;
+  color: #e7efe9;
+  font-size: 14.5px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.ag-vnav__item:hover {
+  background: var(--cab-chip);
+}
+.ag-vnav__item[aria-current='page'] {
+  box-shadow: inset 0 -2px 0 var(--amarillo);
+  border-radius: 10px 10px 0 0;
+  color: #fff;
+}
+.ag-header--visitor :focus-visible {
+  outline-color: var(--amarillo);
+}
+
+/* On the map page the header lies over the photo of the opening, so there is no band of plain color above it. */
+.ag-header--over-photo {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 2;
+  background: linear-gradient(180deg, rgba(14, 32, 24, 0.82) 0%, rgba(14, 32, 24, 0.72) 70%, rgba(14, 32, 24, 0) 100%);
+}
+.ag-header--over-photo .ag-brand__sub,
+.ag-header--over-photo .ag-vnav__item {
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
+}
+
+/* The opening: the same green as the header, so the two read as one piece */
+.ag-app--visitor .ag-main > .ag-vhero {
+  position: relative;
+  width: auto;
+  max-width: none;
+  margin: -28px calc(var(--v-margen) * -1) 4px;
+  overflow: hidden;
+  /* The green stays underneath: without signal, or until the photo arrives, the words still read. */
+  background:
+    linear-gradient(90deg, rgba(14, 32, 24, 0.9) 0%, rgba(14, 32, 24, 0.82) 45%, rgba(14, 32, 24, 0.18) 78%, rgba(14, 32, 24, 0.05) 100%),
+    url('../../assets/sierra-fincas-1800.webp') center 22% / cover no-repeat,
+    var(--cab-fondo);
+  color: #fff;
+}
+.ag-vhero__inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  max-width: var(--v-ancho);
+  margin-inline: auto;
+  padding: 104px var(--v-margen) 34px; /* the header sits on top of the photo */
+}
+@media (min-width: 1257px) {
+  .ag-vhero__inner {
+    padding-inline: 0;
+  }
+}
+.ag-vhero__places {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--amarillo-claro);
+}
+.ag-vhero h1 {
+  max-width: 17em;
+  font-family: var(--font-title);
+  font-size: clamp(30px, 4vw, 44px);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+.ag-vhero__lead {
+  max-width: 34em;
+  font-size: 17px;
+  line-height: 1.45;
+  color: #dbe7de;
+}
+.ag-vhero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+}
+.ag-vhero__explore {
+  background: #fff;
+  color: var(--verde-oscuro);
+}
+.ag-vhero .ag-btn--outline {
+  border-color: var(--cab-texto-suave);
+  background: transparent;
+  color: #fff;
+}
+.ag-vhero .ag-btn--primary {
+  box-shadow: none;
+}
+.ag-vhero :focus-visible {
+  outline-color: var(--amarillo);
+}
+.ag-vhero__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+  color: #dbe7de;
+}
+.ag-vhero__facts b {
+  font-family: var(--font-title);
+  font-size: 18px;
+  color: #fff;
+}
+
+.ag-vmaphead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 14px;
+  margin-bottom: -8px;
+  scroll-margin-top: 12px;
+}
+.ag-vmaphead h2 {
+  font-family: var(--font-title);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--verde-oscuro);
+}
+.ag-vmaphead p {
+  font-size: 14.5px;
+  color: var(--texto-3);
+}
+
+/* How a story gets here */
+.ag-vhow {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 20px;
+}
+.ag-vhow h2 {
+  font-family: var(--font-title);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--verde-oscuro);
+}
+.ag-vhow__steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 24px 32px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ag-vhow__steps li {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ag-vhow__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--verde-claro);
+  color: var(--verde-oscuro);
+}
+.ag-vhow h3 {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--texto);
+}
+.ag-vhow p {
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--texto-3);
+}
+.ag-vhow__invite {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px 24px;
+  margin-top: 12px;
+  padding: 20px 24px;
+  border-radius: 16px;
+  background: var(--verde-claro);
+}
+.ag-vhow__invite h3 {
+  margin-bottom: 2px;
+  font-family: var(--font-title);
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--verde-oscuro);
+}
+.ag-vhow__invite p {
+  color: var(--texto-2);
+}
+
+.ag-vfooter {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 24px;
+  padding: 20px max(var(--v-margen), calc((100% - var(--v-ancho)) / 2));
+  background: var(--cab-fondo);
+  color: var(--cab-texto-suave);
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+.ag-vfooter a {
+  color: #fff;
+}
+.ag-vfooter__credit {
+  flex-basis: 100%;
+  order: 3;
+  font-size: 12.5px;
+}
+.ag-vfooter__next {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+.ag-vfooter__next a {
+  color: #fff;
+  font-weight: 700;
+}
+.ag-vfooter :focus-visible {
+  outline-color: var(--amarillo);
+}
+
+@media (max-width: 720px) {
+  .ag-app--visitor {
+    --v-margen: 16px;
+  }
+  .ag-app--visitor .ag-main > .ag-vhero {
+    margin-top: -20px;
+  }
+  .ag-header--visitor {
+    gap: 10px;
+    min-height: 60px;
+  }
+  /* On a phone the opening has these same two ways in, with big buttons. */
+  .ag-vnav,
+  .ag-brand__sub--wide {
+    display: none;
+  }
+  .ag-header--visitor .ag-hchip {
+    padding: 6px 10px;
+  }
+  .ag-header--visitor .ag-hchip__label {
+    display: none;
+  }
+  .ag-vhero__inner {
+    padding-block: 84px 26px;
+  }
+  .ag-app--visitor .ag-main > .ag-vhero {
+    background:
+      linear-gradient(180deg, rgba(14, 32, 24, 0.7) 0%, rgba(14, 32, 24, 0.62) 55%, rgba(14, 32, 24, 0.72) 100%),
+      url('../../assets/sierra-fincas-900.webp') center / cover no-repeat,
+      var(--cab-fondo);
+  }
+  .ag-vhero__lead {
+    font-size: 16px;
+  }
+  .ag-vhero__actions {
+    width: 100%;
+  }
+  .ag-vhero__explore {
+    flex: 1 1 100%;
+    height: 48px;
+  }
+  .ag-vhero .ag-btn--primary {
+    flex: 1 1 auto;
+    height: 48px;
+  }
+  .ag-vhero .ag-btn--outline {
+    height: 48px;
+  }
+  .ag-vhow__invite {
+    padding: 18px 16px;
+  }
+  .ag-vhow__invite .ag-btn {
+    width: 100%;
+  }
 }

@@ -1,3 +1,4 @@
+import logo from '../../assets/logo-temporal.png'
 import { Link, Outlet } from 'react-router-dom'
 import AdminLogin from '../auth/AdminLogin.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
@@ -42,7 +43,7 @@ export default function AdminShell() {
       <header className="ag-header ag-header--admin">
         <div className="ag-brand">
           <div className="ag-brand__logo">
-            <Icon name="pin" size={18} strokeWidth={2.2} />
+            <img src={logo} alt="" />
           </div>
           <div className="ag-brand__line">
             <span className="ag-brand__name">{config.portal.nombre}</span>

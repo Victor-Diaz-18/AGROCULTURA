@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { NARRADOR_ANONIMO, NO_LOCATION } from '../../config/constants.js'
 import { SHOW_CODES } from '../../config/flags.js'
+import { useAuth } from '../../context/AuthContext.jsx'
 import { usePortalData } from '../../context/PortalDataContext.jsx'
 import { fetchStory } from '../../services/stories.js'
 import { ApiError, OfflineError } from '../../services/http.js'
@@ -25,6 +26,8 @@ import PhotoGallery from './PhotoGallery.jsx'
  */
 export default function StoryCard({ story, onClose }) {
   const { config } = usePortalData()
+  const { user } = useAuth()
+  const isVisitor = !user
   const navigate = useNavigate()
   // As in the design: the sectors other than Minca are "zona de Minca".
   const sector = placeName(story.sector_id, config.sectores)
@@ -61,7 +64,7 @@ export default function StoryCard({ story, onClose }) {
     <Modal open onClose={onClose} label="Ficha de la historia" maxWidth={920} level={50} top={40}>
       <div className="ag-card-story__head">
         <div className="ag-card-story__id">
-          <span className="ag-card-story__code">{story.codigo}</span>
+          {!isVisitor && <span className="ag-card-story__code">{story.codigo}</span>}
           <OriginBadge origen={story.origen} />
           <span className="ag-card-story__kicker">Ficha de historia{SHOW_CODES ? ' · F8' : ''}</span>
         </div>
@@ -90,6 +93,8 @@ export default function StoryCard({ story, onClose }) {
           {audios.map((medio, index) => (
             <AudioPlayer key={medio.url ?? `audio-${index}`} url={medio.url} seconds={medio.duracion_s ?? 0} />
           ))}
+          {!isVisitor && (
+            <>
           <div className="ag-card-story__future">
             <button type="button" disabled>
               Ver en 360°{SHOW_CODES ? ' · F14' : ''}
@@ -99,6 +104,8 @@ export default function StoryCard({ story, onClose }) {
             </button>
           </div>
           <span className="ag-card-story__note">360° y realidad aumentada quedan para fases futuras.</span>
+            </>
+          )}
         </div>
 
         <div className="ag-card-story__info">

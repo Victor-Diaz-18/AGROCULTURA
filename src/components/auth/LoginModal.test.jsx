@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { screen, within } from '@testing-library/react'
+import { act, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { setSimulatedOffline } from '../../offline/connectivity.js'
 import { ADMIN, NARRATOR, fakeToken } from '../../test/auth.js'
 import { callsTo, renderApp, reply } from '../../test/renderApp.jsx'
 
@@ -162,7 +163,7 @@ describe('Sign-in dialog', () => {
   it('says so when there is no signal, without calling the server', async () => {
     const user = userEvent.setup()
     const { fetchMock } = renderApp()
-    await user.click(screen.getByRole('button', { name: /Simular conexión/ }))
+    act(() => setSimulatedOffline(true))
     const dialog = await openDialog(user)
     await user.type(within(dialog).getByLabelText('Usuario'), '3005550192')
     await user.type(within(dialog).getByLabelText('Contraseña'), '4821')

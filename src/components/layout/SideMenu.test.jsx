@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { screen, within } from '@testing-library/react'
+import { NARRATOR } from '../../test/auth.js'
 import { STATS } from '../../test/fixtures.js'
 import { renderApp } from '../../test/renderApp.jsx'
 
 describe('SideMenu', () => {
   it('groups the entries as in the design', () => {
-    renderApp()
+    renderApp({ user: NARRATOR })
     const nav = screen.getByRole('navigation', { name: 'Secciones' })
 
     for (const title of ['EXPLORAR', 'NARRADOR', 'ADMINISTRACIÓN', 'PRÓXIMAMENTE']) {
@@ -15,14 +16,14 @@ describe('SideMenu', () => {
   })
 
   it('locks the administration entries for people who are not administrators', () => {
-    renderApp()
+    renderApp({ user: NARRATOR })
     const nav = screen.getByRole('navigation', { name: 'Secciones' })
 
     expect(within(nav).getAllByRole('img', { name: 'Solo administradores' })).toHaveLength(3)
   })
 
   it('marks the current page', () => {
-    renderApp({ route: '/proximamente/ra' })
+    renderApp({ user: NARRATOR, route: '/proximamente/ra' })
     const nav = screen.getByRole('navigation', { name: 'Secciones' })
 
     expect(within(nav).getByRole('link', { name: /Avatares en RA/ })).toHaveAttribute('aria-current', 'page')
@@ -30,7 +31,7 @@ describe('SideMenu', () => {
   })
 
   it('shows how many stories are published and how many wait for review', async () => {
-    renderApp({ api: { '/estadisticas': { ...STATS, publicadas: 7, en_revision: 4 } } })
+    renderApp({ user: NARRATOR, api: { '/estadisticas': { ...STATS, publicadas: 7, en_revision: 4 } } })
     const nav = screen.getByRole('navigation', { name: 'Secciones' })
 
     expect(await within(nav).findByText('7')).toBeInTheDocument()
@@ -39,7 +40,7 @@ describe('SideMenu', () => {
   })
 
   it('lists the future phases F14 and F15', () => {
-    renderApp()
+    renderApp({ user: NARRATOR })
     const nav = screen.getByRole('navigation', { name: 'Secciones' })
 
     expect(within(nav).getByRole('link', { name: /Recorridos 360°/ })).toBeInTheDocument()

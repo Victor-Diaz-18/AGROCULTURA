@@ -1,3 +1,4 @@
+import logo from '../../assets/logo-temporal.png'
 import { SHOW_CODES } from '../../config/flags.js'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { usePortalData } from '../../context/PortalDataContext.jsx'
@@ -28,7 +29,7 @@ export default function Header() {
     <header className="ag-header">
       <div className="ag-brand">
         <div className="ag-brand__logo">
-          <Icon name="pin" size={20} strokeWidth={2.2} />
+          <img src={logo} alt="" />
         </div>
         <div className="ag-brand__text">
           <span className="ag-brand__name">{config.portal.nombre}</span>
