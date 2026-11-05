@@ -457,7 +457,7 @@
   font-weight: 800;
 }
 
-/* The map and its list side by side at every size, as on a computer. On a phone each story is a small card that fits the column. */
+/* The map and its list side by side on a computer. On a phone the map takes the whole width and the stories are a strip below it, to slide sideways. */
 .ag-mapcard__body {
   flex-wrap: nowrap;
 }
@@ -468,49 +468,54 @@
   flex: 2 1 0;
 }
 @media (max-width: 720px) {
+  .ag-mapcard__body {
+    flex-direction: column;
+  }
   .ag-storymap {
-    flex: 11 1 0;
-    height: 440px;
+    flex: none;
+    width: 100%;
+    height: 340px;
   }
   .ag-mapcard__list {
-    flex: 9 1 0;
-    max-height: 440px;
+    flex: none;
+    width: 100%;
+    max-height: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-top: 1px solid var(--linea);
+    border-left: 0;
+    scroll-snap-type: x proximity;
+    scroll-padding-left: 12px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .ag-storylist {
+    display: flex;
+    gap: 10px;
+    width: max-content;
+    padding: 12px;
+  }
+  .ag-storylist li {
+    display: flex;
+    flex: none;
+    width: 240px; /* narrower than the screen, so the next card shows at the edge and says the strip slides */
+    scroll-snap-align: start;
   }
   .ag-storyitem {
     flex-direction: column;
-    gap: 6px;
-    padding: 8px;
+    gap: 8px;
+    padding: 10px;
+    border: 1px solid var(--borde);
+    border-radius: 14px;
+  }
+  .ag-storyitem--selected {
+    border-color: var(--verde-oscuro);
+  }
+  .ag-storyitem__text {
+    width: 100%;
   }
   .ag-storyitem__thumb {
     width: 100%;
-    height: 72px;
-  }
-  .ag-storyitem__title {
-    font-size: 13.5px;
-  }
-  .ag-storyitem__meta {
-    font-size: 12px;
-    line-height: 1.3;
-  }
-  .ag-storyitem__noplace {
-    font-size: 11px;
-  }
-  .ag-storyitem__formats span {
-    height: 20px;
-    padding: 0 5px;
-    font-size: 11px;
-  }
-  /* In a narrow map the legend sits small and on two lines, clear of the controls */
-  .ag-storymap__legend {
-    bottom: 22px;
-    left: 6px;
-    flex-direction: column;
-    gap: 2px;
-    padding: 5px 8px;
-    font-size: 11px;
-  }
-  .ag-storymap .leaflet-control-attribution {
-    max-width: 100%;
-    font-size: 9px;
+    height: 120px;
   }
 }
+
