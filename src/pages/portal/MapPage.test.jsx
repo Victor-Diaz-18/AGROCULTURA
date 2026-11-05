@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, screen, waitFor, within } from '@testing-library/react'
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { toggleSimulatedOffline } from '../../offline/connectivity.js'
 import { NARRATOR } from '../../test/auth.js'
@@ -104,12 +104,12 @@ describe('Mapa de historias (F1)', () => {
   })
 
   it('opens the card from a pin and marks that story in the list', async () => {
-    const user = userEvent.setup()
     open()
 
-    await user.click(await screen.findByRole('button', { name: 'Ver La primera cosecha' }))
+    // fireEvent: see the note in StoryMap.test.jsx; the real mouse is tested in e2e/mapa.spec.js.
+    fireEvent.click(await screen.findByRole('button', { name: 'Ver La primera cosecha' }))
 
-    expect(await screen.findByRole('dialog', { name: 'Ficha de la historia' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'La primera cosecha' })).toBeInTheDocument() // the card, once it has arrived
     expect(within(listOf()).getByRole('button', { name: /La primera cosecha/ })).toHaveAttribute('aria-current', 'true')
   })
 

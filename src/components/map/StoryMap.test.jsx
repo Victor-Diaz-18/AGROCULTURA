@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { CONFIG, mapStory, storyWithoutPlace } from '../../test/fixtures.js'
 import { SECTOR_LABELS_MIN_ZOOM, ZOOM_LIMITS } from '../../config/map.js'
@@ -65,10 +65,11 @@ describe('StoryMap (F1)', () => {
   })
 
   it('tells which story was tapped', async () => {
-    const user = userEvent.setup()
     const { onSelect } = setup()
 
-    await user.click(screen.getByRole('button', { name: 'Ver En La Tagua' }))
+    // fireEvent, not user.click: that one first moves a mouse with no coordinates, and Leaflet cannot place the name of the pin.
+    // Moving the mouse and then clicking is tested in a real browser, in e2e/mapa.spec.js.
+    fireEvent.click(screen.getByRole('button', { name: 'Ver En La Tagua' }))
 
     expect(onSelect).toHaveBeenCalledWith(far[1])
   })
@@ -292,5 +293,19 @@ describe('StoryMap: bringing a story into view', () => {
     rerender(<StoryMap stories={close} sectors={sectors} selectedCode="HIS-2026-001" focus={{ code: 'HIS-2026-001', nonce: 1 }} onSelect={vi.fn()} onViewChange={vi.fn()} />)
 
     expect(await screen.findByRole('button', { name: 'Ver Uno' }, { timeout: 3000 })).toBeInTheDocument()
+  })
+
+  it('says the name of a story when the mouse is on its pin, with no click, and hides it when the mouse leaves', async () => {
+    const onSelect = vi.fn()
+    const { container } = render(<StoryMap stories={[mapStory({ titulo: 'En La Tagua' })]} sectors={[]} onSelect={onSelect} />)
+    const pin = await screen.findByRole('button', { name: 'Ver En La Tagua' })
+    expect(container.querySelector('.ag-pin-tip')).toBeNull()
+
+    fireEvent.mouseOver(pin)
+    expect(container.querySelector('.ag-pin-tip')).toHaveTextContent('En La Tagua')
+    expect(onSelect).not.toHaveBeenCalled()
+
+    fireEvent.mouseOut(pin)
+    expect(container.querySelector('.ag-pin-tip')).toBeNull()
   })
 })

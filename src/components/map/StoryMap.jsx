@@ -184,7 +184,7 @@ export default function StoryMap({ stories, sectors, selectedCode, focus, fitKey
     syncSectorLabels(mapRef.current, sectorLabels.current)
   }, [sectors])
 
-  // One pin per story. The tooltip of the selected one is made of text, not HTML.
+  // One pin per story. The tooltips with their names are made of text, not HTML.
   useEffect(() => {
     const cluster = clusterRef.current
     const map = mapRef.current
@@ -226,17 +226,20 @@ export default function StoryMap({ stories, sectors, selectedCode, focus, fitKey
     map.fitBounds(L.latLngBounds(points), { padding: [40, 40], maxZoom: 13 })
   }, [fitKey, stories])
 
-  // The marked story: dark, bigger, with its title above.
+  // The marked story: dark, bigger, with its title always above. The others say their title when the mouse is on them.
   useEffect(() => {
     markers.current.forEach(({ marker, story }, code) => {
       const selected = code === selectedCode
       marker.setIcon(pinIcon(story, selected))
       marker.setZIndexOffset(selected ? 1000 : 0)
       marker.unbindTooltip()
+      const title = document.createElement('span')
+      title.textContent = story.titulo
       if (selected) {
-        const title = document.createElement('span')
-        title.textContent = story.titulo
         marker.bindTooltip(title, { permanent: true, direction: 'top', offset: [0, -52], className: 'ag-pin-tip', opacity: 1 }).openTooltip()
+      } else {
+        // The name shows as soon as the mouse is on the pin, with no click.
+        marker.bindTooltip(title, { direction: 'top', offset: [0, -38], className: 'ag-pin-tip', opacity: 1 })
       }
     })
   }, [selectedCode, stories])
