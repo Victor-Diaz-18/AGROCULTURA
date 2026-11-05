@@ -414,17 +414,6 @@
     flex-wrap: wrap;
     gap: 10px;
   }
-  /* The map fits with room to see the list below it, and the page scrolls: no list scrolling inside the page. */
-  .ag-storymap {
-    flex-basis: 100%;
-    height: 340px;
-  }
-  .ag-mapcard__list {
-    flex-basis: 100%;
-    max-height: none;
-    border-left: 0;
-    border-top: 1px solid var(--linea);
-  }
 }
 
 /* The groups of stories breathe, so the map invites to touch them. */
@@ -466,4 +455,62 @@
 .ag-mapcard__foot a {
   color: var(--verde-azulado);
   font-weight: 800;
+}
+
+/* The map and its list side by side at every size, as on a computer. On a phone each story is a small card that fits the column. */
+.ag-mapcard__body {
+  flex-wrap: nowrap;
+}
+.ag-storymap {
+  flex: 3 1 0;
+}
+.ag-mapcard__list {
+  flex: 2 1 0;
+}
+@media (max-width: 720px) {
+  .ag-storymap {
+    flex: 11 1 0;
+    height: 440px;
+  }
+  .ag-mapcard__list {
+    flex: 9 1 0;
+    max-height: 440px;
+  }
+  .ag-storyitem {
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px;
+  }
+  .ag-storyitem__thumb {
+    width: 100%;
+    height: 72px;
+  }
+  .ag-storyitem__title {
+    font-size: 13.5px;
+  }
+  .ag-storyitem__meta {
+    font-size: 12px;
+    line-height: 1.3;
+  }
+  .ag-storyitem__noplace {
+    font-size: 11px;
+  }
+  .ag-storyitem__formats span {
+    height: 20px;
+    padding: 0 5px;
+    font-size: 11px;
+  }
+  /* In a narrow map the legend sits small and on two lines, clear of the controls */
+  .ag-storymap__legend {
+    bottom: 22px;
+    left: 6px;
+    flex-direction: column;
+    gap: 2px;
+    padding: 5px 8px;
+    font-size: 11px;
+  }
+  .ag-storymap .leaflet-control-attribution {
+    max-width: 100%;
+    font-size: 9px;
+  }
 }

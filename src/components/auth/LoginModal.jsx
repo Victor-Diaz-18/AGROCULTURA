@@ -1,3 +1,4 @@
+import logo from '../../assets/logo-temporal.png'
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../../context/AuthContext.jsx'
 import Field from '../ui/Field.jsx'
@@ -10,7 +11,7 @@ const MIN_USERNAME = 3
 const MIN_PASSWORD = 6
 
 function noticeFor({ creating, rol, destino }) {
-  if (creating) return 'Crea tu cuenta para contar tus historias.'
+  if (creating) return 'Crea tu cuenta para contar tus historias. Solo te toma un minuto.'
   if (destino === '/contar' || destino === '/mis-historias') return 'Para contar una historia necesitas ingresar.'
   if (rol === 'administrador') return 'Esta sección es solo para administradores.'
   return 'Escribe tu usuario y tu contraseña.'
@@ -29,6 +30,7 @@ function LoginForm({ rol, destino, onClose }) {
   const [nuevoUsuario, setNuevoUsuario] = useState('')
   const [nuevaClave, setNuevaClave] = useState('')
   const [verClave, setVerClave] = useState(true) // shown while it is chosen, so it is not mistyped (there is no "forgot it" yet)
+  const [verClaveIngreso, setVerClaveIngreso] = useState(false) // signing in, it starts hidden: someone may be looking
   const { busy, error, clearError, registerNarrator, signIn } = useSignIn()
   const formRef = useRef(null)
   const switched = useRef(false)
@@ -64,7 +66,8 @@ function LoginForm({ rol, destino, onClose }) {
   return (
     <Modal open onClose={onClose} label={creating ? 'Crear cuenta' : 'Ingresar'} maxWidth={488} level={55} top={60} className="ag-login">
       <div className="ag-login__head">
-        <div>
+        <img className="ag-login__logo" src={logo} alt="" />
+        <div className="ag-login__heading">
           <h2 className="ag-login__title">{creating ? 'Crear cuenta' : 'Ingresar'}</h2>
           <span className="ag-login__notice">{noticeFor({ creating, rol, destino })}</span>
         </div>
@@ -132,8 +135,12 @@ function LoginForm({ rol, destino, onClose }) {
               />
             </Field>
             <Field label="Contraseña">
-              <input className="ag-input" type="password" autoComplete="current-password" value={clave} onChange={change(setClave)} />
+              <input className="ag-input" type={verClaveIngreso ? 'text' : 'password'} autoComplete="current-password" value={clave} onChange={change(setClave)} />
             </Field>
+            <label className="ag-showpass">
+              <input type="checkbox" checked={verClaveIngreso} onChange={(event) => setVerClaveIngreso(event.target.checked)} />
+              Mostrar la contraseña
+            </label>
           </>
         )}
 

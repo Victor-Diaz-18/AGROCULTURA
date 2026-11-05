@@ -111,3 +111,18 @@
 .ag-adminlogin .ag-submit {
   background: var(--adm-cab-fondo);
 }
+
+/* Who is asking: the logo beside the title */
+.ag-login__logo {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+.ag-login__heading {
+  flex: 1;
+  min-width: 0;
+}
+.ag-login__head {
+  gap: 12px;
+}

@@ -154,6 +154,21 @@ describe('voice guide (F9)', () => {
       expect(await screen.findByText(/Leyendo en voz alta/)).toBeInTheDocument()
     })
 
+    it('reads the fixed words of another page with the same voice', async () => {
+      const user = userEvent.setup()
+      const { fetchMock } = renderApp({
+        route: '/proximamente/360',
+        api: { '/config': { ...CONFIG, voz_disponible: true }, '/voz/paginas/proximamente-360': { url: 'https://audio.test/360.mp3' } },
+      })
+      await waitFor(() => expect(callsTo(fetchMock, '/config').length).toBeGreaterThan(0))
+      await act(async () => {})
+
+      await user.click(screen.getByRole('button', { name: 'Escuchar' }))
+
+      await waitFor(() => expect(callsTo(fetchMock, '/voz/paginas/proximamente-360')).toHaveLength(1))
+      expect(window.speechSynthesis.speak).not.toHaveBeenCalled()
+    })
+
     it('when the service fails, the voice of the device reads instead', async () => {
       const user = userEvent.setup()
       const { fetchMock } = withVoice({ '/voz/portada': () => reply({ detail: 'x' }, 503) })

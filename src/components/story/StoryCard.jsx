@@ -65,15 +65,13 @@ export default function StoryCard({ story, onClose }) {
   }
 
   return (
-    <Modal open onClose={onClose} label="Ficha de la historia" maxWidth={920} level={50} top={40}>
+    <Modal open onClose={onClose} label="Ficha de la historia" maxWidth={920} level={50} top={40} className="ag-story-modal">
       <div className="ag-card-story__head">
         <div className="ag-card-story__id">
           {!isVisitor && <span className="ag-card-story__code">{story.codigo}</span>}
           <OriginBadge origen={story.origen} />
           <span className="ag-card-story__kicker">Ficha de historia{SHOW_CODES ? ' · F8' : ''}</span>
         </div>
-        {/* Only what is already public may go to the voice service: an answer of the public API has no `estado`. */}
-        <ListenButton title={story.titulo} text={readAloud} piece={story.estado === undefined ? `historias/${story.codigo}` : undefined} size="sm" />
         <button type="button" className="ag-close" aria-label="Cerrar" onClick={onClose}>
           <Icon name="cerrar" size={16} strokeWidth={2.4} />
         </button>
@@ -122,6 +120,8 @@ export default function StoryCard({ story, onClose }) {
 
         <div className="ag-card-story__info">
           <h2 className="ag-card-story__title">{story.titulo}</h2>
+          {/* Only what is already public may go to the voice service: an answer of the public API has no `estado`. */}
+          <ListenButton title={story.titulo} text={readAloud} piece={story.estado === undefined ? `historias/${story.codigo}` : undefined} />
           <dl className="ag-card-story__facts">
             <div>
               <dt>Ocurrió</dt>
@@ -174,16 +174,16 @@ export default function StoryCard({ story, onClose }) {
                 Ver en el mapa
               </button>
               {hasLocation(story) && (
-                <>
-                  <a className="ag-card-story__map" href={googleMapsUrl(story)} target="_blank" rel="noopener noreferrer">
-                    <Icon name="enlace-externo" size={16} />
+                <span className="ag-card-story__maplinks">
+                  <a href={googleMapsUrl(story)} target="_blank" rel="noopener noreferrer">
+                    <Icon name="enlace-externo" size={14} />
                     Abrir en Google Maps
                   </a>
-                  <a className="ag-card-story__map" href={appleMapsUrl(story, story.titulo)} target="_blank" rel="noopener noreferrer">
-                    <Icon name="enlace-externo" size={16} />
+                  <a href={appleMapsUrl(story, story.titulo)} target="_blank" rel="noopener noreferrer">
+                    <Icon name="enlace-externo" size={14} />
                     Abrir en Apple Maps
                   </a>
-                </>
+                </span>
               )}
               {story.aproximada && (
                 <p className="ag-hint ag-card-story__approx">

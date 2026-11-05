@@ -168,3 +168,46 @@ describe('La vista de un visitante sin cuenta', () => {
     expect(screen.getByRole('button', { name: /Simular conexión/ })).toBeInTheDocument()
   })
 })
+
+describe('Las pantallas que un visitante también ve', () => {
+  it('Próximamente habla al público: sin las notas internas del equipo, y con la salida al mapa', async () => {
+    renderApp({ route: '/proximamente/360' })
+
+    expect(await screen.findByText('Estamos trabajando en esto.')).toBeInTheDocument()
+    expect(screen.getByText('Pronto podrás recorrer estos lugares en 360°.')).toBeInTheDocument()
+    expect(within(screen.getByRole('main')).getByRole('link', { name: 'Volver al mapa' })).toHaveAttribute('href', '/')
+    expect(screen.queryByText(/No se construye/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/DEPENDE DE/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Origen:/)).not.toBeInTheDocument()
+  })
+
+  it('la página no encontrada muestra el paisaje y lleva al mapa', async () => {
+    renderApp({ route: '/no-existe' })
+
+    expect(await screen.findByRole('heading', { name: 'No encontramos esta página' })).toBeInTheDocument()
+    expect(document.querySelector('.ag-vscene')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Volver al mapa' })).toBeInTheDocument()
+  })
+
+  it('al ingresar la contraseña empieza oculta, y se puede mostrar', async () => {
+    const user = userEvent.setup()
+    renderApp()
+    await user.click(within(screen.getByRole('banner')).getByRole('button', { name: /Ingresar/ }))
+    const dialog = await screen.findByRole('dialog', { name: 'Ingresar' })
+    const password = within(dialog).getByLabelText('Contraseña')
+    expect(password).toHaveAttribute('type', 'password')
+
+    await user.click(within(dialog).getByRole('checkbox', { name: 'Mostrar la contraseña' }))
+
+    expect(password).toHaveAttribute('type', 'text')
+  })
+
+  it('crear cuenta invita y dice que es rápido', async () => {
+    const user = userEvent.setup()
+    renderApp()
+    await user.click(within(screen.getByRole('banner')).getByRole('button', { name: /Ingresar/ }))
+    await user.click(within(await screen.findByRole('dialog', { name: 'Ingresar' })).getByRole('button', { name: 'Crea una' }))
+
+    expect(await screen.findByText(/Solo te toma un minuto/)).toBeInTheDocument()
+  })
+})

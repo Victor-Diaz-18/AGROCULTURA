@@ -338,3 +338,43 @@
   line-height: 1.4;
   color: var(--texto-3);
 }
+
+/* The two other maps are a way out, not the main thing: small links beside «Ver en el mapa» */
+.ag-card-story__maplinks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 16px;
+}
+.ag-card-story__maplinks a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 32px;
+  color: var(--verde-azulado);
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+/* On a phone the card is long: its top stays in view, so closing it is always one tap away */
+@media (max-width: 720px) {
+  .ag-story-modal.ag-modal {
+    overflow: clip;
+  }
+  .ag-story-modal .ag-card-story__head {
+    position: sticky;
+    top: -40px; /* the margin the dialog leaves above it (`top` in StoryCard): otherwise the text would show over the header */
+    z-index: 2;
+    flex-wrap: nowrap;
+    background: #fff;
+    padding-block: 10px;
+  }
+  .ag-story-modal .ag-card-story__id {
+    flex: 1;
+    min-width: 0;
+  }
+  .ag-story-modal .ag-card-story__refimg img,
+  .ag-story-modal .ag-gallery__main {
+    height: 180px;
+  }
+}

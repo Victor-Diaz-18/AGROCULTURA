@@ -102,7 +102,7 @@ test('sin señal la familia guarda su historia en el dispositivo y sale sola al 
   await page.getByRole('button', { name: /Ingresar/ }).click()
   const dialog = page.getByRole('dialog', { name: 'Ingresar' })
   await dialog.getByLabel('Usuario').fill(FAMILY.usuario.toLowerCase()) // the same user name, whatever the capitals
-  await dialog.getByLabel('Contraseña').fill(FAMILY.clave)
+  await dialog.getByLabel('Contraseña', { exact: true }).fill(FAMILY.clave)
   await dialog.getByRole('button', { name: 'Ingresar' }).click()
   await expect(page.getByText('Rosa Elena Pérez').first()).toBeVisible()
 
@@ -128,7 +128,7 @@ test('lo que quedó a medias se recupera al volver', async ({ page }) => {
   await page.getByRole('button', { name: /Ingresar/ }).click()
   const dialog = page.getByRole('dialog', { name: 'Ingresar' })
   await dialog.getByLabel('Usuario').fill(FAMILY.usuario.toLowerCase()) // the same user name, whatever the capitals
-  await dialog.getByLabel('Contraseña').fill(FAMILY.clave)
+  await dialog.getByLabel('Contraseña', { exact: true }).fill(FAMILY.clave)
   await dialog.getByRole('button', { name: 'Ingresar' }).click()
   await page.getByRole('link', { name: /Contar una historia/ }).first().click()
   await page.getByLabel('O escríbela').fill('Algo que no alcancé a terminar.')
@@ -147,7 +147,7 @@ test('una historia sin ubicación y sin nombre: se cuenta, se aprueba, sale en l
   await page.getByRole('button', { name: /Ingresar/ }).click()
   const dialog = page.getByRole('dialog', { name: 'Ingresar' })
   await dialog.getByLabel('Usuario').fill(FAMILY.usuario)
-  await dialog.getByLabel('Contraseña').fill(FAMILY.clave)
+  await dialog.getByLabel('Contraseña', { exact: true }).fill(FAMILY.clave)
   await dialog.getByRole('button', { name: 'Ingresar' }).click()
   await expect(page.getByText('Rosa Elena Pérez').first()).toBeVisible()
 
@@ -171,7 +171,7 @@ test('una historia sin ubicación y sin nombre: se cuenta, se aprueba, sale en l
   const team = await (await browser.newContext()).newPage()
   await team.goto('/admin')
   await team.getByLabel('Usuario').fill(ADMIN.usuario)
-  await team.getByLabel('Contraseña').fill(ADMIN.clave)
+  await team.getByLabel('Contraseña', { exact: true }).fill(ADMIN.clave)
   await team.getByRole('button', { name: 'Ingresar' }).click()
   await team.getByRole('link', { name: /Revisión/ }).first().click()
   await team.getByRole('row', { name: new RegExp(HIDDEN_TITLE) }).getByRole('button', { name: 'Revisar' }).click()
