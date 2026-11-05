@@ -51,7 +51,7 @@ Un solo repositorio y un solo proyecto de Vercel sirven la interfaz, la API de P
    | `ADMIN_USER` | El usuario del administrador inicial |
    | `ADMIN_PASSWORD` | Su contraseña (10 caracteres o más). Para cambiarla después: se cambia aquí y se vuelve a desplegar |
    | `BLOB_READ_WRITE_TOKEN` | Ya la creó el paso 3 |
-   | `AZURE_SPEECH_KEY` y `AZURE_SPEECH_REGION` | Opcionales: la clave y la región de un recurso **Speech** de Azure (plan gratuito **F0**). Con ellas, la portada, las primeras fincas y las fichas publicadas se leen con la voz del portal; sin ellas, con la voz de cada dispositivo. `AZURE_SPEECH_VOICE` elige la voz (por defecto `es-CO-SalomeNeural`) y `VOZ_MAX_CARACTERES_DIA` limita el gasto diario (15000) |
+   | `AZURE_SPEECH_KEY` y `AZURE_SPEECH_REGION` | Opcionales: la clave y la región de un recurso **Speech** de Azure (plan gratuito **F0**). Con ellas, la portada, las primeras fincas y las fichas publicadas se leen con la voz del portal; sin ellas, con la voz de cada dispositivo. `AZURE_SPEECH_VOICE` elige la voz (por defecto `es-CO-GonzaloNeural`) y `VOZ_MAX_CARACTERES_DIA` limita el gasto diario (15000) |
 | `ALLOW_DEMO_RESET` | `true` solo mientras se prueba con datos de ejemplo (ver la lista siguiente) |
    | `SEED_DEMO_NARRATOR_PHONE` y `SEED_DEMO_NARRATOR_PIN` | Opcionales: una narradora de ejemplo para las demostraciones (entra con ese celular como usuario y ese PIN como contraseña) |
 

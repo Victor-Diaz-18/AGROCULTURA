@@ -127,14 +127,14 @@ def test_what_is_written_goes_escaped_to_azure(monkeypatch):
     settings = Settings(env="test", mongodb_uri=None, mongodb_db="x_test", azure_speech_key="c", azure_speech_region="eastus")
 
     assert azure.synthesize(settings, "Café <b> & más") == b"mp3"
-    assert "es-CO-SalomeNeural" in sent["body"]
+    assert "es-CO-GonzaloNeural" in sent["body"]
     assert "Café &lt;b&gt; &amp; más" in sent["body"]
     assert sent["url"].startswith("https://eastus.tts.speech.microsoft.com/")
 
 
 def test_each_voice_keeps_its_own_audio(client, app, voice):
     client.get("/api/voz/fincas")
-    other = Settings(env="test", mongodb_uri=None, mongodb_db="x_test", azure_speech_key="c", azure_speech_region="r", azure_speech_voice="es-CO-GonzaloNeural")
+    other = Settings(env="test", mongodb_uri=None, mongodb_db="x_test", azure_speech_key="c", azure_speech_region="r", azure_speech_voice="es-CO-SalomeNeural")
     app.dependency_overrides[get_settings] = lambda: other
 
     client.get("/api/voz/fincas")

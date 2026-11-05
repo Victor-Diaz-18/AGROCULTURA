@@ -56,7 +56,7 @@ class Settings:
     # The voice of the portal (Azure Speech). Without the key the app reads with the voice of each device.
     azure_speech_key: str | None = None
     azure_speech_region: str | None = None
-    azure_speech_voice: str = "es-CO-SalomeNeural"  # the same for everybody; each voice keeps its own audios
+    azure_speech_voice: str = "es-CO-GonzaloNeural"  # the same for everybody; each voice keeps its own audios
     voz_max_caracteres_dia: int = 15000  # the free Azure plan gives 500,000 a month: this keeps it from running out
 
     @property
@@ -107,7 +107,7 @@ def load_settings(environ: Mapping[str, str]) -> Settings:
         "allow_demo_reset": _flag(environ, "ALLOW_DEMO_RESET"),
         "azure_speech_key": _text(environ, "AZURE_SPEECH_KEY"),
         "azure_speech_region": _text(environ, "AZURE_SPEECH_REGION"),
-        "azure_speech_voice": _text(environ, "AZURE_SPEECH_VOICE") or "es-CO-SalomeNeural",
+        "azure_speech_voice": _text(environ, "AZURE_SPEECH_VOICE") or "es-CO-GonzaloNeural",
         "voz_max_caracteres_dia": _whole(environ, "VOZ_MAX_CARACTERES_DIA", 15000),
     }
 
