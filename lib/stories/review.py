@@ -9,7 +9,7 @@ from pymongo.database import Database
 from lib.core.clock import utcnow
 from lib.core.errors import ConflictError, InvalidDataError, NotFoundError
 from lib.stories import consent, repository, service
-from lib.stories.constants import COMPROBACIONES, ESTADOS, MOTIVOS_RECHAZO, ORIGENES
+from lib.stories.constants import COMPROBACION_CONSENTIMIENTO, COMPROBACIONES, ESTADOS, MOTIVOS_RECHAZO, ORIGENES
 from lib.stories.schemas import HistoriaProyectoIn
 
 MAX_LIST = 200
@@ -62,21 +62,31 @@ def list_stories(db: Database, *, estado: str | None, origen: str | None, limit:
     return [story_for_admin(story) for story in repository.list_for_admin(db, estado=estado, origen=origen, limit=limit)]
 
 
+def required_checks() -> tuple[str, ...]:
+    """The checks an approval must come with: the three of the design, and the narrator's consent once it is demanded."""
+    return COMPROBACIONES + ((COMPROBACION_CONSENTIMIENTO,) if consent.EXIGIR_CONSENTIMIENTO else ())
+
+
 def _not_decided(db: Database, code: str) -> Exception:
-    """Why a story could not be decided: it does not exist, or somebody already decided it."""
+    """Why a story could not be decided: it does not exist, it has no consent, or somebody already decided it."""
     story = repository.find_by_code(db, code)
     if story is None:
         return NotFoundError("No encontramos esa historia.")
     if story["origen"] != "comunidad":
         return ConflictError("Las historias del proyecto se publican de una vez: no pasan por revisión.")
+    if story["estado"] == "revision" and consent.EXIGIR_CONSENTIMIENTO and not story.get("consentimiento"):
+        return InvalidDataError(
+            "Esta historia se envió antes de que existiera la autorización del narrador, así que no se puede publicar. "
+            "Recházala con el motivo «Falta la autorización»."
+        )
     label = "publicada" if story["estado"] == "publicada" else "rechazada"
     return ConflictError(f"Esa historia ya fue revisada: quedó {label}. Actualiza la lista.")
 
 
 def approve(db: Database, code: str, *, admin: dict, confirmed: list[str], now: datetime | None = None) -> dict:
-    """Publishes a story that was waiting for review, once the three checks are confirmed."""
-    if not set(COMPROBACIONES).issubset(confirmed):
-        raise InvalidDataError("Marca las tres comprobaciones antes de aprobar la historia.")
+    """Publishes a story that was waiting for review, once every check is confirmed (and, if demanded, it has the consent)."""
+    if not set(required_checks()).issubset(confirmed):
+        raise InvalidDataError("Marca todas las comprobaciones antes de aprobar la historia.")
     now = now or utcnow()
     story = repository.decide(
         db,
@@ -88,6 +98,7 @@ def approve(db: Database, code: str, *, admin: dict, confirmed: list[str], now: 
             "revisada_por": admin["_id"],
             "publicada_en": now,
         },
+        needs_consent=consent.EXIGIR_CONSENTIMIENTO,
     )
     if story is None:
         raise _not_decided(db, code)

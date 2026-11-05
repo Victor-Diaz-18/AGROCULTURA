@@ -29,9 +29,11 @@ MOTIVOS_RECHAZO = (
         "texto": "Fuera del tema: no trata de la cultura cafetera",
     },
     {
+        # The id is kept (stories rejected before keep the text they were given). Sectors are only names of reference: this is
+        # about the story having something to do with the coffee zone of Minca and its surroundings, not about a boundary.
         "id": "fuera-del-territorio",
-        "etiqueta": "Fuera del territorio",
-        "texto": "Fuera del territorio: no ocurrió en Minca ni sectores aledaños",
+        "etiqueta": "Sin relación con la zona",
+        "texto": "Sin relación con la zona cafetera de Minca y sus alrededores",
     },
     {
         "id": "contenido-incompleto",
@@ -43,11 +45,20 @@ MOTIVOS_RECHAZO = (
         "etiqueta": "Expone datos de otros",
         "texto": "Expone datos personales de otras personas",
     },
+    {
+        "id": "falta-autorizacion",
+        "etiqueta": "Falta la autorización",
+        "texto": "Falta la autorización del narrador para publicarla",
+    },
 )
 
 # What the administrator confirms before approving a story (the three checks of the design).
 # The server asks for all of them, so an approval cannot skip the review even by calling the API directly.
+# "territorio" is "se relaciona con la zona cafetera de Minca y sus alrededores": the sectors are names of reference, not a
+# boundary, and nothing here decides that a story is "inside" or "outside".
 COMPROBACIONES = ("tema", "territorio", "datos")
+# "El narrador dio su consentimiento": also asked once the authorization is demanded (see consent.EXIGIR_CONSENTIMIENTO).
+COMPROBACION_CONSENTIMIENTO = "consentimiento"
 
 # Who "tells" a story the team uploads when nobody else is named.
 NARRADOR_PROYECTO = "Equipo AGROCULTURA"

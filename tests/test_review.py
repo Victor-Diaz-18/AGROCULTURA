@@ -106,13 +106,13 @@ def test_approving_publishes_the_story_and_changes_the_counters(client, db, admi
 
 
 @pytest.mark.parametrize("checks", [[], ["tema"], ["tema", "territorio"], ["tema", "territorio", "otra"], ["datos", "territorio"]])
-def test_approving_needs_the_three_checks(client, db, admin, checks):
+def test_approving_needs_every_check(client, db, admin, checks):
     code = waiting(db)
 
     response = approve(client, admin, code, checks)
 
     assert response.status_code == 422
-    assert "tres comprobaciones" in response.json()["detail"]
+    assert "todas las comprobaciones" in response.json()["detail"]
     assert db.historias.find_one({"codigo": code})["estado"] == "revision"
 
 

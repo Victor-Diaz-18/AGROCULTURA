@@ -99,17 +99,17 @@ def list_for_admin(db: Database, *, estado: str | None, origen: str | None, limi
     return list(collection(db).find(query).sort(order).limit(limit))
 
 
-def decide(db: Database, code: str, changes: dict) -> dict | None:
+def decide(db: Database, code: str, changes: dict, *, needs_consent: bool = False) -> dict | None:
     """Moves a community story out of review, once. Returns it, or None if it was not waiting for review.
 
     The state is part of the filter, so two administrators deciding at the same moment
-    cannot both succeed: the second one finds nothing in review.
+    cannot both succeed: the second one finds nothing in review. With `needs_consent`, a story that carries no record of its
+    narrator's authorization is not found either (it can be rejected, never published).
     """
-    return collection(db).find_one_and_update(
-        {"codigo": code, "estado": "revision", "origen": "comunidad"},
-        {"$set": changes},
-        return_document=ReturnDocument.AFTER,
-    )
+    query: dict = {"codigo": code, "estado": "revision", "origen": "comunidad"}
+    if needs_consent:
+        query["consentimiento.aceptado_en"] = {"$exists": True}
+    return collection(db).find_one_and_update(query, {"$set": changes}, return_document=ReturnDocument.AFTER)
 
 
 def add_video(db: Database, story_id, medio: dict) -> dict | None:
