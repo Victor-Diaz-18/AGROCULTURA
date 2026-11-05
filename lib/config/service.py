@@ -8,6 +8,7 @@ from lib.catalog import service as catalog
 from lib.config import repository
 from lib.core.errors import InvalidDataError
 from lib.core.settings import Settings
+from lib.stories import consent
 from lib.stories.constants import EPOCAS, MOTIVOS_RECHAZO
 
 
@@ -28,6 +29,7 @@ def get_public_config(db: Database, settings: Settings) -> dict:
         "etiquetas": catalog.list_tag_names(db),
         "epocas": list(EPOCAS),
         "motivos_rechazo": [dict(motivo) for motivo in MOTIVOS_RECHAZO],
+        "consentimiento": consent.public_texts(),
     }
 
 

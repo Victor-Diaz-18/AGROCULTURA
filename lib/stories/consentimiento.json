@@ -1,0 +1,39 @@
+{
+  "version": "2026-11-1",
+  "narrador": {
+    "aproximada_con_nombre": {
+      "texto": "Autorizo que mi historia se publique con mi nombre y con un lugar aproximado en el mapa (a unos 500 metros).",
+      "aviso": "El equipo de AGROCULTURA sí ve tu nombre y el lugar exacto, para poder revisarla."
+    },
+    "aproximada_sin_nombre": {
+      "texto": "Autorizo que mi historia se publique sin mi nombre (saldrá como «Narrador anónimo») y con un lugar aproximado en el mapa (a unos 500 metros).",
+      "aviso": "El equipo de AGROCULTURA sí ve tu nombre y el lugar exacto, para poder revisarla."
+    },
+    "ninguna_con_nombre": {
+      "texto": "Autorizo que mi historia se publique con mi nombre y sin ubicación en el mapa.",
+      "aviso": "El equipo de AGROCULTURA sí ve tu nombre y el lugar de referencia que escribas, para poder revisarla."
+    },
+    "ninguna_sin_nombre": {
+      "texto": "Autorizo que mi historia se publique sin mi nombre (saldrá como «Narrador anónimo») y sin ubicación en el mapa.",
+      "aviso": "El equipo de AGROCULTURA sí ve tu nombre y el lugar de referencia que escribas, para poder revisarla."
+    }
+  },
+  "equipo": {
+    "aproximada_con_nombre": {
+      "texto": "Tengo la autorización de quien cuenta la historia para publicarla con su nombre y con un lugar aproximado en el mapa (a unos 500 metros).",
+      "aviso": ""
+    },
+    "aproximada_sin_nombre": {
+      "texto": "Tengo la autorización de quien cuenta la historia para publicarla sin su nombre (saldrá como «Narrador anónimo») y con un lugar aproximado en el mapa (a unos 500 metros).",
+      "aviso": ""
+    },
+    "ninguna_con_nombre": {
+      "texto": "Tengo la autorización de quien cuenta la historia para publicarla con su nombre y sin ubicación en el mapa.",
+      "aviso": ""
+    },
+    "ninguna_sin_nombre": {
+      "texto": "Tengo la autorización de quien cuenta la historia para publicarla sin su nombre (saldrá como «Narrador anónimo») y sin ubicación en el mapa.",
+      "aviso": ""
+    }
+  }
+}

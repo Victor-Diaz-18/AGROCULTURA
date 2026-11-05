@@ -20,6 +20,23 @@ def test_a_malformed_location_is_rejected_by_the_geospatial_index(db):
         db.historias.insert_one(make_story(ubicacion={"type": "Point", "coordinates": [500, 500]}))
 
 
+def test_stories_without_a_place_have_no_point_and_the_geospatial_index_accepts_them(db):
+    """A story published "sin ubicación" has no `ubicacion` at all: the 2dsphere index must skip it, not reject it."""
+    from tests.factories import make_story
+
+    without_point = {key: value for key, value in make_story().items() if key != "ubicacion"}
+    db.historias.insert_one({**without_point, "ubicacion_modo": "ninguna"})
+    db.historias.insert_one(make_story())
+
+    assert db.historias.count_documents({}) == 2
+    assert db.historias.count_documents({"ubicacion_modo": "ninguna"}) == 1
+    # a geospatial query only ever finds what has a point
+    near = db.historias.count_documents(
+        {"ubicacion": {"$geoWithin": {"$centerSphere": [[-74.118, 11.14], 0.01]}}}
+    )
+    assert near == 1
+
+
 def test_a_draft_identifier_is_unique_per_author_but_stories_without_one_can_repeat_an_author(db):
     from bson import ObjectId
     from pymongo.errors import DuplicateKeyError

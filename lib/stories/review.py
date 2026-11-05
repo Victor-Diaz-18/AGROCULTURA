@@ -8,11 +8,17 @@ from pymongo.database import Database
 
 from lib.core.clock import utcnow
 from lib.core.errors import ConflictError, InvalidDataError, NotFoundError
-from lib.stories import repository, service
+from lib.stories import consent, repository, service
 from lib.stories.constants import COMPROBACIONES, ESTADOS, MOTIVOS_RECHAZO, ORIGENES
 from lib.stories.schemas import HistoriaProyectoIn
 
 MAX_LIST = 200
+
+
+def _consent_for_admin(record: dict | None) -> dict | None:
+    if not record:
+        return None
+    return {**record, "aceptado_en": service._iso(record.get("aceptado_en"))}
 
 
 def story_for_admin(story: dict) -> dict:
@@ -22,8 +28,11 @@ def story_for_admin(story: dict) -> dict:
         "titulo": story["titulo"],
         "texto": story.get("texto", ""),
         "narrador_nombre": story.get("narrador_nombre", ""),
+        "anonima": bool(story.get("anonima")),
         "sector_id": story.get("sector_id"),
         "lugar_nombre": story.get("lugar_nombre"),
+        "finca_nombre": story.get("finca_nombre"),
+        "ubicacion_modo": story.get("ubicacion_modo", "aproximada"),
         "epoca": story["epoca"],
         "etiquetas": story.get("etiquetas", []),
         "formatos": service.formats_of(story),
@@ -37,6 +46,7 @@ def story_for_admin(story: dict) -> dict:
         "motivo_rechazo": story.get("motivo_rechazo"),
         "lat": service._coordinates(story)[0],
         "lon": service._coordinates(story)[1],
+        "consentimiento": _consent_for_admin(story.get("consentimiento")),
         "enviada_en": service._iso(story.get("enviada_en") or story.get("creada_en")),
         "revisada_en": service._iso(story.get("revisada_en")),
         "publicada_en": service._iso(story.get("publicada_en")),
@@ -117,6 +127,7 @@ def create_project_story(
         origen="proyecto",
         estado="publicada",
         narrador_nombre=data.narrador_nombre,
+        consent_from=consent.DE_EQUIPO,
         now=now,
     )
     return story_for_admin(story), created

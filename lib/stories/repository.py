@@ -43,8 +43,17 @@ def count(db: Database, *, estado: str | None = None, origen: str | None = None,
 
 
 def distinct_sector_ids(db: Database, *, estado: str) -> list[str]:
-    """The sectors that have stories (a story in "another place of the zone" has no sector)."""
-    return collection(db).distinct("sector_id", {"estado": estado, "sector_id": {"$ne": None}})
+    """The sectors that have stories on the map. A story in "another place of the zone" has no sector, and a story published
+    without a place keeps its sector (if any) as a reference only the administrators read: it does not count, so the
+    public counter cannot give it away."""
+    return collection(db).distinct(
+        "sector_id", {"estado": estado, "sector_id": {"$ne": None}, "ubicacion_modo": {"$ne": "ninguna"}}
+    )
+
+
+def count_without_location(db: Database, *, estado: str) -> int:
+    """Stories that have no place on the map."""
+    return collection(db).count_documents({"estado": estado, "ubicacion_modo": "ninguna"})
 
 
 COUNTERS = "contadores"

@@ -26,6 +26,19 @@ class MotivoRechazo(BaseModel):
     texto: str
 
 
+class TextoConsentimiento(BaseModel):
+    texto: str
+    aviso: str = ""
+
+
+class Consentimiento(BaseModel):
+    """The texts a narrator (or the team, for its own stories) accepts, one for every combination of name and place."""
+
+    version: str
+    narrador: dict[str, TextoConsentimiento]
+    equipo: dict[str, TextoConsentimiento]
+
+
 class ConfigPublica(BaseModel):
     """Everything the app needs to start, including to fill the story form offline."""
 
@@ -34,3 +47,4 @@ class ConfigPublica(BaseModel):
     etiquetas: list[str]
     epocas: list[str]
     motivos_rechazo: list[MotivoRechazo]
+    consentimiento: Consentimiento

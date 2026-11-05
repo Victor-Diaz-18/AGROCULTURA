@@ -8,6 +8,15 @@ EPOCAS = (
 )
 
 ESTADOS = ("borrador", "revision", "publicada", "rechazada")
+
+# Where a story is shown (the narrator chooses, in "¿Dónde ocurrió?"):
+#  - "aproximada": a point on the map, always rounded to about 500 m for the public (see privacy.py);
+#  - "ninguna": no point and no icon on the map. The story is still published (list, search, card), and the name of the
+#    place the narrator writes as a reference is for the administrators only.
+UBICACION_MODOS = ("aproximada", "ninguna")
+
+# What the public reads in the place of the name of a narrator who asked to be published without it.
+NARRADOR_ANONIMO = "Narrador anónimo"
 ORIGENES = ("comunidad", "proyecto")
 TIPOS_MEDIO = ("foto", "audio", "video")
 
