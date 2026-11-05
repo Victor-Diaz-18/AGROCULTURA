@@ -1,7 +1,7 @@
 """The voice of the portal: audio of public content only, made once and kept.
 
-There is no way to ask for the audio of an arbitrary text. The server knows what can be read (the opening, the first farms, the
-cards of published stories) and writes the words itself, from what the public API already gives. So an unpublished story, a real
+There is no way to ask for the audio of an arbitrary text. The server knows what can be read (the opening, the map, the first farms,
+the fixed words of each page, the cards of published stories) and writes the words itself, from what the public API already gives. So an unpublished story, a real
 name kept private or a place hidden by its narrator can never reach the voice service, and nobody can spend the quota on other things.
 """
 
@@ -16,15 +16,17 @@ from pathlib import Path
 from pymongo.database import Database
 
 from lib.catalog import service as catalog
-from lib.core.errors import TooManyRequestsError
+from lib.core.errors import NotFoundError, TooManyRequestsError
 from lib.core.settings import Settings
 from lib.media.storage import Storage
+from lib.stories import consent
 from lib.stories import service as stories
 from lib.voice import azure
 
 CACHE = "voz_cache"
 USE = "voz_uso"
 _TEXTS = json.loads((Path(__file__).parent / "fincas.json").read_text(encoding="utf-8"))
+_PAGES = json.loads((Path(__file__).parent / "paginas.json").read_text(encoding="utf-8"))
 
 
 def for_speech(text: str) -> str:
@@ -52,6 +54,31 @@ def text_of_opening(db: Database) -> str:
         "Para contar tu historia, toca el botón rojo, Contar una historia.",
     ]
     return " ".join(part for part in parts if part)
+
+
+def text_of_map(db: Database) -> str:
+    """What the map says to someone signed in. The counters are the public ones; the zone in view is left out (it would make a new audio per movement)."""
+    numbers = stories.get_stats(db)
+    parts = [
+        "Mapa de historias. Historias aprobadas de la cultura cafetera, con un lugar aproximado en el mapa cuando su narrador lo permite.",
+        f"Hay {_count(numbers['publicadas'], 'historia publicada', 'historias publicadas')}: "
+        f"{numbers['aprobadas_comunidad']} de la comunidad y {numbers['por_origen']['proyecto']} del proyecto.",
+        f"{numbers['sectores_con_historias']} de {numbers['total_sectores']} sectores tienen historias.",
+        f"Hay {_count(numbers['en_revision'], 'historia esperando revisión', 'historias esperando revisión')}.",
+        "Para contar tu historia, toca el botón rojo, Contar una historia.",
+    ]
+    return " ".join(parts)
+
+
+def text_of_page(page: str) -> str:
+    """The fixed words of a page. Only those: what a person is writing or an unreviewed story never comes through here."""
+    if page.startswith("contar-3-"):
+        words = consent.public_texts()["narrador"].get(page.removeprefix("contar-3-"))
+        if words:
+            return _PAGES["contar-3"].replace("{texto}", words["texto"]).replace("{aviso}", words.get("aviso", "")).replace("  ", " ")
+    elif page != "contar-3" and page in _PAGES:
+        return _PAGES[page]
+    raise NotFoundError("Esa página no tiene voz.")
 
 
 def text_of_farms() -> str:
@@ -104,6 +131,14 @@ def audio_of(db: Database, settings: Settings, storage: Storage, text: str) -> s
 
 def voice_of_opening(db: Database, settings: Settings, storage: Storage) -> str:
     return audio_of(db, settings, storage, text_of_opening(db))
+
+
+def voice_of_map(db: Database, settings: Settings, storage: Storage) -> str:
+    return audio_of(db, settings, storage, text_of_map(db))
+
+
+def voice_of_page(db: Database, settings: Settings, storage: Storage, page: str) -> str:
+    return audio_of(db, settings, storage, text_of_page(page))
 
 
 def voice_of_farms(db: Database, settings: Settings, storage: Storage) -> str:

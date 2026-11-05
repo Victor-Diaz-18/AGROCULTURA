@@ -7,6 +7,7 @@ import DiscardDraftDialog from '../../components/tell/DiscardDraftDialog.jsx'
 import DataTable, { Cell, TableRow } from '../../components/ui/DataTable.jsx'
 import FCode from '../../components/ui/FCode.jsx'
 import Icon from '../../components/ui/Icon.jsx'
+import pages from '../../../lib/voice/paginas.json'
 import ListenButton from '../../components/ui/ListenButton.jsx'
 import SegmentedTabs from '../../components/ui/SegmentedTabs.jsx'
 import StatusChip from '../../components/ui/StatusChip.jsx'
@@ -17,8 +18,6 @@ import { usePortalData } from '../../context/PortalDataContext.jsx'
 import useConnectivity from '../../hooks/useConnectivity.js'
 import { formatDate } from '../../utils/format.js'
 import { placeLine } from '../../utils/geo.js'
-
-const READ_ALOUD = 'Mis historias. Lo que has contado y en qué va cada historia.'
 
 const COLUMNS = ['CÓDIGO', 'HISTORIA', 'SECTOR', 'FORMATOS', 'FECHA', 'ESTADO', 'QUÉ SIGUE']
 
@@ -95,7 +94,7 @@ export default function MyStoriesPage() {
         subtitle="Lo que has contado y en qué va cada historia."
         actions={
           <>
-            <ListenButton title="Mis historias" text={READ_ALOUD} />
+            <ListenButton title="Mis historias" text={pages['mis-historias']} piece="paginas/mis-historias" />
             <Button variant="primary" icon="mas" onClick={() => navigate('/contar')}>
               Contar otra historia
             </Button>

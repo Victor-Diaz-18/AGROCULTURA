@@ -20,6 +20,18 @@ def opening(db: Database = Depends(get_db), settings: Settings = Depends(get_set
     return {"url": service.voice_of_opening(db, settings, storage)}
 
 
+@router.get("/voz/mapa", response_model=Audio)
+def signed_in_map(db: Database = Depends(get_db), settings: Settings = Depends(get_settings), storage: Storage = Depends(get_storage)):
+    """The map as someone signed in hears it (public: it only says the public counters)."""
+    return {"url": service.voice_of_map(db, settings, storage)}
+
+
+@router.get("/voz/paginas/{pagina}", response_model=Audio)
+def page(pagina: str, db: Database = Depends(get_db), settings: Settings = Depends(get_settings), storage: Storage = Depends(get_storage)):
+    """The fixed words of a page, read (public). A page that is not on the list answers 404."""
+    return {"url": service.voice_of_page(db, settings, storage, pagina)}
+
+
 @router.get("/voz/fincas", response_model=Audio)
 def farms(db: Database = Depends(get_db), settings: Settings = Depends(get_settings), storage: Storage = Depends(get_storage)):
     """The first farms and the facts of the zone, read (public)."""

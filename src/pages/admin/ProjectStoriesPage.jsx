@@ -5,6 +5,7 @@ import PageHeader from '../../components/layout/PageHeader.jsx'
 import StoryCard from '../../components/story/StoryCard.jsx'
 import Button from '../../components/ui/Button.jsx'
 import DataTable, { Cell, TableRow } from '../../components/ui/DataTable.jsx'
+import pages from '../../../lib/voice/paginas.json'
 import ListenButton from '../../components/ui/ListenButton.jsx'
 import { usePortalData } from '../../context/PortalDataContext.jsx'
 import useAdminStories from '../../hooks/useAdminStories.js'
@@ -41,7 +42,7 @@ export default function ProjectStoriesPage({ variant = 'portal' }) {
         subtitle={TEXT[variant]}
         actions={
           <>
-            {variant === 'portal' && <ListenButton title="Historias del proyecto" text={`Historias del proyecto. ${TEXT.portal}`} />}
+            {variant === 'portal' && <ListenButton title="Historias del proyecto" text={pages['historias-propias']} piece="paginas/historias-propias" />}
             <Button variant="project" icon="mas" onClick={() => setCreating(true)}>
               Nueva historia del proyecto
             </Button>

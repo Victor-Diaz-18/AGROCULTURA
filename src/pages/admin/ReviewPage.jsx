@@ -4,6 +4,7 @@ import PageHeader from '../../components/layout/PageHeader.jsx'
 import StoryCard from '../../components/story/StoryCard.jsx'
 import DataTable, { Cell, TableRow } from '../../components/ui/DataTable.jsx'
 import FCode from '../../components/ui/FCode.jsx'
+import pages from '../../../lib/voice/paginas.json'
 import ListenButton from '../../components/ui/ListenButton.jsx'
 import SegmentedTabs from '../../components/ui/SegmentedTabs.jsx'
 import { usePortalData } from '../../context/PortalDataContext.jsx'
@@ -59,7 +60,7 @@ export default function ReviewPage({ variant = 'portal' }) {
       <PageHeader
         title="Revisión de historias"
         subtitle={TEXT[variant]}
-        actions={variant === 'portal' ? <ListenButton title="Revisión de historias" text={`Revisión de historias. ${TEXT.portal}`} /> : null}
+        actions={variant === 'portal' ? <ListenButton title="Revisión de historias" text={pages.revision} piece="paginas/revision" /> : null}
       />
 
       {variant === 'portal' && (

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PageHeader from '../../components/layout/PageHeader.jsx'
 import Icon from '../../components/ui/Icon.jsx'
+import pages from '../../../lib/voice/paginas.json'
 import ListenButton from '../../components/ui/ListenButton.jsx'
 import Stepper from '../../components/tell/Stepper.jsx'
 import StepRecord from '../../components/tell/StepRecord.jsx'
@@ -20,18 +21,18 @@ import { clearWorkingDraft, loadWorkingDraft, saveWorkingDraft } from '../../off
 import { ApiError, OfflineError } from '../../services/http.js'
 import { sendStory } from '../../services/stories.js'
 import { formatDuration } from '../../utils/format.js'
-import { acceptConsent, consentText, isAccepted } from '../../utils/consent.js'
+import { acceptConsent, consentText, consentVariant, isAccepted } from '../../utils/consent.js'
 import { newId } from '../../utils/id.js'
 import { placeLine } from '../../utils/geo.js'
 
 const SUBTITLE = 'Con tu voz, una foto, un video o por escrito. Nadie la ve hasta que un administrador la aprueba.'
 
 /** What "Escuchar instrucciones" reads on each step (F9). The last one also reads the authorization, so it can be heard before it is given. */
+/** The words live in lib/voice/paginas.json, because the server reads them aloud too. Never what the person is writing. */
 const READ_ALOUD = {
-  1: 'Contar una historia. Paso 1 de 3: cuéntala. Toca el botón rojo para grabarla con tu voz, o escríbela. Si tienes fotos, puedes agregarlas.',
-  2: 'Contar una historia. Paso 2 de 3: dónde y cuándo. Ponle un título. Elige si en el mapa se ve un lugar aproximado o si va sin ubicación; con lugar aproximado, toca el lugar en el mapa. Elige la época.',
-  3: (consent) =>
-    `Contar una historia. Paso 3 de 3: revisa tu historia. Si quieres, márcala para publicarla sin tu nombre. Para enviarla tienes que marcar la autorización. Dice así: ${consent.texto} ${consent.aviso} Un administrador la revisa antes de publicarla.`,
+  1: pages['contar-1'],
+  2: pages['contar-2'],
+  3: (consent) => pages['contar-3'].replace('{texto}', consent.texto).replace('{aviso}', consent.aviso ?? ''),
 }
 
 export const SEND_MESSAGES = {
@@ -219,6 +220,7 @@ export default function TellPage() {
   const choice = { anonima, modo }
   const accepted = isAccepted(consent, choice)
   const authorization = consentText(choice)
+  const authorizationVariant = consentVariant(choice)
   const placed = modo === 'ninguna' || Boolean(location) // without a place on the map there is no point to wait for
   const canContinue = {
     1: Boolean(audio) || recording || texto.trim().length > 0,
@@ -394,6 +396,7 @@ export default function TellPage() {
           <ListenButton
             title="Contar una historia"
             text={() => (step === 3 ? READ_ALOUD[3](authorization) : READ_ALOUD[step])}
+            piece={`paginas/contar-${step === 3 ? `3-${authorizationVariant}` : step}`}
             label="Escuchar instrucciones"
           />
         }

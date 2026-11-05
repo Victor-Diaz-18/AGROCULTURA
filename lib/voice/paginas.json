@@ -1,0 +1,11 @@
+{
+  "mis-historias": "Mis historias. Lo que has contado y en qué va cada historia.",
+  "contar-1": "Contar una historia. Paso 1 de 3: cuéntala. Toca el botón rojo para grabarla con tu voz, o escríbela. Si tienes fotos, puedes agregarlas.",
+  "contar-2": "Contar una historia. Paso 2 de 3: dónde y cuándo. Ponle un título. Elige si en el mapa se ve un lugar aproximado o si va sin ubicación; con lugar aproximado, toca el lugar en el mapa. Elige la época.",
+  "contar-3": "Contar una historia. Paso 3 de 3: revisa tu historia. Si quieres, márcala para publicarla sin tu nombre. Para enviarla tienes que marcar la autorización. Dice así: {texto} {aviso} Un administrador la revisa antes de publicarla.",
+  "revision": "Revisión de historias. Ninguna historia se publica sin pasar por aquí. Revisa el contenido, márcalo y decide.",
+  "historias-propias": "Historias del proyecto. Las sube el equipo. En el mapa se ven en otro color para distinguirlas de las de la comunidad.",
+  "configuracion": "Configuración del portal. Lo que puede cambiar el administrador.",
+  "proximamente-360": "Recorridos 360°. Estamos trabajando en esto. Pronto podrás recorrer estos lugares en 360°.",
+  "proximamente-ra": "Avatares en realidad aumentada. Estamos trabajando en esto. Pronto podrás conocer a los narradores como avatares en realidad aumentada."
+}

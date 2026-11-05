@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import DemoResetDialog from '../../components/admin/DemoResetDialog.jsx'
 import PageHeader from '../../components/layout/PageHeader.jsx'
 import Icon from '../../components/ui/Icon.jsx'
+import pages from '../../../lib/voice/paginas.json'
 import ListenButton from '../../components/ui/ListenButton.jsx'
 import Switch from '../../components/ui/Switch.jsx'
 import { usePortalData } from '../../context/PortalDataContext.jsx'
@@ -85,7 +86,7 @@ export default function SettingsPage({ variant = 'portal' }) {
       <PageHeader
         title="Configuración del portal"
         subtitle={TEXT[variant]}
-        actions={variant === 'portal' ? <ListenButton title="Configuración del portal" text={`Configuración del portal. ${TEXT.portal}`} /> : null}
+        actions={variant === 'portal' ? <ListenButton title="Configuración del portal" text={pages.configuracion} piece="paginas/configuracion" /> : null}
       />
 
       <div className="ag-settings">

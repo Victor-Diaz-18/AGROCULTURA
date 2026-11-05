@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 
 from lib.core.settings import Settings, get_settings
+from lib.stories import consent
 from lib.voice import azure, service
 from tests.factories import make_story
 
@@ -130,6 +131,34 @@ def test_what_is_written_goes_escaped_to_azure(monkeypatch):
     assert "es-CO-GonzaloNeural" in sent["body"]
     assert "Café &lt;b&gt; &amp; más" in sent["body"]
     assert sent["url"].startswith("https://eastus.tts.speech.microsoft.com/")
+
+
+@pytest.mark.parametrize("page", ["mis-historias", "contar-1", "contar-2", "revision", "historias-propias", "configuracion", "proximamente-360", "proximamente-ra"])
+def test_reads_the_fixed_words_of_each_page(client, voice, page):
+    assert client.get(f"/api/voz/paginas/{page}").status_code == 200
+    assert len(voice) == 1
+
+
+def test_the_last_step_of_telling_reads_the_authorization_the_person_is_shown(client, voice):
+    assert client.get("/api/voz/paginas/contar-3-ninguna_sin_nombre").status_code == 200
+    words = consent.public_texts()["narrador"]["ninguna_sin_nombre"]["texto"]
+    assert service.for_speech(words) in voice[0]
+    assert "{texto}" not in voice[0]
+
+
+@pytest.mark.parametrize("page", ["no-existe", "contar-3", "contar-3-inventada", "..%2Fsecreto"])
+def test_a_page_that_is_not_on_the_list_is_never_read(client, voice, page):
+    assert client.get(f"/api/voz/paginas/{page}").status_code == 404
+    assert voice == []
+
+
+def test_the_map_says_the_public_counters_and_no_story(client, voice, db):
+    db.historias.insert_one(make_story(codigo="HIS-2026-052", estado="revision", titulo="Sin revisar", texto="Texto privado"))
+
+    assert client.get("/api/voz/mapa").status_code == 200
+    assert "1 historia esperando revisión" in voice[0]
+    assert "Sin revisar" not in voice[0]
+    assert "Texto privado" not in voice[0]
 
 
 def test_each_voice_keeps_its_own_audio(client, app, voice):

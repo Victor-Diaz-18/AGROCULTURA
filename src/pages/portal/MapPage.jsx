@@ -121,7 +121,7 @@ export default function MapPage() {
         subtitle="Historias aprobadas de la cultura cafetera, con un lugar aproximado en el mapa cuando su narrador lo permite."
         actions={
           <>
-            <ListenButton title="Mapa de historias" text={readAloud} />
+            <ListenButton title="Mapa de historias" text={readAloud} piece="mapa" />
             <Button variant="primary" icon="mas" onClick={() => navigate('/contar')}>
               Contar una historia
             </Button>
