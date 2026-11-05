@@ -139,7 +139,7 @@ def admin(client, db, settings):
     ensure_admin(db, settings)
     response = client.post(
         "/api/auth/ingreso",
-        json={"rol": "administrador", "usuario": settings.admin_user, "clave": settings.admin_password},
+        json={"usuario": settings.admin_user, "clave": settings.admin_password},
     )
     session = response.json()
     return {**session, "headers": bearer(session["token"])}

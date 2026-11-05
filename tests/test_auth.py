@@ -11,8 +11,9 @@ from tests.conftest import NARRATOR, bearer, register
 LOGIN = "/api/auth/ingreso"
 
 
-def sign_in(client, celular="3005550192", clave="4821", rol="narrador"):
-    return client.post(LOGIN, json={"rol": rol, "usuario": celular, "clave": clave})
+def sign_in(client, celular="3005550192", clave="4821"):
+    """Everybody signs in the same way: a user name and a password (a narrator's are the phone and the PIN)."""
+    return client.post(LOGIN, json={"usuario": celular, "clave": clave})
 
 
 # ---- sign up ---------------------------------------------------------------
@@ -98,16 +99,59 @@ def test_a_wrong_pin_and_an_unknown_phone_get_the_same_answer(client):
     unknown_phone = sign_in(client, celular="3109998877")
 
     assert wrong_pin.status_code == unknown_phone.status_code == 401
-    assert wrong_pin.json()["detail"] == unknown_phone.json()["detail"] == "Celular o clave incorrectos."
+    assert wrong_pin.json()["detail"] == unknown_phone.json()["detail"] == "Usuario o contraseña incorrectos."
 
 
-def test_narrator_credentials_do_not_open_the_administrator_door(client):
+def test_every_failure_says_the_same_whoever_is_signing_in(client, settings, admin):
+    register(client)
+    answers = [
+        sign_in(client, clave="0000"),  # a narrator, wrong PIN
+        sign_in(client, celular="3109998877"),  # a phone nobody registered
+        sign_in(client, celular=settings.admin_user, clave="no-es-esa-clave"),  # the administrator, wrong password
+        sign_in(client, celular="nadie", clave="no-es-esa-clave"),  # a name nobody has
+    ]
+
+    assert {answer.status_code for answer in answers} == {401}
+    assert {answer.json()["detail"] for answer in answers} == {"Usuario o contraseña incorrectos."}
+
+
+def test_the_account_says_what_kind_of_person_it_is_so_nobody_has_to(client, settings, admin):
     register(client)
 
-    response = sign_in(client, rol="administrador")
+    narrator = sign_in(client)
+    administrator = sign_in(client, celular=settings.admin_user, clave=settings.admin_password)
 
-    assert response.status_code == 401
-    assert response.json()["detail"] == "Usuario o contraseña incorrectos."
+    assert narrator.json()["usuario"]["rol"] == "narrador"
+    assert administrator.json()["usuario"]["rol"] == "administrador"
+
+
+def test_the_user_name_is_not_case_sensitive_but_the_password_is(client, settings, admin):
+    ok = sign_in(client, celular=f"  {settings.admin_user.upper()} ", clave=settings.admin_password)
+    wrong_case = sign_in(client, celular=settings.admin_user, clave=settings.admin_password.swapcase())
+
+    assert ok.status_code == 200
+    assert wrong_case.status_code == 401
+
+
+def test_a_role_sent_by_an_older_version_of_the_app_is_ignored(client, settings, admin):
+    register(client)
+
+    # An old screen asking for the administrator door with a narrator's data: it is still a narrator.
+    as_admin = client.post(LOGIN, json={"rol": "administrador", "usuario": "3005550192", "clave": "4821"})
+    # ...and one asking for the narrator door with the administrator's data: it is still the administrator.
+    as_narrator = client.post(
+        LOGIN, json={"rol": "narrador", "usuario": settings.admin_user, "clave": settings.admin_password}
+    )
+
+    assert as_admin.json()["usuario"]["rol"] == "narrador"
+    assert as_narrator.json()["usuario"]["rol"] == "administrador"
+
+
+def test_a_narrator_cannot_become_an_administrator_by_asking(client):
+    register(client)
+    token = sign_in(client).json()["token"]
+
+    assert client.get("/api/admin/historias", headers=bearer(token)).status_code == 403
 
 
 def test_five_failed_attempts_lock_the_phone_even_for_the_right_pin(client):
@@ -253,6 +297,6 @@ def test_a_short_jwt_secret_is_not_accepted(app, settings):
     from lib.core.settings import get_settings
 
     app.dependency_overrides[get_settings] = lambda: replace(settings, jwt_secret="too-short")
-    response = TestClient(app).post(LOGIN, json={"rol": "narrador", "usuario": "3005550192", "clave": "4821"})
+    response = TestClient(app).post(LOGIN, json={"usuario": "3005550192", "clave": "4821"})
 
     assert response.status_code == 503

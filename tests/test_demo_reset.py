@@ -180,7 +180,7 @@ def test_the_demo_narrator_owns_two_of_the_examples_like_ana_does_in_the_design(
     demo = replace(settings, allow_demo_reset=True, demo_narrator_phone="300 111 2233", demo_narrator_pin="2468")
     app.dependency_overrides[get_settings] = lambda: demo
     ensure_demo_narrator(db, demo)
-    session = client.post("/api/auth/ingreso", json={"rol": "narrador", "usuario": "3001112233", "clave": "2468"}).json()
+    session = client.post("/api/auth/ingreso", json={"usuario": "3001112233", "clave": "2468"}).json()
 
     reset(client, admin)
 

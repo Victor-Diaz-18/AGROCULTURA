@@ -12,7 +12,7 @@ describe('pages that need a role', () => {
 
     const dialog = await screen.findByRole('dialog', { name: 'Ingresar' })
     expect(within(dialog).getByText('Para contar una historia necesitas ingresar.')).toBeInTheDocument()
-    expect(within(dialog).getByRole('button', { name: 'Narrador · F2' })).toHaveAttribute('aria-pressed', 'true')
+    expect(within(dialog).getByLabelText('Usuario')).toBeInTheDocument() // the same form for everybody
     expect(await heading('Mapa de historias')).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Contar una historia' })).not.toBeInTheDocument()
   })
@@ -22,7 +22,7 @@ describe('pages that need a role', () => {
 
     const dialog = await screen.findByRole('dialog', { name: 'Ingresar' })
     expect(within(dialog).getByText('Esta sección es solo para administradores.')).toBeInTheDocument()
-    expect(within(dialog).getByRole('button', { name: 'Administrador · F7' })).toHaveAttribute('aria-pressed', 'true')
+    expect(within(dialog).getByLabelText('Usuario')).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Revisión de historias' })).not.toBeInTheDocument()
   })
 
@@ -37,7 +37,7 @@ describe('pages that need a role', () => {
     renderApp({ route: '/revision', user: NARRATOR })
 
     const dialog = await screen.findByRole('dialog', { name: 'Ingresar' })
-    expect(within(dialog).getByRole('button', { name: 'Administrador · F7' })).toHaveAttribute('aria-pressed', 'true')
+    expect(within(dialog).getByText('Esta sección es solo para administradores.')).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Revisión de historias' })).not.toBeInTheDocument()
   })
 
@@ -56,12 +56,28 @@ describe('pages that need a role', () => {
     })
     const dialog = await screen.findByRole('dialog', { name: 'Ingresar' })
 
-    await user.click(within(dialog).getByRole('button', { name: 'Ya tengo cuenta' }))
-    await user.type(within(dialog).getByLabelText('Número de celular'), '3005550192')
-    await user.type(within(dialog).getByLabelText('Tu clave'), '4821')
+    await user.type(within(dialog).getByLabelText('Usuario'), '3005550192')
+    await user.type(within(dialog).getByLabelText('Contraseña'), '4821')
     await user.click(within(dialog).getByRole('button', { name: 'Ingresar' }))
 
     expect(await heading('Contar una historia')).toBeInTheDocument()
+  })
+
+  it('does not send a narrator who signs in from an administrator page to a page that would turn them back', async () => {
+    const user = userEvent.setup()
+    renderApp({
+      route: '/revision',
+      api: { '/auth/ingreso': () => reply({ token: fakeToken(), usuario: NARRATOR }), '/auth/yo': NARRATOR },
+    })
+    const dialog = await screen.findByRole('dialog', { name: 'Ingresar' })
+
+    await user.type(within(dialog).getByLabelText('Usuario'), '3005550192')
+    await user.type(within(dialog).getByLabelText('Contraseña'), '4821')
+    await user.click(within(dialog).getByRole('button', { name: 'Ingresar' }))
+
+    expect(await screen.findByText('Hola, Ana. Ya puedes contar tus historias.')).toBeInTheDocument()
+    expect(await heading('Mapa de historias')).toBeInTheDocument() // stays where it was...
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument() // ...and the dialog does not open again
   })
 
   it('asks for sign-in from the side menu without leaving the current page', async () => {
@@ -81,7 +97,7 @@ describe('pages that need a role', () => {
     await user.click(screen.getByRole('link', { name: /Revisión/ }))
 
     const dialog = screen.getByRole('dialog', { name: 'Ingresar' })
-    expect(within(dialog).getByRole('button', { name: 'Administrador · F7' })).toHaveAttribute('aria-pressed', 'true')
+    expect(within(dialog).getByText('Esta sección es solo para administradores.')).toBeInTheDocument()
   })
 
   it('does not reopen the sign-in dialog when someone signs out on a protected page', async () => {

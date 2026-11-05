@@ -305,7 +305,7 @@ export default function TellPage() {
         await keepOnDevice() // the signal went away while sending
         return
       }
-      if (error instanceof ApiError && error.status === 401) openLogin({ tab: 'narrador' })
+      if (error instanceof ApiError && error.status === 401) openLogin({ rol: 'narrador' })
       setSendError(describeFailure(error))
       setSending(false)
       return

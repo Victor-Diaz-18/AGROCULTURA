@@ -20,7 +20,7 @@ def test_the_administrator_signs_in_with_user_and_password(client, admin, settin
     assert admin["usuario"]["nombre"] == "Administración"
 
     wrong = client.post(
-        "/api/auth/ingreso", json={"rol": "administrador", "usuario": settings.admin_user, "clave": "no-es-esa-clave"}
+        "/api/auth/ingreso", json={"usuario": settings.admin_user, "clave": "no-es-esa-clave"}
     )
     assert wrong.status_code == 401
 
@@ -30,7 +30,7 @@ def test_the_user_name_is_not_case_sensitive(client, db, settings):
 
     response = client.post(
         "/api/auth/ingreso",
-        json={"rol": "administrador", "usuario": f"  {settings.admin_user.upper()} ", "clave": settings.admin_password},
+        json={"usuario": f"  {settings.admin_user.upper()} ", "clave": settings.admin_password},
     )
 
     assert response.status_code == 200
@@ -50,7 +50,7 @@ def test_changing_admin_password_in_the_environment_updates_the_administrator(cl
     assert ensure_admin(db, renewed) == "actualizado"
 
     sign_in = lambda clave: client.post(  # noqa: E731
-        "/api/auth/ingreso", json={"rol": "administrador", "usuario": settings.admin_user, "clave": clave}
+        "/api/auth/ingreso", json={"usuario": settings.admin_user, "clave": clave}
     )
     assert sign_in("otra-clave-mas-larga-9876").status_code == 200
     assert sign_in(settings.admin_password).status_code == 401

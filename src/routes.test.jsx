@@ -47,7 +47,7 @@ describe('/admin (F7)', () => {
     await user.click(screen.getByRole('button', { name: 'Ingresar' }))
 
     expect(await screen.findByRole('heading', { name: 'Resumen' })).toBeInTheDocument()
-    expect(JSON.parse(callsTo(fetchMock, '/auth/ingreso')[0][1].body).rol).toBe('administrador')
+    expect(JSON.parse(callsTo(fetchMock, '/auth/ingreso')[0][1].body)).toEqual({ usuario: 'admin', clave: 'una-clave-larga-1234' })
   })
 
   it('keeps the card and shows the message when the credentials are wrong', async () => {

@@ -28,7 +28,7 @@ esta captura porque se tomó sin acceso a internet; en la plataforma real se ve 
 
 ## El recorrido de una historia
 
-1. **Una familia crea su cuenta** con su nombre, su celular y una clave de 4 a 6 números.
+1. **Una familia crea su cuenta** con su nombre, su celular y una clave de 4 a 6 números (en «Ingresar», con «¿No tienes cuenta? Crea una»). Después entra con el mismo formulario de **usuario y contraseña** que usa todo el mundo: su usuario es su celular y su contraseña es su clave.
 2. **Cuenta su historia** en tres pasos: *Cuéntala* (con su voz, escribiéndola, con fotos y un video), *Dónde y cuándo* (un título, tocar el
    lugar en el mapa o usar el GPS del teléfono, y la época) y *Revisar y enviar*.
 3. **Si no hay señal**, el último botón dice «Guardar en el dispositivo»: la historia queda como borrador en el teléfono y **se envía sola**

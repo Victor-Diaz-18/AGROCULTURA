@@ -19,8 +19,8 @@ def register(body: RegistroIn, db: Database = Depends(get_db), settings: Setting
 
 @router.post("/ingreso", response_model=SesionOut)
 def login(body: IngresoIn, db: Database = Depends(get_db), settings: Settings = Depends(get_settings)):
-    """Signs in a narrator (mobile number + PIN) or an administrator (user + password)."""
-    user = service.login(db, settings, rol=body.rol, usuario=body.usuario, clave=body.clave)
+    """Signs in with a user name and a password. A narrator's are the mobile number and the PIN."""
+    user = service.login(db, settings, usuario=body.usuario, clave=body.clave)
     return service.session_for(user, settings)
 
 

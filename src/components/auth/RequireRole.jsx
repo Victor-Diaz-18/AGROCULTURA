@@ -13,7 +13,7 @@ export default function RequireRole({ role: needed, children }) {
   const allowed = role === needed
 
   useEffect(() => {
-    if (!allowed) openLogin({ tab: needed, destino: pathname })
+    if (!allowed) openLogin({ rol: needed, destino: pathname })
     // Only on arrival: a later sign-out must not reopen the dialog.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])

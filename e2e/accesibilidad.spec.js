@@ -32,12 +32,17 @@ test('el mapa, su ficha y el ingreso', async ({ page }) => {
   await page.getByRole('button', { name: /Ingresar/ }).click()
   await expect(page.getByRole('dialog', { name: 'Ingresar' })).toBeVisible()
   await check(page, 'ingresar')
+
+  await page.getByRole('dialog').getByRole('button', { name: 'Crea una' }).click()
+  await expect(page.getByRole('dialog', { name: 'Crear cuenta' })).toBeVisible()
+  await check(page, 'crear cuenta')
 })
 
 test('el área del narrador: contar en tres pasos y «Mis historias»', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('button', { name: /Ingresar/ }).click()
-  const dialog = page.getByRole('dialog', { name: 'Ingresar' })
+  await page.getByRole('dialog', { name: 'Ingresar' }).getByRole('button', { name: 'Crea una' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Crear cuenta' })
   await dialog.getByLabel('Tu nombre').fill('Luz Marina Ospina')
   await dialog.getByLabel('Número de celular').fill(`3${String(Date.now()).slice(-9)}`)
   await dialog.getByLabel('Elige una clave de 4 a 6 números').fill('7391')

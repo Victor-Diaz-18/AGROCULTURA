@@ -253,3 +253,10 @@ Para que el ingreso sea real y seguro se agregó:
 
 Se quitó el texto «Prototipo: cualquier usuario y contraseña sirven» de las pantallas de administrador, y los
 valores de ejemplo que venían escritos de antemano. El correo no se pide en la versión 1.
+
+**Después de la entrega del bloque 8, el ingreso se simplificó** (a pedido del equipo): las dos filas de pestañas
+(«Narrador / Administrador» y «Primera vez / Ya tengo cuenta») ya no existen. Ahora la ventana «Ingresar» tiene **un solo
+formulario, Usuario y Contraseña, igual para todos**, y debajo «¿No tienes cuenta? Crea una», que lleva al formulario
+de crear cuenta (nombre, celular y clave de 4 a 6 números). Para una familia el usuario es su celular y la contraseña es
+su clave corta, así que las cuentas que ya existían siguen funcionando sin cambios. Los puntos 1 a 3 de arriba quedan
+reemplazados por esto.

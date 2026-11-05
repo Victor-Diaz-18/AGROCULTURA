@@ -13,7 +13,8 @@ const ADMIN = { usuario: 'admin', clave: 'clave-de-prueba-123' }
 async function signUp(page) {
   await page.goto('/')
   await page.getByRole('button', { name: /Ingresar/ }).click()
-  const dialog = page.getByRole('dialog', { name: 'Ingresar' })
+  await page.getByRole('dialog', { name: 'Ingresar' }).getByRole('button', { name: 'Crea una' }).click() // «¿No tienes cuenta? Crea una»
+  const dialog = page.getByRole('dialog', { name: 'Crear cuenta' })
   await dialog.getByLabel('Tu nombre').fill('Rosa Elena Pérez')
   await dialog.getByLabel('Número de celular').fill(PHONE)
   await dialog.getByLabel('Elige una clave de 4 a 6 números').fill('4821')
@@ -96,9 +97,8 @@ test('sin señal la familia guarda su historia en el dispositivo y sale sola al 
   await page.goto('/')
   await page.getByRole('button', { name: /Ingresar/ }).click()
   const dialog = page.getByRole('dialog', { name: 'Ingresar' })
-  await dialog.getByRole('button', { name: 'Ya tengo cuenta' }).click()
-  await dialog.getByLabel('Número de celular').fill(PHONE)
-  await dialog.getByLabel('Tu clave').fill('4821')
+  await dialog.getByLabel('Usuario').fill(PHONE) // a narrator's user is the mobile number...
+  await dialog.getByLabel('Contraseña').fill('4821') // ...and the password is the short PIN
   await dialog.getByRole('button', { name: 'Ingresar' }).click()
   await expect(page.getByText('Rosa Elena Pérez').first()).toBeVisible()
 
@@ -122,9 +122,8 @@ test('lo que quedó a medias se recupera al volver', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('button', { name: /Ingresar/ }).click()
   const dialog = page.getByRole('dialog', { name: 'Ingresar' })
-  await dialog.getByRole('button', { name: 'Ya tengo cuenta' }).click()
-  await dialog.getByLabel('Número de celular').fill(PHONE)
-  await dialog.getByLabel('Tu clave').fill('4821')
+  await dialog.getByLabel('Usuario').fill(PHONE) // a narrator's user is the mobile number...
+  await dialog.getByLabel('Contraseña').fill('4821') // ...and the password is the short PIN
   await dialog.getByRole('button', { name: 'Ingresar' }).click()
   await page.getByRole('link', { name: /Contar una historia/ }).first().click()
   await page.getByLabel('O escríbela').fill('Algo que no alcancé a terminar.')

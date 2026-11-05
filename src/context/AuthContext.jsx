@@ -18,7 +18,7 @@ const AuthContext = createContext({
   user: null,
   role: 'visitante',
   token: null,
-  login: { open: false, tab: 'narrador', destino: null, nonce: 0 },
+  login: { open: false, rol: null, destino: null, nonce: 0 },
   openLogin: () => {},
   closeLogin: () => {},
   startSession: () => {},
@@ -34,7 +34,7 @@ export function AuthProvider({ children }) {
   const { pathname } = useLocation()
   const { online } = useConnectivity()
   const [session, setSession] = useState(() => loadSession())
-  const [login, setLogin] = useState({ open: false, tab: 'narrador', destino: null, nonce: 0 })
+  const [login, setLogin] = useState({ open: false, rol: null, destino: null, nonce: 0 })
 
   const user = session?.user ?? null
   const token = session?.token ?? null
@@ -68,8 +68,9 @@ export function AuthProvider({ children }) {
     setSession({ token: newToken, user: usuario })
   }, [])
 
+  // `rol` is the kind of account the page being opened needs, if any; it only changes what the dialog says.
   const openLogin = useCallback(
-    ({ tab = 'narrador', destino = null } = {}) => setLogin((current) => ({ open: true, tab, destino, nonce: current.nonce + 1 })),
+    ({ rol = null, destino = null } = {}) => setLogin((current) => ({ open: true, rol, destino, nonce: current.nonce + 1 })),
     [],
   )
   const closeLogin = useCallback(() => setLogin((current) => ({ ...current, open: false })), [])

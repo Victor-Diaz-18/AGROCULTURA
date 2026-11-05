@@ -35,13 +35,14 @@ describe('every page passes axe', () => {
     await expectAccessible()
   })
 
-  it('the sign-in dialog, both tabs', async () => {
+  it('the sign-in dialog, in its two forms (sign in and create an account)', async () => {
     const user = userEvent.setup()
     renderApp()
     await user.click(screen.getByRole('button', { name: /Ingresar/ }))
-    await screen.findByRole('dialog')
+    await screen.findByRole('dialog', { name: 'Ingresar' })
     await expectAccessible()
-    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: /Administrador/ }))
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Crea una' }))
+    await screen.findByRole('dialog', { name: 'Crear cuenta' })
     await expectAccessible()
   })
 

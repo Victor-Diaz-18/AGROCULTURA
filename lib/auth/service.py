@@ -21,10 +21,8 @@ from lib.core.settings import Settings
 logger = logging.getLogger(__name__)
 
 MIN_ADMIN_PASSWORD_LENGTH = 10
-_BAD_CREDENTIALS = {
-    ROL_NARRADOR: "Celular o clave incorrectos.",
-    ROL_ADMIN: "Usuario o contraseña incorrectos.",
-}
+# One message for every failure (unknown user, wrong secret, deactivated account), whoever is signing in.
+_BAD_CREDENTIALS = "Usuario o contraseña incorrectos."
 
 
 def public_user(user: dict) -> dict:
@@ -52,41 +50,42 @@ def register_narrator(
     try:
         return repository.insert_user(db, document)
     except DuplicateKeyError:
-        raise ConflictError("Ese celular ya tiene una cuenta. Toca «Ya tengo cuenta» para ingresar.") from None
+        raise ConflictError("Ese celular ya tiene una cuenta. Toca «Ingresa» más abajo para entrar con ella.") from None
 
 
-def _login_name(rol: str, usuario: str) -> str:
-    cleaned = usuario.strip().lower()
-    if rol == ROL_NARRADOR:
-        return normalize_phone(usuario) or cleaned
-    return cleaned
+def _login_name(usuario: str) -> str:
+    """The name an account is stored under.
+
+    A narrator's user name is the mobile number (however it is written) and an administrator's is a plain
+    name that never looks like a phone number (see `ensure_admin`), so the name alone tells which account is meant
+    and nobody has to say what kind of person they are.
+    """
+    return normalize_phone(usuario) or usuario.strip().lower()
 
 
-def login(
-    db: Database, settings: Settings, *, rol: str, usuario: str, clave: str, now: datetime | None = None
-) -> dict:
+def login(db: Database, settings: Settings, *, usuario: str, clave: str, now: datetime | None = None) -> dict:
+    """Signs in a narrator (mobile number + PIN) or an administrator (user name + password)."""
     security.require_secret(settings)
     now = now or utcnow()
     window = timedelta(minutes=settings.login_window_minutes)
-    name = _login_name(rol, usuario)
-    key = f"{rol}:{name}"
+    name = _login_name(usuario)  # the counter is per account, whoever tries
 
-    attempt = repository.register_attempt(db, key, now, window)
+    attempt = repository.register_attempt(db, name, now, window)
     if attempt["intentos"] > settings.login_max_attempts:
         remaining = attempt["desde"] + window - now
         minutes = max(1, math.ceil(remaining.total_seconds() / 60))
         unit = "minuto" if minutes == 1 else "minutos"
         raise TooManyRequestsError(f"Demasiados intentos. Espera {minutes} {unit} e inténtalo de nuevo.")
 
-    user = repository.find_by_usuario(db, name, rol)
+    user = repository.find_by_usuario(db, name)
     active = bool(user and user.get("activo", True))
     # Always run one bcrypt comparison, even for unknown users, so the time taken
     # does not reveal whether the account exists.
     hashed = user["clave_hash"] if active else security.dummy_hash(settings.bcrypt_rounds)
     if not (security.verify_secret(clave, hashed) and active):
-        raise UnauthorizedError(_BAD_CREDENTIALS[rol])
+        raise UnauthorizedError(_BAD_CREDENTIALS)
 
-    repository.clear_attempts(db, key)
+    repository.clear_attempts(db, name)
     repository.mark_login(db, user["_id"], now)
     return user
 

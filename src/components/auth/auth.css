@@ -37,16 +37,16 @@
   background: #fff;
   color: var(--texto);
 }
-.ag-tabs--wide {
-  display: flex;
+.ag-login__switch {
+  margin: 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--borde);
+  text-align: center;
+  font-size: 15px;
+  color: var(--texto-2);
 }
-.ag-tabs--wide .ag-tab {
-  flex: 1;
-  justify-content: center;
-  height: 36px;
-  padding: 0 6px; /* the design used the default button padding here, which keeps "Administrador · F7" on one line */
-  font-size: 14px;
-  font-weight: 800;
+.ag-login__switch .ag-linkbutton {
+  padding: 6px 4px; /* a bigger place to touch than the words alone */
 }
 
 /* ---------- "Acceso del equipo" card (admin panel) ---------- */

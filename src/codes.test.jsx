@@ -55,8 +55,11 @@ describe('without VITE_SHOW_CODES the people who use the platform never see the 
     await user.click(screen.getByRole('button', { name: /Ingresar/ }))
 
     const dialog = await screen.findByRole('dialog', { name: 'Ingresar' })
-    expect(within(dialog).getByRole('button', { name: 'Narrador' })).toBeInTheDocument()
-    expect(within(dialog).getByRole('button', { name: 'Administrador' })).toBeInTheDocument()
+    expect(within(dialog).getByLabelText('Usuario')).toBeInTheDocument()
+    noCodes()
+
+    await user.click(within(dialog).getByRole('button', { name: 'Crea una' }))
+    expect(await screen.findByRole('dialog', { name: 'Crear cuenta' })).toBeInTheDocument()
     noCodes()
   })
 

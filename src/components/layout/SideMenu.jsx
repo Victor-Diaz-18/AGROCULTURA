@@ -18,7 +18,7 @@ export default function SideMenu() {
     onNavigate: (event) => {
       if (role === needed) return
       event.preventDefault()
-      openLogin({ tab: needed, destino: item.to })
+      openLogin({ rol: needed, destino: item.to })
     },
   })
 

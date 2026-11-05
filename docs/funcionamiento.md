@@ -5,13 +5,19 @@ Las decisiones y los cambios respecto al diseño aprobado están en [`plan-v1.md
 
 ## Ingreso y sesiones
 
+- **Un solo ingreso para todos.** El botón «Ingresar» abre una sola ventana con **Usuario** y **Contraseña**, sea quien
+  sea la persona (familia o equipo), y debajo «¿No tienes cuenta? **Crea una**», que cambia al formulario de crear cuenta
+  (con «¿Ya tienes cuenta? Ingresa» para volver). Nadie tiene que decir qué tipo de persona es: **la cuenta lo dice** y
+  el servidor responde con el rol. Para una familia, el *usuario* es su número de celular y la *contraseña* es su clave
+  corta (la ventana lo explica debajo de los campos). Cualquier fallo responde lo mismo, *«Usuario o contraseña
+  incorrectos.»*, para no revelar si la cuenta existe. La tarjeta de `/admin` («Acceso del equipo») usa el mismo ingreso.
 - **Narrador:** se registra con su nombre, su celular (10 dígitos, empieza por 3; se acepta con `+57`, espacios
   o guiones) y una clave corta (**PIN de 4 a 6 números**). No usa correo. El PIN se guarda solo con hash
   (bcrypt), nunca en texto plano. La sesión dura **30 días**, para que pueda usar la aplicación sin señal.
 - **Administrador:** entra con usuario y contraseña. Los define `ADMIN_USER` y `ADMIN_PASSWORD`; la aplicación
   crea al administrador sola en la primera petición. **La variable manda:** para cambiar la contraseña, cambia
   `ADMIN_PASSWORD` en Vercel y haz un Redeploy. La sesión dura **8 horas**.
-- **Intentos fallidos:** como máximo **5 intentos cada 15 minutos por celular (o usuario)**. Pasado el límite
+- **Intentos fallidos:** como máximo **5 intentos cada 15 minutos por cuenta (celular o usuario)**. Pasado el límite
   se bloquea aunque se escriba la clave correcta, hasta que termine la ventana de 15 minutos.
 - **Narradora de ejemplo (opcional):** si defines `SEED_DEMO_NARRATOR_PHONE` y `SEED_DEMO_NARRATOR_PIN`
   (y opcionalmente `SEED_DEMO_NARRATOR_NAME`), se crea una cuenta de ejemplo. Nunca se modifica después.

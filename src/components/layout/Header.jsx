@@ -84,7 +84,7 @@ export default function Header() {
             </button>
           </div>
         ) : (
-          <button type="button" className="ag-login-btn" onClick={openLogin}>
+          <button type="button" className="ag-login-btn" onClick={() => openLogin()}>
             <Icon name="usuario" size={18} />
             <span>Ingresar</span>
             <FCode>F2</FCode>

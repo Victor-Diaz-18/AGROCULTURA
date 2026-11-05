@@ -7,6 +7,9 @@ import { ApiError, OfflineError } from '../../services/http.js'
 
 const firstName = (name) => name.split(' ')[0]
 
+const welcome = (usuario) =>
+  usuario.rol === 'administrador' ? 'Ingresaste como administrador.' : `Hola, ${firstName(usuario.nombre)}. Ya puedes contar tus historias.`
+
 /** Sign-up / sign-in actions shared by the dialog and the admin card. */
 export default function useSignIn() {
   const { startSession, closeLogin, login } = useAuth()
@@ -15,7 +18,7 @@ export default function useSignIn() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
-  async function run(call, welcome) {
+  async function run(call) {
     setBusy(true)
     setError('')
     try {
@@ -23,7 +26,8 @@ export default function useSignIn() {
       startSession(session)
       closeLogin()
       toast(welcome(session.usuario))
-      if (login.destino) navigate(login.destino)
+      // Go where the person was heading, unless that page is for the other kind of account (it would send them back).
+      if (login.destino && (!login.rol || login.rol === session.usuario.rol)) navigate(login.destino)
     } catch (failure) {
       if (failure instanceof OfflineError) setError('Sin señal: necesitas conexión para ingresar.')
       else if (failure instanceof ApiError) setError(failure.message)
@@ -33,15 +37,11 @@ export default function useSignIn() {
     }
   }
 
-  const greet = (usuario) => `Hola, ${firstName(usuario.nombre)}. Ya puedes contar tus historias.`
-
   return {
     busy,
     error,
     clearError: () => setError(''),
-    registerNarrator: (fields) => run(() => registerNarrator(fields), greet),
-    signInNarrator: ({ celular, pin }) => run(() => signIn({ rol: 'narrador', usuario: celular, clave: pin }), greet),
-    signInAdmin: ({ usuario, clave }) =>
-      run(() => signIn({ rol: 'administrador', usuario, clave }), () => 'Ingresaste como administrador.'),
+    registerNarrator: (fields) => run(() => registerNarrator(fields)),
+    signIn: ({ usuario, clave }) => run(() => signIn({ usuario, clave })),
   }
 }

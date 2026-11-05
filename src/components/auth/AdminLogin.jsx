@@ -11,12 +11,12 @@ export default function AdminLogin() {
   const { user } = useAuth()
   const [usuario, setUsuario] = useState('')
   const [clave, setClave] = useState('')
-  const { busy, error, clearError, signInAdmin } = useSignIn()
+  const { busy, error, clearError, signIn } = useSignIn()
   const canSubmit = usuario.trim() !== '' && clave !== ''
 
   const submit = (event) => {
     event.preventDefault()
-    if (canSubmit && !busy) signInAdmin({ usuario: usuario.trim(), clave })
+    if (canSubmit && !busy) signIn({ usuario: usuario.trim(), clave })
   }
   const change = (setter) => (event) => {
     clearError()

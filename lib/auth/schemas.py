@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import re
-from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -40,7 +39,8 @@ class RegistroIn(BaseModel):
 
 
 class IngresoIn(BaseModel):
-    rol: Literal["narrador", "administrador"]
+    """Everybody signs in the same way. A `rol` sent by an older version of the app is ignored: the account says what it is."""
+
     usuario: str = Field(min_length=1, max_length=80)
     clave: str = Field(min_length=1, max_length=72)
 
