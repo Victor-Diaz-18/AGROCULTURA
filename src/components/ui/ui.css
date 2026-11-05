@@ -337,8 +337,9 @@
   z-index: 60;
   display: flex;
   align-items: center;
-  gap: 12px;
-  max-width: min(420px, calc(100vw - 48px));
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  max-width: min(460px, calc(100vw - 48px));
   padding: 10px 10px 10px 16px;
   border-radius: 12px;
   background: var(--texto);
@@ -351,6 +352,26 @@
 .ag-reading__text {
   font-size: 14px;
   line-height: 1.35;
+}
+.ag-reading__voice {
+  display: flex;
+  flex: 1 1 100%;
+  order: 3;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.ag-reading__voice select {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 8px;
+  background: #f3f6f1;
+  color: var(--texto);
+  font-size: 13px;
 }
 .ag-reading__stop {
   flex: none;

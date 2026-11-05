@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { act, screen } from '@testing-library/react'
+import { act, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderApp } from '../test/renderApp.jsx'
-import { splitForSpeech } from './SpeechContext.jsx'
+import { prepareForSpeech, spanishVoices, splitForSpeech } from './SpeechContext.jsx'
 
 describe('voice guide (F9)', () => {
   it('reads the page aloud and shows what is being read', async () => {
@@ -55,6 +55,59 @@ describe('voice guide (F9)', () => {
     expect(utterance.lang).toBe('es-CO')
   })
 
+  it('never picks a machine voice just because it comes first in the list of the device', async () => {
+    const user = userEvent.setup()
+    window.speechSynthesis.getVoices.mockReturnValue([
+      { lang: 'es-MX', name: 'Eddy (Español (México))' },
+      { lang: 'es-MX', name: 'Grandma (Español (México))' },
+      { lang: 'es-ES', name: 'Mónica' },
+      { lang: 'es-MX', name: 'Paulina' },
+    ])
+    renderApp()
+
+    await user.click(screen.getByRole('button', { name: 'Escuchar' }))
+
+    expect(window.speechSynthesis.speak.mock.calls[0][0].voice.name).toBe('Paulina')
+    expect(within(screen.getByLabelText('Voz')).queryByRole('option', { name: /Grandma/ })).not.toBeInTheDocument()
+  })
+
+  it('puts the neural voices first, whatever the country', () => {
+    const names = spanishVoices([
+      { lang: 'es-CO', name: 'Local Colombia' },
+      { lang: 'es-MX', name: 'Paulina' },
+      { lang: 'es-US', name: 'Google español de Estados Unidos' },
+      { lang: 'es-CO', name: 'Microsoft Salome Online (Natural) - Spanish (Colombia)' },
+      { lang: 'en-US', name: 'Samantha' },
+    ]).map((voice) => voice.name)
+
+    expect(names).toEqual(['Microsoft Salome Online (Natural) - Spanish (Colombia)', 'Google español de Estados Unidos', 'Paulina', 'Local Colombia'])
+  })
+
+  it('lets the person choose another voice: it starts over with it, and remembers it', async () => {
+    const user = userEvent.setup()
+    window.speechSynthesis.getVoices.mockReturnValue([
+      { lang: 'es-MX', name: 'Paulina' },
+      { lang: 'es-ES', name: 'Mónica' },
+    ])
+    const { unmount } = renderApp()
+    await user.click(screen.getByRole('button', { name: 'Escuchar' }))
+    window.speechSynthesis.speak.mockClear()
+
+    await user.selectOptions(screen.getByLabelText('Voz'), 'Mónica')
+
+    expect(window.speechSynthesis.speak.mock.calls[0][0].voice.name).toBe('Mónica')
+    unmount()
+    window.speechSynthesis.speak.mockClear()
+    renderApp()
+    await user.click(screen.getByRole('button', { name: 'Escuchar' }))
+    expect(window.speechSynthesis.speak.mock.calls[0][0].voice.name).toBe('Mónica')
+    localStorage.removeItem('agrocultura.voz')
+  })
+
+  it('says numbers and units in words a voice can read', () => {
+    expect(prepareForSpeech('5.775 m de altura, a unos 14 km · 100.000 cafetos «#café»')).toBe('5775 metros de altura, a unos 14 kilómetros, 100000 cafetos café')
+  })
+
   it('tells the person when the device cannot read aloud', async () => {
     const user = userEvent.setup()
     Object.defineProperty(window, 'speechSynthesis', { value: undefined, configurable: true, writable: true })
@@ -93,7 +146,7 @@ describe('voice guide (F9)', () => {
     const chunks = splitForSpeech(Array(12).fill(sentence).join(' '))
 
     expect(chunks.length).toBeGreaterThan(1)
-    expect(chunks.every((chunk) => chunk.length <= 220)).toBe(true)
+    expect(chunks.every((chunk) => chunk.length <= 160)).toBe(true)
     expect(chunks.join(' ')).toBe(Array(12).fill(sentence).join(' '))
   })
 })
