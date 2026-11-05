@@ -57,7 +57,7 @@ test('lo que está en revisión no aparece en el mapa público', async ({ browse
   await expect(visitor.getByText(STORY)).toHaveCount(0)
 })
 
-test('el equipo entra, revisa la historia, hace las tres comprobaciones y la aprueba', async ({ page }) => {
+test('el equipo entra, revisa la historia, hace las cuatro comprobaciones y la aprueba', async ({ page }) => {
   await page.goto('/admin')
   await page.getByLabel('Usuario').fill(ADMIN.usuario)
   await page.getByLabel('Contraseña').fill(ADMIN.clave)
@@ -67,8 +67,8 @@ test('el equipo entra, revisa la historia, hace las tres comprobaciones y la apr
   await page.getByRole('row', { name: new RegExp(STORY) }).getByRole('button', { name: 'Revisar' }).click()
   const dialog = page.getByRole('dialog', { name: 'Revisar historia' })
   await expect(dialog.getByRole('heading', { name: STORY })).toBeVisible()
-  await expect(dialog.getByRole('button', { name: 'Aprobar y publicar' })).toBeDisabled() // not before the three checks
-  for (const check of [/cultura cafetera/, /Minca o en un sector/, /datos personales/]) await dialog.getByRole('checkbox', { name: check }).click()
+  await expect(dialog.getByRole('button', { name: 'Aprobar y publicar' })).toBeDisabled() // not before the four checks
+  for (const check of [/cultura cafetera/, /zona cafetera de Minca y sus alrededores/, /datos personales/, /El narrador dio su consentimiento/]) await dialog.getByRole('checkbox', { name: check }).click()
   await dialog.getByRole('button', { name: 'Aprobar y publicar' }).click()
 
   await expect(page.getByText(/publicada/i).first()).toBeVisible()
@@ -177,7 +177,7 @@ test('una historia sin ubicación y sin nombre: se cuenta, se aprueba, sale en l
   await team.getByRole('row', { name: new RegExp(HIDDEN_TITLE) }).getByRole('button', { name: 'Revisar' }).click()
   const review = team.getByRole('dialog', { name: 'Revisar historia' })
   await expect(review).toContainText(FAMILY.usuario) // the team does see the real name
-  for (const check of [/cultura cafetera/, /Minca o en un sector/, /datos personales/]) await review.getByRole('checkbox', { name: check }).click()
+  for (const check of [/cultura cafetera/, /zona cafetera de Minca y sus alrededores/, /datos personales/, /El narrador dio su consentimiento/]) await review.getByRole('checkbox', { name: check }).click()
   await review.getByRole('button', { name: 'Aprobar y publicar' }).click()
   await expect(team.getByText(/publicada/i).first()).toBeVisible()
 

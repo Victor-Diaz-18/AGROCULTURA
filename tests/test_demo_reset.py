@@ -209,3 +209,21 @@ def test_the_demo_narrator_owns_two_of_the_examples_like_ana_does_in_the_design(
     mine = client.get("/api/historias/mias", headers={"Authorization": f"Bearer {session['token']}"}).json()
     assert sorted(story["codigo"] for story in mine) == ["HIS-2026-007", "HIS-2026-011"]
     assert {story["estado"] for story in mine} == {"publicada", "revision"}
+
+
+def test_the_examples_carry_the_record_of_their_authorization_so_the_ones_in_review_can_be_published(client, db, admin, reset_on):
+    reset(client, admin)
+    waiting_codes = [story["codigo"] for story in db.historias.find({"estado": "revision"})]
+
+    assert len(waiting_codes) == 4
+    for code in waiting_codes:
+        response = client.post(
+            f"/api/admin/historias/{code}/aprobar",
+            headers=admin["headers"],
+            json={"confirmaciones": ["tema", "territorio", "datos", "consentimiento"]},
+        )
+        assert response.status_code == 200, response.text
+    assert db.historias.find_one({"codigo": "HIS-2026-013"})["consentimiento"]["variante"] == "ninguna_con_nombre"
+    assert db.historias.find_one({"codigo": "HIS-2026-014"})["consentimiento"]["variante"] == "aproximada_sin_nombre"
+    assert db.historias.find_one({"codigo": "HIS-2026-004"})["consentimiento"]["de"] == "equipo"
+

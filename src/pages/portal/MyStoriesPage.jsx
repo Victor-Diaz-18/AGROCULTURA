@@ -132,7 +132,10 @@ export default function MyStoriesPage() {
           {rows.map((story) => (
             <TableRow key={story.codigo ?? story.clientId}>
               <Cell className="ag-table__code">{story.codigo ?? 'Por asignar'}</Cell>
-              <Cell className="ag-table__title">{story.titulo}</Cell>
+              <Cell className="ag-table__title">
+                {story.titulo}
+                {story.anonima && <span className="ag-table__reason">Se publicará sin tu nombre</span>}
+              </Cell>
               <Cell>{story.lugar_texto ?? placeLine(story, config.sectores)}</Cell>
               <Cell className="ag-table__muted">{story.formatos.join(' · ')}</Cell>
               <Cell className="ag-table__muted">{formatDate(story.enviada_en)}</Cell>

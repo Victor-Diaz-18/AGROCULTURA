@@ -8,7 +8,7 @@ from lib.stories.privacy import GRID_DEGREES, public_point
 from tests.factories import make_story, story_payload
 
 EXACT = {"lat": 11.08373, "lon": -74.04418}  # somebody's house, say
-APPROVAL = {"confirmaciones": ["tema", "territorio", "datos"]}
+APPROVAL = {"confirmaciones": ["tema", "territorio", "datos", "consentimiento"]}
 
 
 def publish(client, narrator, admin, point, origin="gps", **overrides):

@@ -5,8 +5,10 @@ export const EPOCAS = ['Antes de 1960', '1960 a 1979', '1980 a 1999', '2000 en a
 /** What the administrator confirms before approving a story. The ids are the ones the server asks for. */
 export const COMPROBACIONES = [
   { id: 'tema', texto: 'Trata de la cultura cafetera.' },
-  { id: 'territorio', texto: 'Ocurrió en Minca o en un sector aledaño.' },
+  // The sectors are names of reference, not a boundary: nothing here says a story is "inside" or "outside".
+  { id: 'territorio', texto: 'Se relaciona con la zona cafetera de Minca y sus alrededores.' },
   { id: 'datos', texto: 'No expone datos personales de otras personas.' },
+  { id: 'consentimiento', texto: 'El narrador dio su consentimiento.' },
 ]
 
 /** The most an upload may weigh (a Vercel function takes about 4.5 MB per request): same as lib/media/validation.py. */

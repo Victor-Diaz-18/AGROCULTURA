@@ -43,7 +43,7 @@ export const hasLocation = (story) => story.con_ubicacion !== false && Number.is
  * ("Finca La Esperanza, La Tagua"), or just one of them, or "Otro lugar de la zona". A story with no place says so.
  */
 export function placeLine(story, sectors) {
-  if (story.con_ubicacion === false) return NO_LOCATION
+  if (story.con_ubicacion === false || story.ubicacion_modo === 'ninguna') return NO_LOCATION
   const sector = sectors.find((item) => item.id === story.sector_id)?.nombre
   if (story.lugar_nombre) return sector ? `${story.lugar_nombre}, ${sector}` : story.lugar_nombre
   return sector ?? OTHER_PLACE

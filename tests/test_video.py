@@ -7,7 +7,7 @@ from lib.media.validation import MAX_VIDEO_BYTES
 from tests.conftest import bearer, register
 from tests.factories import story_payload
 
-APPROVAL = {"confirmaciones": ["tema", "territorio", "datos"]}
+APPROVAL = {"confirmaciones": ["tema", "territorio", "datos", "consentimiento"]}
 
 
 def video_for(user, name="video-ab12.mp4", **overrides):

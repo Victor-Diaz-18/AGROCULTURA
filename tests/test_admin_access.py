@@ -59,7 +59,7 @@ def test_the_narrator_cannot_reach_review_even_with_a_story_of_their_own(client,
 
     db.historias.insert_one(make_story(estado="revision", codigo="HIS-2026-050"))
 
-    response = client.post("/api/admin/historias/HIS-2026-050/aprobar", headers=narrator["headers"], json={"confirmaciones": ["tema", "territorio", "datos"]})
+    response = client.post("/api/admin/historias/HIS-2026-050/aprobar", headers=narrator["headers"], json={"confirmaciones": ["tema", "territorio", "datos", "consentimiento"]})
 
     assert response.status_code == 403
     assert db.historias.find_one({"codigo": "HIS-2026-050"})["estado"] == "revision"

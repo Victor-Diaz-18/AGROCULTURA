@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
+from lib.stories import consent
+
 _counter = {"n": 0}
 
 
@@ -26,6 +28,8 @@ def make_story(**overrides) -> dict:
         "motivo_rechazo": None,
         "origen": "comunidad",
         "ejemplo": False,
+        # Every story that is sent carries the record of its authorization (a story without one was sent before it existed).
+        "consentimiento": {"version": consent.VERSION, "variante": "aproximada_con_nombre", "de": "narrador", "aceptado_en": datetime(2026, 9, 1)},
         "creada_en": datetime(2026, 9, 1, tzinfo=timezone.utc),
         "publicada_en": datetime(2026, 9, 2, tzinfo=timezone.utc),
     }
@@ -51,6 +55,7 @@ def story_payload(**overrides) -> dict:
         "etiquetas": ["#café"],
         "ubicacion": {"lat": 11.14, "lon": -74.118},
         "ubicacion_origen": "sector",
+        "consentimiento": {"aceptado": True, "version": consent.VERSION},
         "medios": [],
     }
     payload.update(overrides)

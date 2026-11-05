@@ -16,6 +16,12 @@ export const consentVariant = ({ anonima, modo }) => `${modo}_${anonima ? 'sin' 
 /** { texto, aviso } of the text for those choices. `who`: "narrador" (own story) or "equipo" (a story the team uploads). */
 export const consentText = ({ anonima, modo }, who = 'narrador') => TEXTS[who][consentVariant({ anonima, modo })]
 
+/**
+ * The text a story was published under, from the record kept with it ({ version, variante, de, aceptado_en }); null when the
+ * record is of another version of the words (the team then sees the version and the date, not words that were never shown).
+ */
+export const consentTextOf = (record) => (record && record.version === CONSENT_VERSION ? (TEXTS[record.de]?.[record.variante] ?? null) : null)
+
 /** What is kept in the draft when the box is ticked: the text it was ticked for and when. */
 export const acceptConsent = ({ anonima, modo }, now = new Date()) => ({
   version: CONSENT_VERSION,

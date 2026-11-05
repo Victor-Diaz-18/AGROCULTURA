@@ -2,6 +2,7 @@
 
 from datetime import datetime, timezone
 
+from lib.stories import consent
 from tests.factories import JPEG, WEBM_AUDIO
 
 YEAR = datetime.now(timezone.utc).year
@@ -15,6 +16,7 @@ def body(**overrides):
         "epoca": "1960 a 1979",
         "sector_id": "tijereras",
         "etiquetas": ["#finca"],
+        "consentimiento": {"aceptado": True, "version": consent.VERSION},  # the team has the authorization of whoever tells it
         "medios": [],
     }
     payload.update(overrides)

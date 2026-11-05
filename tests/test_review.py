@@ -4,9 +4,10 @@ from datetime import datetime
 
 import pytest
 
+from lib.stories import consent
 from tests.factories import make_story
 
-ALL_CHECKS = ["tema", "territorio", "datos"]
+ALL_CHECKS = ["tema", "territorio", "datos", "consentimiento"]
 
 
 def waiting(db, code="HIS-2026-020", **overrides):
@@ -158,6 +159,7 @@ def test_rejecting_keeps_the_reason_and_the_narrator_reads_it(client, db, admin,
             "etiquetas": [],
             "ubicacion": {"lat": 11.14, "lon": -74.118},
             "ubicacion_origen": "sector",
+            "consentimiento": {"aceptado": True, "version": consent.VERSION},
             "medios": [],
         },
     ).json()

@@ -1,15 +1,17 @@
 import { useRef, useState } from 'react'
-import { LIMITS, MAX_PLACE_NAME, MAX_UPLOAD_BYTES } from '../../config/constants.js'
+import { LIMITS, MAX_FARM_NAME, MAX_PLACE_NAME, MAX_UPLOAD_BYTES } from '../../config/constants.js'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { usePortalData } from '../../context/PortalDataContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { ApiError, OfflineError } from '../../services/http.js'
 import { publishProjectStory } from '../../services/admin.js'
 import { readAudioDuration } from '../../utils/audio.js'
+import { acceptConsent, consentText, isAccepted } from '../../utils/consent.js'
 import { formatBytes, formatDuration } from '../../utils/format.js'
 import { newId } from '../../utils/id.js'
 import LocationPicker from '../map/LocationPicker.jsx'
 import MediaPicker from '../tell/MediaPicker.jsx'
+import PlaceOptions from '../tell/PlaceOptions.jsx'
 import Chip from '../ui/Chip.jsx'
 import FCode from '../ui/FCode.jsx'
 import Icon from '../ui/Icon.jsx'
@@ -32,7 +34,11 @@ export default function ProjectStoryModal({ onClose, onPublished }) {
   const toast = useToast()
   const [titulo, setTitulo] = useState('')
   const [location, setLocation] = useState(null) // { lat, lon, origen, sectorId }: anywhere in the zone
+  const [modo, setModo] = useState('aproximada') // "aproximada" (a point, about 500 m for the public) or "ninguna" (no place on the map)
   const [lugar, setLugar] = useState('')
+  const [finca, setFinca] = useState('')
+  const [anonima, setAnonima] = useState(false) // publish without the name of whoever tells it
+  const [consent, setConsent] = useState(null) // the team's confirmation that it has the authorization of whoever tells the story
   const [chosenEpoca, setEpoca] = useState('')
   const [narrador, setNarrador] = useState('')
   const [texto, setTexto] = useState('')
@@ -53,7 +59,12 @@ export default function ProjectStoryModal({ onClose, onPublished }) {
   // Neither the place nor the period have a default: a wrong one would go unnoticed.
   const epoca = chosenEpoca
 
-  const valid = titulo.trim().length >= LIMITS.tituloMin && Boolean(location) && Boolean(epoca) && (texto.trim().length > 0 || Boolean(audio))
+  // The authorization is for one text (with or without the name, with a place or none): it only counts while the choices are the same.
+  const choice = { anonima, modo }
+  const accepted = isAccepted(consent, choice)
+  const authorization = consentText(choice, 'equipo')
+  const placed = modo === 'ninguna' || Boolean(location)
+  const valid = titulo.trim().length >= LIMITS.tituloMin && placed && Boolean(epoca) && (texto.trim().length > 0 || Boolean(audio)) && accepted
 
   const photos = {
     photos: fotos,
@@ -93,7 +104,23 @@ export default function ProjectStoryModal({ onClose, onPublished }) {
     setProgress(null)
     try {
       const story = await publishProjectStory(
-        { clientId, titulo: titulo.trim(), texto: texto.trim(), epoca, location, lugar: lugar.trim(), etiquetas, narrador: narrador.trim(), audio, fotos, video },
+        {
+          clientId,
+          titulo: titulo.trim(),
+          texto: texto.trim(),
+          epoca,
+          location,
+          ubicacionModo: modo,
+          lugar: lugar.trim(),
+          finca: finca.trim(),
+          anonima,
+          consentimiento: accepted ? consent : null,
+          etiquetas,
+          narrador: narrador.trim(),
+          audio,
+          fotos,
+          video,
+        },
         { uploaded: uploaded.current, userId: user?.id, onProgress: setProgress },
       )
       const sector = config.sectores.find((item) => item.id === story.sector_id)
@@ -133,25 +160,53 @@ export default function ProjectStoryModal({ onClose, onPublished }) {
         />
       </label>
 
-      <div className="ag-project-modal__field">
-        <span>¿Dónde ocurrió? Toca el lugar en el mapa</span>
-        <LocationPicker sectors={config.sectores} value={location} onChange={setLocation} />
-        <span className="ag-hint">
-          En el mapa público se ve un punto aproximado (a unos 500 metros). El punto exacto solo lo ven los administradores.
-        </span>
-      </div>
+      <fieldset className="ag-project-modal__field ag-tell__where">
+        <legend>¿Dónde ocurrió?</legend>
+        <PlaceOptions modo={modo} onModo={setModo} />
+        {modo === 'aproximada' && (
+          <>
+            <span>Toca el lugar en el mapa</span>
+            <LocationPicker sectors={config.sectores} value={location} onChange={setLocation} />
+            <span className="ag-hint">
+              En el mapa público se ve un punto aproximado (a unos 500 metros). El punto exacto solo lo ven los administradores.
+            </span>
+          </>
+        )}
+      </fieldset>
 
-      <label className="ag-project-modal__field">
-        Nombre del lugar (si quieres)
+      <div className="ag-project-modal__field">
+        <label htmlFor="ag-proyecto-lugar">{modo === 'ninguna' ? 'Nombre de referencia (si quieres)' : 'Nombre del lugar (si quieres)'}</label>
         <input
+          id="ag-proyecto-lugar"
           type="text"
           className="ag-project-modal__input"
           value={lugar}
           maxLength={MAX_PLACE_NAME}
           onChange={(event) => setLugar(event.target.value)}
+          aria-describedby="ag-proyecto-lugar-ayuda"
           placeholder="Por ejemplo: Patio de secado de la finca"
         />
-      </label>
+        <span id="ag-proyecto-lugar-ayuda" className="ag-hint">
+          {modo === 'ninguna' ? 'Solo lo ve el equipo. El público no lo ve.' : 'Se verá en la ficha pública de la historia.'}
+        </span>
+      </div>
+
+      <div className="ag-project-modal__field">
+        <label htmlFor="ag-proyecto-finca">Nombre de la finca o marca (si quieres)</label>
+        <input
+          id="ag-proyecto-finca"
+          type="text"
+          className="ag-project-modal__input"
+          value={finca}
+          maxLength={MAX_FARM_NAME}
+          onChange={(event) => setFinca(event.target.value)}
+          aria-describedby="ag-proyecto-finca-ayuda"
+          placeholder="Por ejemplo: Café Don Aurelio"
+        />
+        <span id="ag-proyecto-finca-ayuda" className="ag-hint">
+          Se verá en la ficha pública de la historia.{modo === 'ninguna' ? ' Piensa si el nombre de la finca dice dónde queda.' : ''}
+        </span>
+      </div>
 
       <label className="ag-project-modal__field">
         Época
@@ -175,6 +230,16 @@ export default function ProjectStoryModal({ onClose, onPublished }) {
           onChange={(event) => setNarrador(event.target.value)}
           placeholder="Equipo AGROCULTURA o nombre de la persona entrevistada"
         />
+      </label>
+
+      <label className="ag-option ag-option--check">
+        <input type="checkbox" checked={anonima} onChange={(event) => setAnonima(event.target.checked)} aria-labelledby="ag-proyecto-anonima-titulo" aria-describedby="ag-proyecto-anonima-ayuda" />
+        <span className="ag-option__body">
+          <b id="ag-proyecto-anonima-titulo">Publicar sin el nombre de quien la cuenta</b>
+          <span id="ag-proyecto-anonima-ayuda" className="ag-option__text">
+            El público lee «Narrador anónimo». El equipo conserva el nombre.
+          </span>
+        </span>
       </label>
 
       <label className="ag-project-modal__field">
@@ -234,6 +299,13 @@ export default function ProjectStoryModal({ onClose, onPublished }) {
             </li>
           </ul>
         )}
+      </div>
+
+      <div className="ag-consent">
+        <label className="ag-consent__box">
+          <input type="checkbox" checked={accepted} onChange={(event) => setConsent(event.target.checked ? acceptConsent(choice) : null)} aria-required="true" />
+          <span className="ag-consent__text">{authorization.texto}</span>
+        </label>
       </div>
 
       {busy && video && progress != null && (

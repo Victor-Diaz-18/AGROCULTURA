@@ -43,7 +43,7 @@ def test_a_story_in_review_is_on_the_map_only_after_it_is_approved(client, db, a
     db.historias.insert_one(make_story(codigo="HIS-2026-010", estado="revision", origen="comunidad", publicada_en=None))
     assert listing(client).json() == []
 
-    client.post("/api/admin/historias/HIS-2026-010/aprobar", headers=admin["headers"], json={"confirmaciones": ["tema", "territorio", "datos"]})
+    client.post("/api/admin/historias/HIS-2026-010/aprobar", headers=admin["headers"], json={"confirmaciones": ["tema", "territorio", "datos", "consentimiento"]})
 
     assert [story["codigo"] for story in listing(client).json()] == ["HIS-2026-010"]
 

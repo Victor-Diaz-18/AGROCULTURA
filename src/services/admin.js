@@ -1,5 +1,5 @@
 import { request } from './http.js'
-import { uploadMedia } from './stories.js'
+import { buildStoryPayload, uploadMedia } from './stories.js'
 import { uploadVideo } from './video.js'
 
 /** Everything here needs an administrator session. */
@@ -12,7 +12,7 @@ const query = (params) => {
 /** Stories with all their content. `estado`: revision | publicada | rechazada. `origen`: comunidad | proyecto. */
 export const fetchAdminStories = ({ estado, origen, limite } = {}) => request(`/admin/historias${query({ estado, origen, limite })}`)
 
-/** Publishes a story that waited for review. `confirmaciones`: the checks marked ("tema", "territorio", "datos"). */
+/** Publishes a story that waited for review. `confirmaciones`: the checks marked ("tema", "territorio", "datos", "consentimiento"). */
 export const approveStory = (codigo, confirmaciones) =>
   request(`/admin/historias/${encodeURIComponent(codigo)}/aprobar`, { method: 'POST', body: { confirmaciones } })
 
@@ -59,22 +59,6 @@ export async function publishProjectStory(draft, { uploaded = new WeakMap(), use
     }
     medios.push(medio)
   }
-  return createProjectStory({
-    client_id: draft.clientId,
-    titulo: draft.titulo,
-    texto: draft.texto,
-    epoca: draft.epoca,
-    ubicacion: { lat: draft.location.lat, lon: draft.location.lon },
-    ubicacion_origen: draft.location.origen,
-    ...(draft.lugar ? { lugar_nombre: draft.lugar } : {}),
-    etiquetas: draft.etiquetas,
-    narrador_nombre: draft.narrador || undefined,
-    medios: medios.map(({ tipo, url, mime, bytes, duracion_s: duracion }) => ({
-      tipo,
-      url,
-      mime,
-      bytes,
-      ...(duracion != null ? { duracion_s: duracion } : {}),
-    })),
-  })
+  // The same options as a narrator's story (place, name, farm, authorization), plus who tells it.
+  return createProjectStory({ ...buildStoryPayload(draft, medios), narrador_nombre: draft.narrador || undefined })
 }

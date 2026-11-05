@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ADMIN, NARRATOR } from '../../test/auth.js'
-import { STATS, adminStory } from '../../test/fixtures.js'
+import { CONFIG, STATS, adminStory } from '../../test/fixtures.js'
 import { callsTo, renderApp, reply } from '../../test/renderApp.jsx'
 
 const FIRST = adminStory({ codigo: 'HIS-2026-008', titulo: 'El beneficiadero comunitario' })
@@ -20,6 +20,7 @@ const WITH_PHOTO = adminStory({
   formatos: ['Foto'],
   medios: [{ tipo: 'foto', url: 'https://s.public.blob.vercel-storage.com/historias/u/f.jpg' }],
 })
+const CONFIG_WITH = (motivos) => ({ ...CONFIG, motivos_rechazo: [...CONFIG.motivos_rechazo, ...motivos] })
 const DONE = (estado, extra = {}) => adminStory({ codigo: 'HIS-2026-012', titulo: 'Un viaje a la ciudad', estado, ...extra })
 
 /** The API of the review screens: a queue that shrinks as stories are decided. */
@@ -48,7 +49,7 @@ const open = (variant = 'admin', api = reviewApi()) =>
   renderApp({ route: variant === 'admin' ? '/admin/revision' : '/revision', user: ADMIN, api })
 
 const tickAll = async (user) => {
-  for (const name of [/cultura cafetera/, /Minca o en un sector/, /datos personales/]) {
+  for (const name of [/cultura cafetera/, /zona cafetera de Minca y sus alrededores/, /datos personales/, /El narrador dio su consentimiento/]) {
     await user.click(screen.getByRole('checkbox', { name }))
   }
 }
@@ -151,7 +152,7 @@ describe('Revisión: la bandeja (F6)', () => {
 })
 
 describe('Revisión: leer la historia', () => {
-  it('opens the story with its text, tags, who tells it and the three checks', async () => {
+  it('opens the story with its text, tags, who tells it and the four checks', async () => {
     const user = userEvent.setup()
     open()
 
@@ -163,7 +164,7 @@ describe('Revisión: leer la historia', () => {
     expect(within(dialog).getByText(/Narra Jorge Iván Castro · La Tagua · 2000 en adelante · enviada 18 oct 2026/)).toBeInTheDocument()
     expect(within(dialog).getByText('#oficios')).toBeInTheDocument()
     expect(within(dialog).getByText('1 de 2')).toBeInTheDocument()
-    expect(within(dialog).getAllByRole('checkbox')).toHaveLength(3)
+    expect(within(dialog).getAllByRole('checkbox')).toHaveLength(4)
   })
 
   it('lets the reviewer hear the audio and see the photos before deciding', async () => {
@@ -195,7 +196,7 @@ describe('Revisión: leer la historia', () => {
 })
 
 describe('Revisión: aprobar', () => {
-  it('cannot approve until the three checks are marked', async () => {
+  it('cannot approve until the four checks are marked', async () => {
     const user = userEvent.setup()
     open()
     await user.click((await screen.findAllByRole('button', { name: 'Revisar' }))[0])
@@ -203,9 +204,10 @@ describe('Revisión: aprobar', () => {
 
     expect(approve).toBeDisabled()
     await user.click(screen.getByRole('checkbox', { name: /cultura cafetera/ }))
-    await user.click(screen.getByRole('checkbox', { name: /Minca o en un sector/ }))
-    expect(approve).toBeDisabled()
+    await user.click(screen.getByRole('checkbox', { name: /zona cafetera de Minca y sus alrededores/ }))
     await user.click(screen.getByRole('checkbox', { name: /datos personales/ }))
+    expect(approve).toBeDisabled() // the narrator's consent is a check too
+    await user.click(screen.getByRole('checkbox', { name: /El narrador dio su consentimiento/ }))
     expect(approve).toBeEnabled()
 
     await user.click(screen.getByRole('checkbox', { name: /datos personales/ }))
@@ -223,7 +225,7 @@ describe('Revisión: aprobar', () => {
 
     expect(await screen.findByText('Publicada: ya aparece en el mapa. Siguiente en la fila.')).toBeInTheDocument()
     const [[, init]] = callsTo(fetchMock, '/admin/historias/HIS-2026-008/aprobar')
-    expect(JSON.parse(init.body)).toEqual({ confirmaciones: ['tema', 'territorio', 'datos'] })
+    expect(JSON.parse(init.body)).toEqual({ confirmaciones: ['tema', 'territorio', 'datos', 'consentimiento'] })
     const dialog = await screen.findByRole('dialog', { name: 'Revisar historia' })
     expect(within(dialog).getByRole('heading', { name: 'Recetas con café de la abuela' })).toBeInTheDocument()
     expect(within(dialog).getByText('1 de 1')).toBeInTheDocument()
@@ -342,3 +344,85 @@ describe('Revisión: rechazar (caso 3)', () => {
     expect(screen.getByRole('combobox', { name: /Motivo del rechazo/ })).toHaveValue('')
   })
 })
+
+describe('Revisión: lo que el público no ve y la autorización', () => {
+  const review = async (story) => {
+    const user = userEvent.setup()
+    open('admin', reviewApi({ queue: [story] }))
+    await user.click((await screen.findAllByRole('button', { name: 'Revisar' }))[0])
+    return { user, dialog: await screen.findByRole('dialog', { name: 'Revisar historia' }) }
+  }
+
+  it('shows the authorization the narrator gave: the text, the version and the day', async () => {
+    const { dialog } = await review(FIRST)
+
+    expect(within(dialog).getByText('AUTORIZACIÓN DEL NARRADOR')).toBeInTheDocument()
+    expect(within(dialog).getByText(/«Autorizo que mi historia se publique con mi nombre y con un lugar aproximado en el mapa/)).toBeInTheDocument()
+    expect(within(dialog).getByText(/Lo aceptó el narrador el 18 oct 2026 \(versión 2026-11-1\)/)).toBeInTheDocument()
+  })
+
+  it('shows the real name of a story that will be published without it, and says how it will read', async () => {
+    const { dialog } = await review(adminStory({ codigo: 'HIS-2026-008', titulo: 'Con reserva', narrador_nombre: 'Jorge Iván Castro', anonima: true, consentimiento: { ...FIRST.consentimiento, variante: 'aproximada_sin_nombre' } }))
+
+    expect(within(dialog).getByText(/Narra Jorge Iván Castro/)).toBeInTheDocument()
+    const private_ = within(dialog).getByRole('list', { name: 'Lo que el público no ve de esta historia' })
+    expect(private_).toHaveTextContent('Se publicará como «Narrador anónimo»: solo el equipo ve el nombre.')
+    expect(within(dialog).getByText(/sin mi nombre \(saldrá como «Narrador anónimo»\)/)).toBeInTheDocument()
+  })
+
+  it('shows the reference of a story that will have no place, which the public never gets', async () => {
+    const { dialog } = await review(
+      adminStory({ codigo: 'HIS-2026-008', titulo: 'Sin lugar', ubicacion_modo: 'ninguna', lat: null, lon: null, sector_id: null, lugar_nombre: 'Finca Los Mangos', consentimiento: { ...FIRST.consentimiento, variante: 'ninguna_con_nombre' } }),
+    )
+
+    expect(within(dialog).getByText(/Sin ubicación en el mapa/, { selector: 'span' })).toBeInTheDocument()
+    expect(within(dialog).getByRole('list', { name: 'Lo que el público no ve de esta historia' })).toHaveTextContent(
+      'Se publicará sin ubicación en el mapa. Referencia (solo para el equipo): Finca Los Mangos.',
+    )
+  })
+
+  it('shows the name of the farm, which the card will show', async () => {
+    const { dialog } = await review(adminStory({ codigo: 'HIS-2026-008', finca_nombre: 'Café Don Aurelio' }))
+
+    expect(within(dialog).getByRole('list', { name: 'Lo que el público no ve de esta historia' })).toHaveTextContent('Finca o marca (se verá en la ficha): Café Don Aurelio.')
+  })
+
+  it('shows no such list for a story with a place, with its name and no farm', async () => {
+    const { dialog } = await review(FIRST)
+
+    expect(within(dialog).queryByRole('list', { name: 'Lo que el público no ve de esta historia' })).not.toBeInTheDocument()
+  })
+
+  it('a story sent before the authorization existed cannot be approved, and says what to do', async () => {
+    const { user, dialog } = await review(adminStory({ codigo: 'HIS-2026-008', titulo: 'Antigua', consentimiento: null }))
+
+    expect(within(dialog).getByRole('alert')).toHaveTextContent('Esta historia se envió antes de que existiera la autorización del narrador')
+    expect(within(dialog).getByRole('alert')).toHaveTextContent('«Falta la autorización»')
+    for (const name of [/cultura cafetera/, /zona cafetera de Minca y sus alrededores/, /datos personales/, /El narrador dio su consentimiento/]) {
+      await user.click(within(dialog).getByRole('checkbox', { name }))
+    }
+    expect(within(dialog).getByRole('checkbox', { name: /El narrador dio su consentimiento/ })).toHaveAttribute('aria-checked', 'false')
+    expect(within(dialog).getByRole('button', { name: 'Aprobar y publicar' })).toBeDisabled()
+  })
+
+  it('such a story can still be rejected, with its own reason', async () => {
+    const user = userEvent.setup()
+    const reasons = [{ id: 'falta-autorizacion', etiqueta: 'Falta la autorización', texto: 'Falta la autorización del narrador para publicarla' }]
+    open('admin', { ...reviewApi({ queue: [adminStory({ codigo: 'HIS-2026-008', titulo: 'Antigua', consentimiento: null })] }), '/config': { ...CONFIG_WITH(reasons) } })
+    await user.click((await screen.findAllByRole('button', { name: 'Revisar' }))[0])
+    const dialog = await screen.findByRole('dialog', { name: 'Revisar historia' })
+
+    await user.click(within(dialog).getByRole('button', { name: 'Rechazar' }))
+    await user.selectOptions(within(dialog).getByRole('combobox', { name: /Motivo del rechazo/ }), 'falta-autorizacion')
+
+    expect(within(dialog).getByRole('button', { name: 'Confirmar rechazo' })).toBeEnabled()
+  })
+
+  it('the checks never say a story is inside or outside a sector', async () => {
+    const { dialog } = await review(FIRST)
+
+    expect(within(dialog).queryByText(/aledaño|dentro de|fuera de/i)).not.toBeInTheDocument()
+    expect(within(dialog).getByText('Se relaciona con la zona cafetera de Minca y sus alrededores.')).toBeInTheDocument()
+  })
+})
+

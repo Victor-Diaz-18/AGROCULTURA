@@ -29,6 +29,8 @@ function draftAsStory(item) {
     titulo: item.titulo,
     sector_id: item.location?.sectorId ?? null,
     lugar_nombre: item.lugar || null,
+    ubicacion_modo: item.ubicacionModo ?? 'aproximada',
+    anonima: Boolean(item.anonima),
     lugar_texto: item.lugarTexto ?? null, // the place as the narrator saw it, for a phone that has not loaded the sectors
     epoca: item.epoca,
     formatos: item.formatos,

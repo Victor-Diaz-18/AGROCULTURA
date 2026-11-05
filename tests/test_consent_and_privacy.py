@@ -10,7 +10,7 @@ from lib.stories import consent
 from tests.factories import make_story, story_payload
 
 AUTHORIZATION = {"aceptado": True, "version": consent.VERSION}
-APPROVAL = {"confirmaciones": ["tema", "territorio", "datos"]}
+APPROVAL = {"confirmaciones": ["tema", "territorio", "datos", "consentimiento"]}
 
 REAL_NAME = "Ana Beltrán"  # the narrator of the `narrator` fixture
 EXACT = {"lat": 11.08373, "lon": -74.04418}  # somebody's house, say
@@ -109,32 +109,31 @@ def test_a_consent_for_an_older_text_is_refused_so_the_person_sees_the_new_one(c
     assert "cambió" in response.json()["detail"]
 
 
-def test_while_it_is_not_demanded_a_story_without_consent_still_goes_in_without_a_record(client, db, narrator):
-    response = client.post("/api/historias", headers=narrator["headers"], json=story_payload())
+def test_while_it_is_not_demanded_a_story_without_consent_still_goes_in_without_a_record(client, db, narrator, monkeypatch):
+    monkeypatch.setattr(consent, "EXIGIR_CONSENTIMIENTO", False)  # the switch exists, and it is on
+
+    response = client.post("/api/historias", headers=narrator["headers"], json=story_payload(consentimiento=None))
 
     assert response.status_code == 201
     assert db.historias.find_one({"codigo": response.json()["codigo"]})["consentimiento"] is None
 
 
-def test_when_it_is_demanded_a_story_without_consent_cannot_be_sent(client, db, narrator, monkeypatch):
-    monkeypatch.setattr(consent, "EXIGIR_CONSENTIMIENTO", True)
+def test_a_story_without_consent_cannot_be_sent(client, db, narrator):
+    assert consent.EXIGIR_CONSENTIMIENTO is True  # demanded by default
 
-    response = client.post("/api/historias", headers=narrator["headers"], json=story_payload())
+    response = client.post("/api/historias", headers=narrator["headers"], json=story_payload(consentimiento=None))
 
     assert response.status_code == 422
     assert response.json()["detail"] == "Para enviar tu historia debes autorizar que se publique."
     assert db.historias.count_documents({}) == 0
+    assert client.post("/api/historias", headers=narrator["headers"], json={k: v for k, v in story_payload().items() if k != "consentimiento"}).status_code == 422  # nor with the field missing
 
 
-def test_when_it_is_demanded_a_story_with_consent_goes_in(client, narrator, monkeypatch):
-    monkeypatch.setattr(consent, "EXIGIR_CONSENTIMIENTO", True)
-
+def test_a_story_with_consent_goes_in(client, narrator):
     assert send(client, narrator).status_code == 201
 
 
-def test_when_it_is_demanded_the_teams_stories_need_the_authorization_of_whoever_tells_them(client, db, admin, monkeypatch):
-    monkeypatch.setattr(consent, "EXIGIR_CONSENTIMIENTO", True)
-
+def test_the_teams_stories_need_the_authorization_of_whoever_tells_them(client, db, admin):
     refused = team_story(client, admin, consentimiento=None)
     accepted = team_story(client, admin)
 

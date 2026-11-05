@@ -18,7 +18,7 @@ from lib.catalog import repository as catalog
 from lib.config import repository as config
 from lib.core.settings import Settings
 from lib.media.storage import Storage
-from lib.stories import repository, service
+from lib.stories import consent, repository, service
 from lib.stories.constants import MOTIVOS_RECHAZO, NARRADOR_ANONIMO, NARRADOR_PROYECTO
 
 logger = logging.getLogger(__name__)
@@ -113,7 +113,7 @@ def build_examples(db: Database, settings: Settings) -> list[dict]:
             "ubicacion_modo": "aproximada",
             "ubicacion_origen": "sector",
             "anonima": False,
-            "consentimiento": None,  # example data: nobody gave a consent
+            "consentimiento": None,  # filled below, once the options of the example are known
             "medios": medios,
             "autor_id": owner["_id"] if (mine and owner) else None,
             "narrador_nombre": name,
@@ -128,6 +128,14 @@ def build_examples(db: Database, settings: Settings) -> list[dict]:
             "publicada_en": when if state == "publicada" else None,
         }
         document.update(options)
+        # Like every story that comes in through the app: the example carries the record of its authorization (otherwise the team
+        # could not publish the ones that wait for review). The team's own stories say it was the team who had it.
+        document["consentimiento"] = {
+            "version": consent.VERSION,
+            "variante": consent.variant(anonima=document["anonima"], modo=document["ubicacion_modo"]),
+            "de": consent.DE_EQUIPO if origin == "proyecto" else consent.DE_NARRADOR,
+            "aceptado_en": when,
+        }
         if not placed:  # no point at all, and the search knows nothing of where it is
             document.pop("ubicacion")
             document["ubicacion_origen"] = None

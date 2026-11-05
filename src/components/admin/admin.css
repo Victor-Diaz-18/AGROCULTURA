@@ -91,6 +91,28 @@
   border-left: 1px solid var(--linea);
   background: var(--superficie-suave);
 }
+.ag-review-modal__private {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 10px 12px 10px 28px;
+  border: 1px dashed var(--borde-fuerte);
+  border-radius: 10px;
+  background: var(--fondo);
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--texto-2);
+}
+.ag-review-modal__consent {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.45;
+}
 .ag-review-modal__label {
   font-size: 12px;
   font-weight: 800;

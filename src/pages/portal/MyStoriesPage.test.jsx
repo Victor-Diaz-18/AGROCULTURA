@@ -379,3 +379,26 @@ describe('Mis historias: el video que falta subir (F13)', () => {
     expect(screen.getByText('El camino de mulas')).toBeInTheDocument() // the story is still there
   })
 })
+
+describe('Mis historias: sin ubicación y sin nombre', () => {
+  it('says which stories will be published without the name and without a place', async () => {
+    renderApp({
+      route: '/mis-historias',
+      user: NARRATOR,
+      api: {
+        '/historias/mias': [
+          { codigo: 'HIS-2026-020', titulo: 'Sin nombre', sector_id: 'minca', lugar_nombre: null, epoca: 'Antes de 1960', formatos: ['Audio'], estado: 'revision', motivo_rechazo: null, enviada_en: '2026-11-04T10:00:00Z', anonima: true, ubicacion_modo: 'aproximada' },
+          { codigo: 'HIS-2026-021', titulo: 'Sin lugar', sector_id: null, lugar_nombre: 'Finca Los Mangos', epoca: 'Antes de 1960', formatos: ['Texto'], estado: 'revision', motivo_rechazo: null, enviada_en: '2026-11-04T11:00:00Z', anonima: false, ubicacion_modo: 'ninguna' },
+        ],
+      },
+    })
+
+    const withoutName = (await screen.findByText('Sin nombre')).closest('[role=row]')
+    expect(within(withoutName).getByText('Se publicará sin tu nombre')).toBeInTheDocument()
+    const withoutPlace = screen.getByText('Sin lugar').closest('[role=row]')
+    expect(within(withoutPlace).getByText('Sin ubicación en el mapa')).toBeInTheDocument()
+    expect(withoutPlace).not.toHaveTextContent('Los Mangos') // even to its narrator the table does not repeat the reference
+    expect(withoutPlace).not.toHaveTextContent('Se publicará sin tu nombre')
+  })
+})
+

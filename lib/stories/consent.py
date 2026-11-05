@@ -20,9 +20,9 @@ VERSION: str = TEXTS["version"]
 DE_NARRADOR = "narrador"  # the narrator authorizes their own story
 DE_EQUIPO = "equipo"  # the team says it has the authorization of whoever told a story it uploads
 
-# Whether a story MUST come with the consent. The server already accepts and validates it; it starts to demand it when the
-# screens ask for it (so nobody is left unable to send a story while the app is being updated).
-EXIGIR_CONSENTIMIENTO = False
+# Whether a story MUST come with the consent: without it a story cannot be sent, and an administrator cannot publish a story that
+# carries no record of its authorization (it can be rejected). It was introduced off, while the screens learned to ask for it.
+EXIGIR_CONSENTIMIENTO = True
 
 MESSAGE_REQUIRED = "Para enviar tu historia debes autorizar que se publique."
 MESSAGE_OLD_VERSION = "El texto de la autorización cambió. Actualiza la página y vuelve a marcarla."

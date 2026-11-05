@@ -28,12 +28,12 @@ describe('admin services', () => {
   })
 
   it('approves with the checks that were marked', async () => {
-    await approveStory('HIS-2026-008', ['tema', 'territorio', 'datos'])
+    await approveStory('HIS-2026-008', ['tema', 'territorio', 'datos', 'consentimiento'])
 
     const [url, init] = lastCall()
     expect(url).toBe('/api/admin/historias/HIS-2026-008/aprobar')
     expect(init.method).toBe('POST')
-    expect(JSON.parse(init.body)).toEqual({ confirmaciones: ['tema', 'territorio', 'datos'] })
+    expect(JSON.parse(init.body)).toEqual({ confirmaciones: ['tema', 'territorio', 'datos', 'consentimiento'] })
   })
 
   it('rejects with the id of the reason', async () => {

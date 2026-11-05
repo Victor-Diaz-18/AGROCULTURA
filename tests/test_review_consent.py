@@ -37,15 +37,20 @@ def reject(client, admin, code, motivo):
 
 @pytest.fixture
 def demanded(monkeypatch):
-    monkeypatch.setattr(consent, "EXIGIR_CONSENTIMIENTO", True)
+    monkeypatch.setattr(consent, "EXIGIR_CONSENTIMIENTO", True)  # it is on by default: this says so
 
 
-# ---- while it is not demanded, nothing changes --------------------------------------------------------------------
+@pytest.fixture
+def not_demanded(monkeypatch):
+    monkeypatch.setattr(consent, "EXIGIR_CONSENTIMIENTO", False)
 
 
-def test_while_the_consent_is_not_demanded_three_checks_are_enough_with_or_without_a_record(client, db, admin):
+# ---- the switch: with the consent not demanded, nothing changes ---------------------------------------------------
+
+
+def test_with_the_consent_not_demanded_three_checks_are_enough_with_or_without_a_record(client, db, admin, not_demanded):
     with_record = waiting(db, "HIS-2026-021", consentimiento=RECORD)
-    without = waiting(db, "HIS-2026-022")
+    without = waiting(db, "HIS-2026-022", consentimiento=None)
 
     assert approve(client, admin, with_record, THREE).status_code == 200
     assert approve(client, admin, without, THREE).status_code == 200
@@ -67,7 +72,7 @@ def test_the_narrators_consent_is_one_more_check_of_the_review(client, db, admin
 
 
 def test_a_story_sent_before_the_consent_existed_cannot_be_published_even_with_every_check(client, db, admin, demanded):
-    code = waiting(db)  # no record of any authorization
+    code = waiting(db, consentimiento=None)  # no record of any authorization
 
     response = approve(client, admin, code, FOUR)
 
@@ -77,8 +82,8 @@ def test_a_story_sent_before_the_consent_existed_cannot_be_published_even_with_e
     assert db.historias.find_one({"codigo": code})["estado"] == "revision"
 
 
-def test_such_a_story_can_be_rejected_with_its_own_reason_and_the_narrator_reads_it(client, db, narrator, admin):
-    sent = client.post("/api/historias", headers=narrator["headers"], json=story_payload()).json()  # no consent record
+def test_such_a_story_can_be_rejected_with_its_own_reason_and_the_narrator_reads_it(client, db, narrator, admin, not_demanded):
+    sent = client.post("/api/historias", headers=narrator["headers"], json=story_payload(consentimiento=None)).json()  # an old story: no record
 
     response = reject(client, admin, sent["codigo"], "falta-autorizacion")
 
@@ -89,7 +94,7 @@ def test_such_a_story_can_be_rejected_with_its_own_reason_and_the_narrator_reads
 
 
 def test_the_team_can_still_reject_a_story_without_consent_when_it_is_demanded(client, db, admin, demanded):
-    code = waiting(db)
+    code = waiting(db, consentimiento=None)
 
     assert reject(client, admin, code, "falta-autorizacion").status_code == 200
 

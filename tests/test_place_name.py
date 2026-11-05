@@ -2,9 +2,10 @@
 
 import pytest
 
+from lib.stories import consent
 from tests.factories import story_payload
 
-APPROVAL = {"confirmaciones": ["tema", "territorio", "datos"]}
+APPROVAL = {"confirmaciones": ["tema", "territorio", "datos", "consentimiento"]}
 
 
 def tell(client, headers, **overrides):
@@ -60,7 +61,7 @@ def test_the_teams_stories_can_have_one_too(client, db, admin):
     response = client.post(
         "/api/admin/historias-proyecto",
         headers=admin["headers"],
-        json={"client_id": "equipo-000001", "titulo": "El patio", "texto": "Relato.", "epoca": "1960 a 1979", "etiquetas": [], "medios": [], "ubicacion": {"lat": 11.1, "lon": -74.05}, "ubicacion_origen": "mapa", "lugar_nombre": "Patio de secado de los Pérez"},
+        json={"client_id": "equipo-000001", "titulo": "El patio", "texto": "Relato.", "epoca": "1960 a 1979", "etiquetas": [], "medios": [], "ubicacion": {"lat": 11.1, "lon": -74.05}, "ubicacion_origen": "mapa", "lugar_nombre": "Patio de secado de los Pérez", "consentimiento": {"aceptado": True, "version": consent.VERSION}},
     )
 
     assert response.status_code == 201

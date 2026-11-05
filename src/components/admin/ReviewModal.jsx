@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { COMPROBACIONES } from '../../config/constants.js'
+import { COMPROBACIONES, NARRADOR_ANONIMO } from '../../config/constants.js'
 import { SHOW_CODES } from '../../config/flags.js'
 import { usePortalData } from '../../context/PortalDataContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { approveStory, rejectStory } from '../../services/admin.js'
 import { ApiError, OfflineError } from '../../services/http.js'
+import { consentTextOf } from '../../utils/consent.js'
 import { formatDate } from '../../utils/format.js'
 import StoryMedia from '../story/StoryMedia.jsx'
 import Icon from '../ui/Icon.jsx'
@@ -12,7 +13,10 @@ import Modal from '../ui/Modal.jsx'
 import { placeLine } from '../../utils/geo.js'
 
 /**
- * Review of one story (F6): read it, hear it, see it, tick the three checks and approve; or reject with a reason.
+ * Review of one story (F6): read it, hear it, see it, tick the checks and approve; or reject with a reason.
+ * The team sees what the public will not: the real name of a story published without it, the reference of a story that has no place
+ * on the map, and the authorization its narrator gave (which text, which version, when). A story with no record of an authorization
+ * cannot be published (the server refuses it too): it is rejected with its own reason.
  *
  * `queue`: the stories waiting for review, in order (to say "2 de 5" and to go on to the next).
  * `variant`: "admin" goes on to the next story after a decision; "portal" closes.
@@ -28,9 +32,12 @@ export default function ReviewModal({ story, queue, variant = 'portal', onClose,
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
-  const allChecked = COMPROBACIONES.every(({ id }) => checked.includes(id))
+  const consent = story.consentimiento
+  const allChecked = Boolean(consent) && COMPROBACIONES.every(({ id }) => checked.includes(id))
   const position = queue.findIndex((item) => item.codigo === story.codigo)
   const sectorName = placeLine(story, config.sectores)
+  const noPlace = story.ubicacion_modo === 'ninguna'
+  const acceptedText = consentTextOf(consent)
 
   const toggle = (id) => setChecked((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]))
 
@@ -82,6 +89,13 @@ export default function ReviewModal({ story, queue, variant = 'portal', onClose,
           <span className="ag-review-modal__meta">
             Narra {story.narrador_nombre} · {sectorName} · {story.epoca} · enviada {formatDate(story.enviada_en)}
           </span>
+          {(story.anonima || noPlace || story.finca_nombre) && (
+            <ul className="ag-review-modal__private" aria-label="Lo que el público no ve de esta historia">
+              {story.anonima && <li>Se publicará como «{NARRADOR_ANONIMO}»: solo el equipo ve el nombre.</li>}
+              {noPlace && <li>Se publicará sin ubicación en el mapa{story.lugar_nombre ? `. Referencia (solo para el equipo): ${story.lugar_nombre}` : ''}.</li>}
+              {story.finca_nombre && <li>Finca o marca (se verá en la ficha): {story.finca_nombre}.</li>}
+            </ul>
+          )}
           <div className="ag-review-modal__formats">
             {story.formatos.map((format) => (
               <span key={format} className="ag-format ag-format--lg">
@@ -101,6 +115,19 @@ export default function ReviewModal({ story, queue, variant = 'portal', onClose,
         </div>
 
         <div className="ag-review-modal__checks">
+          <span className="ag-review-modal__label">AUTORIZACIÓN DEL NARRADOR</span>
+          {consent ? (
+            <p className="ag-review-modal__consent">
+              {acceptedText ? `«${acceptedText.texto}»` : 'Autorizó con un texto de otra versión.'}
+              <span className="ag-hint">
+                {consent.de === 'equipo' ? 'Lo confirmó el equipo' : 'Lo aceptó el narrador'} el {formatDate(consent.aceptado_en)} (versión {consent.version}).
+              </span>
+            </p>
+          ) : (
+            <p role="alert" className="ag-error">
+              Esta historia se envió antes de que existiera la autorización del narrador. No se puede publicar: recházala con el motivo «Falta la autorización».
+            </p>
+          )}
           <span className="ag-review-modal__label">ANTES DE APROBAR</span>
           {COMPROBACIONES.map(({ id, texto }) => (
             <button
@@ -108,8 +135,9 @@ export default function ReviewModal({ story, queue, variant = 'portal', onClose,
               type="button"
               role="checkbox"
               aria-checked={checked.includes(id)}
+              aria-disabled={id === 'consentimiento' && !consent ? 'true' : undefined}
               className="ag-check"
-              onClick={() => toggle(id)}
+              onClick={() => (id === 'consentimiento' && !consent ? undefined : toggle(id))}
             >
               <span className="ag-check__box">
                 <Icon name="check" size={12} strokeWidth={3.5} />

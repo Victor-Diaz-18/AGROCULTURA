@@ -33,9 +33,11 @@ const api = (overrides = {}) => ({
   ...overrides,
 })
 const open = (route = '/admin/historias', overrides) => renderApp({ route, user: ADMIN, api: api(overrides) })
+const authorize = (dialog, user) => user.click(within(dialog).getByRole('checkbox', { name: /^Tengo la autorización de quien cuenta la historia/ }))
 const pickPlaceAndPeriod = async (dialog, user) => {
-  await user.click(within(dialog).getByRole('button', { name: 'Minca' }))
+  await user.click(await within(dialog).findByRole('button', { name: 'Minca' })) // the sectors appear once the map has them
   await user.selectOptions(within(dialog).getByRole('combobox', { name: 'Época' }), '1960 a 1979')
+  await authorize(dialog, user) // the team also says it has the authorization of whoever tells the story
 }
 const publishButton = () => screen.getByRole('button', { name: /Publicar historia del proyecto|Publicando…/ })
 const sentBody = (fetchMock) => JSON.parse(callsTo(fetchMock, '/admin/historias-proyecto')[0][1].body)
@@ -124,6 +126,8 @@ describe('Nueva historia del proyecto', () => {
     await user.selectOptions(within(dialog).getByRole('combobox', { name: 'Época' }), 'Antes de 1960')
     expect(publishButton()).toBeDisabled() // still no place
     await user.click(within(dialog).getByRole('button', { name: 'Minca' }))
+    expect(publishButton()).toBeDisabled() // the team has to say it has the authorization of whoever tells the story
+    await authorize(dialog, user)
     expect(publishButton()).toBeEnabled()
   })
 
@@ -152,6 +156,7 @@ describe('Nueva historia del proyecto', () => {
     await user.type(within(dialog).getByLabelText('Quién la cuenta'), 'Doña Rosa')
     await user.type(within(dialog).getByLabelText('Relato'), 'Se secaba al sol.')
     await user.click(within(dialog).getByRole('button', { name: '#finca' }))
+    await authorize(dialog, user)
     await user.click(publishButton())
 
     expect(await screen.findByText('Historia del proyecto publicada en Minca.')).toBeInTheDocument()
@@ -180,6 +185,7 @@ describe('Nueva historia del proyecto', () => {
     await user.selectOptions(within(dialog).getByRole('combobox', { name: 'Época' }), '1960 a 1979')
 
     fireEvent.click(within(dialog).getByRole('application', { name: 'Mapa para elegir dónde ocurrió' }), { clientX: 400, clientY: 115 })
+    await authorize(dialog, user)
     await user.click(publishButton())
 
     expect(await screen.findByText('Historia del proyecto publicada.')).toBeInTheDocument()
@@ -366,5 +372,71 @@ describe('Historias del proyecto: el video (F13)', () => {
 
     expect(await within(dialog).findByRole('alert')).toHaveTextContent(/lo máximo es 25,0 MB/)
     expect(put).not.toHaveBeenCalled()
+  })
+})
+
+describe('Nueva historia del proyecto: lugar, nombre y autorización', () => {
+  it('has the same two options of place as a narrator, and no map without a place', async () => {
+    const user = userEvent.setup()
+    open('/admin/historias?nueva=1')
+    const dialog = await screen.findByRole('dialog')
+
+    expect(within(dialog).getAllByRole('radio')).toHaveLength(2)
+    expect(within(dialog).getByRole('application', { name: 'Mapa para elegir dónde ocurrió' })).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('radio', { name: 'Sin ubicación' }))
+
+    expect(within(dialog).queryByRole('application', { name: 'Mapa para elegir dónde ocurrió' })).not.toBeInTheDocument()
+    expect(within(dialog).getByLabelText('Nombre de referencia (si quieres)')).toHaveAccessibleDescription('Solo lo ve el equipo. El público no lo ve.')
+  })
+
+  it('needs no place to publish a story without one, but needs the authorization', async () => {
+    const user = userEvent.setup()
+    const { fetchMock } = open('/admin/historias?nueva=1')
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByLabelText('Título'), 'Lo que no se dice')
+    await user.type(within(dialog).getByLabelText('Relato'), 'Texto.')
+    await user.selectOptions(within(dialog).getByRole('combobox', { name: 'Época' }), '1960 a 1979')
+    await user.click(within(dialog).getByRole('radio', { name: 'Sin ubicación' }))
+    expect(publishButton()).toBeDisabled()
+
+    await authorize(dialog, user)
+    expect(within(dialog).getByRole('checkbox', { name: /^Tengo la autorización de quien cuenta la historia para publicarla con su nombre y sin ubicación en el mapa/ })).toBeChecked()
+    await user.click(publishButton())
+
+    await screen.findByText(/Historia del proyecto publicada/)
+    const body = sentBody(fetchMock)
+    expect(body.ubicacion_modo).toBe('ninguna')
+    expect(body).not.toHaveProperty('ubicacion')
+    expect(body.consentimiento).toEqual({ aceptado: true, version: expect.any(String), aceptado_en: expect.stringMatching(/Z$/) })
+  })
+
+  it('"Publicar sin el nombre" changes the text of the authorization, which has to be given again', async () => {
+    const user = userEvent.setup()
+    open('/admin/historias?nueva=1')
+    const dialog = await screen.findByRole('dialog')
+    await pickPlaceAndPeriod(dialog, user)
+    expect(within(dialog).getByRole('checkbox', { name: /^Tengo la autorización/ })).toBeChecked()
+
+    await user.click(within(dialog).getByRole('checkbox', { name: 'Publicar sin el nombre de quien la cuenta' }))
+
+    const box = within(dialog).getByRole('checkbox', { name: /^Tengo la autorización de quien cuenta la historia para publicarla sin su nombre/ })
+    expect(box).not.toBeChecked()
+  })
+
+  it('sends the choice of publishing without the name, and the name of the farm', async () => {
+    const user = userEvent.setup()
+    const { fetchMock } = open('/admin/historias?nueva=1')
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByLabelText('Título'), 'Una entrevista')
+    await user.type(within(dialog).getByLabelText('Relato'), 'Texto.')
+    await user.type(within(dialog).getByLabelText('Nombre de la finca o marca (si quieres)'), 'Café La Loma')
+    await user.click(within(dialog).getByRole('checkbox', { name: 'Publicar sin el nombre de quien la cuenta' }))
+    await pickPlaceAndPeriod(dialog, user)
+    await user.click(publishButton())
+
+    await screen.findByText(/Historia del proyecto publicada/)
+    const body = sentBody(fetchMock)
+    expect(body.anonima).toBe(true)
+    expect(body.finca_nombre).toBe('Café La Loma')
   })
 })

@@ -2,6 +2,7 @@
 
 import pytest
 
+from lib.stories import consent
 from tests.factories import story_payload
 
 LA_TAGUA = {"lat": 11.082986, "lon": -74.044951}
@@ -79,7 +80,7 @@ def test_a_point_that_is_not_confirmed_does_not_label_the_stories_around_it(clie
 
 def test_the_story_without_a_sector_shows_up_everywhere_without_breaking_anything(client, db, narrator, admin):
     code = tell(client, narrator["headers"], SOMEWHERE_ELSE)
-    client.post(f"/api/admin/historias/{code}/aprobar", headers=admin["headers"], json={"confirmaciones": ["tema", "territorio", "datos"]})
+    client.post(f"/api/admin/historias/{code}/aprobar", headers=admin["headers"], json={"confirmaciones": ["tema", "territorio", "datos", "consentimiento"]})
 
     mine = client.get("/api/historias/mias", headers=narrator["headers"]).json()[0]
     on_the_map = client.get("/api/historias").json()[0]
@@ -93,7 +94,7 @@ def test_the_story_without_a_sector_shows_up_everywhere_without_breaking_anythin
 def test_only_stories_with_a_sector_count_for_the_sectors_with_stories(client, db, narrator, admin):
     ids = [tell(client, narrator["headers"], point) for point in (SOMEWHERE_ELSE, {"lat": 11.0835, "lon": -74.045})]
     for code in ids:
-        client.post(f"/api/admin/historias/{code}/aprobar", headers=admin["headers"], json={"confirmaciones": ["tema", "territorio", "datos"]})
+        client.post(f"/api/admin/historias/{code}/aprobar", headers=admin["headers"], json={"confirmaciones": ["tema", "territorio", "datos", "consentimiento"]})
 
     stats = client.get("/api/estadisticas").json()
 
@@ -111,6 +112,7 @@ def team(client, admin, **overrides):
         "texto": "Relato.",
         "epoca": "1960 a 1979",
         "etiquetas": [],
+        "consentimiento": {"aceptado": True, "version": consent.VERSION},
         "medios": [],
     }
     body.update(overrides)

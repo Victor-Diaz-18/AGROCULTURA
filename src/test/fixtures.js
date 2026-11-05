@@ -1,4 +1,5 @@
 import { EMPTY_STATS } from '../config/constants.js'
+import { CONSENT_VERSION } from '../utils/consent.js'
 
 export const CONFIG = {
   portal: { nombre: 'AGROCULTURA', avisar_rechazo: false, datos_de_ejemplo: true, reinicio_disponible: false },
@@ -35,6 +36,10 @@ export const adminStory = (overrides = {}) => ({
   motivo_rechazo: null,
   lat: 11.1,
   lon: -74.05,
+  anonima: false,
+  ubicacion_modo: 'aproximada',
+  finca_nombre: null,
+  consentimiento: { version: CONSENT_VERSION, variante: 'aproximada_con_nombre', de: 'narrador', aceptado_en: '2026-10-18T11:58:00Z' },
   enviada_en: '2026-10-18T12:00:00Z',
   revisada_en: '',
   publicada_en: '',
