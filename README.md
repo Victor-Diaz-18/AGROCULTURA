@@ -23,12 +23,12 @@ esta captura porque se tomó sin acceso a internet; en la plataforma real se ve 
 | Quién | Qué puede hacer |
 |---|---|
 | **Cualquier persona** (sin cuenta) | Explorar el **mapa** de historias publicadas; filtrarlas por sector, origen, época y formato; **buscarlas** por título, narrador, lugar o etiqueta; abrir la **ficha** de una historia (escucharla, ver sus fotos y su video, leer su texto, ver dónde ocurrió) y compartir el enlace. Todo se puede **escuchar en voz alta** con el botón «Escuchar». |
-| **Las familias** (narradores) | Crear su cuenta con **nombre, celular y una clave corta** (sin correo). **Contar una historia** en tres pasos: contarla (grabando su voz, escribiéndola, con fotos y un video), decir dónde y cuándo ocurrió, y revisar y enviar. Ver en **«Mis historias»** en qué va cada una: borrador, en revisión, publicada, o no publicada con el motivo. Usarla **sin señal**. |
+| **Las familias** (narradores) | Crear su cuenta con solo un **nombre de usuario y una contraseña** (la que quieran, de 6 caracteres o más; sin correo ni celular). **Contar una historia** en tres pasos: contarla (grabando su voz, escribiéndola, con fotos y un video), decir dónde y cuándo ocurrió, y revisar y enviar. Ver en **«Mis historias»** en qué va cada una: borrador, en revisión, publicada, o no publicada con el motivo. Usarla **sin señal**. |
 | **El equipo** (administradores) | **Revisar** cada historia que llega (leerla, oírla, verla), confirmar tres cosas y **aprobarla** o **rechazarla con un motivo**. **Publicar historias del proyecto** (las que el propio equipo ha recogido, marcadas como «Proyecto»). Ver un **resumen** de lo que hay. Configurar el nombre del portal y las etiquetas. |
 
 ## El recorrido de una historia
 
-1. **Una familia crea su cuenta** con su nombre, su celular y una clave de 4 a 6 números (en «Ingresar», con «¿No tienes cuenta? Crea una»). Después entra con el mismo formulario de **usuario y contraseña** que usa todo el mundo: su usuario es su celular y su contraseña es su clave.
+1. **Una familia crea su cuenta** con un nombre de usuario y una contraseña (en «Ingresar», con «¿No tienes cuenta? Crea una»). El nombre de usuario es también el nombre que se verá en sus historias. Después entra con el mismo formulario de **usuario y contraseña** que usa todo el mundo.
 2. **Cuenta su historia** en tres pasos: *Cuéntala* (con su voz, escribiéndola, con fotos y un video), *Dónde y cuándo* (un título, tocar el
    lugar en el mapa o usar el GPS del teléfono, y la época) y *Revisar y enviar*.
 3. **Si no hay señal**, el último botón dice «Guardar en el dispositivo»: la historia queda como borrador en el teléfono y **se envía sola**
@@ -60,7 +60,7 @@ Lo que viene después (no está construido; aparece como «Próximamente»): **r
 - **Nada se publica sin que una persona lo revise.**
 - **Privacidad del lugar.** Una familia puede estar en su casa al contar su historia. Por eso en el mapa público cada historia aparece en un
   punto **aproximado (unos 500 metros)**; el sitio exacto solo lo ve el equipo al revisarla.
-- **Pocos datos.** Las familias no dan correo: solo nombre, celular y una clave corta, que se guarda protegida (ni el equipo puede leerla). Los intentos fallidos de clave
+- **Pocos datos.** Las familias no dan correo ni celular: solo un nombre de usuario y una contraseña, que se guarda protegida (ni el equipo puede leerla). Los intentos fallidos de clave
   se limitan. Las fotos se reducen en el teléfono y **se les quita la posición GPS** de la cámara antes de subirlas.
 - **Pensada para todas las personas:** se puede usar con teclado y con lector de pantalla, los contrastes cumplen la norma
   internacional (WCAG 2.2, nivel AA), los botones principales son grandes y los textos cortos, y quien pide «reducir movimiento» en su
@@ -96,7 +96,7 @@ puestas en internet. Hoy tiene **datos y avisos de demostración**: antes de rec
 ## Qué falta o está por definir
 
 - **Por definir con el profesor:** el nombre definitivo del portal y si se avisa al narrador cuando se rechaza su historia (y por qué medio:
-  correo, mensaje, WhatsApp). La opción existe pero todavía no envía nada; hoy el narrador lo ve en «Mis historias».
+  correo, mensaje, WhatsApp). La opción existe pero todavía no envía nada; hoy el narrador lo ve en «Mis historias». Como las familias ya no dan celular ni correo, avisarles fuera de la plataforma exigiría volver a pedir un dato de contacto.
 - **Por confirmar con las familias:** la posición de los sectores. Minca, La Tagua y San Lorenzo ya tienen un punto; **Tijereras aún no**, por
   eso su nombre no sale en el mapa.
 - **Fases futuras (no construidas):** recorridos 360° y avatares en realidad aumentada.

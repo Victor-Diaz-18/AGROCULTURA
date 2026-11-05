@@ -151,7 +151,7 @@ def test_an_invalid_video_is_not_added(client, db, narrator):
 
 def test_nobody_adds_a_video_to_another_persons_story(client, db, narrator):
     code = send(client, narrator)
-    session = register(client, nombre="Luis Mora", celular="300 555 0177", pin="9999").json()
+    session = register(client, usuario="Luis Mora", clave="999999").json()
     other = {**session, "headers": bearer(session["token"])}
 
     response = attach(client, other, code)

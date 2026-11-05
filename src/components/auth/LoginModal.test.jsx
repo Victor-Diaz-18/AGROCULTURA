@@ -47,13 +47,14 @@ describe('Sign-in dialog', () => {
     expect(within(dialog).queryByRole('button', { name: /Narrador|Administrador|Primera vez|Ya tengo cuenta/ })).not.toBeInTheDocument()
   })
 
-  it('tells narrators that their user is the mobile number and their password the PIN', async () => {
+  it('asks for nothing else: no hint about phones or PINs, just the two fields', async () => {
     const user = userEvent.setup()
     renderApp()
 
     const dialog = await openDialog(user)
 
-    expect(within(dialog).getByText(/tu usuario es tu número de celular y tu contraseña es tu clave de 4 a 6 números/)).toBeInTheDocument()
+    expect(within(dialog).queryByText(/celular|clave de 4 a 6/i)).not.toBeInTheDocument()
+    expect(within(dialog).getAllByRole('textbox')).toHaveLength(1) // the user; the password is not a textbox
   })
 
   it('only enables the button when there are a user and a password', async () => {
@@ -194,12 +195,23 @@ describe('«¿No tienes cuenta? Crea una»', () => {
     const dialog = await openSignUp(user)
 
     expect(within(dialog).getByRole('heading', { name: 'Crear cuenta' })).toBeInTheDocument()
-    expect(within(dialog).getByLabelText('Tu nombre')).toHaveFocus()
-    expect(within(dialog).getByLabelText('Número de celular')).toBeInTheDocument()
-    expect(within(dialog).getByLabelText('Elige una clave de 4 a 6 números')).toBeInTheDocument()
+    expect(within(dialog).getByLabelText('Nombre de usuario')).toHaveFocus()
+    expect(within(dialog).getByLabelText('Contraseña')).toBeInTheDocument()
     expect(within(dialog).getByRole('button', { name: 'Crear cuenta' })).toBeDisabled()
     expect(within(dialog).getByText(/¿Ya tienes cuenta\?/)).toBeInTheDocument()
     expect(within(dialog).queryByLabelText('Usuario')).not.toBeInTheDocument()
+  })
+
+  it('asks only for a user name and a password: no name, no mobile number, no PIN', async () => {
+    const user = userEvent.setup()
+    renderApp()
+
+    const dialog = await openSignUp(user)
+
+    expect(within(dialog).queryByLabelText('Tu nombre')).not.toBeInTheDocument()
+    expect(within(dialog).queryByLabelText('Número de celular')).not.toBeInTheDocument()
+    expect(within(dialog).queryByLabelText(/clave de 4 a 6/)).not.toBeInTheDocument()
+    expect(within(dialog).getAllByRole('textbox')).toHaveLength(2) // user name and password (shown while it is chosen)
   })
 
   it('goes back to the sign-in form with «¿Ya tienes cuenta? Ingresa»', async () => {
@@ -214,19 +226,36 @@ describe('«¿No tienes cuenta? Crea una»', () => {
     expect(within(back).getByRole('button', { name: 'Crea una' })).toBeInTheDocument()
   })
 
-  it('only enables the button when name, mobile and PIN are valid', async () => {
+  it('only enables the button with a user name (3 or more) and a password of 6 or more characters', async () => {
     const user = userEvent.setup()
     renderApp()
     const dialog = await openSignUp(user)
     const create = within(dialog).getByRole('button', { name: 'Crear cuenta' })
 
-    await user.type(within(dialog).getByLabelText('Tu nombre'), 'Ana Beltrán')
-    await user.type(within(dialog).getByLabelText('Número de celular'), '300 555 0192')
-    await user.type(within(dialog).getByLabelText('Elige una clave de 4 a 6 números'), '12')
-    expect(create).toBeDisabled() // a PIN needs 4 to 6 numbers
+    await user.type(within(dialog).getByLabelText('Nombre de usuario'), 'Al')
+    await user.type(within(dialog).getByLabelText('Contraseña'), '123456')
+    expect(create).toBeDisabled() // the name is too short
 
-    await user.type(within(dialog).getByLabelText('Elige una clave de 4 a 6 números'), '34')
+    await user.type(within(dialog).getByLabelText('Nombre de usuario'), 'e')
     expect(create).toBeEnabled()
+
+    await user.clear(within(dialog).getByLabelText('Contraseña'))
+    await user.type(within(dialog).getByLabelText('Contraseña'), '12345')
+    expect(create).toBeDisabled() // the password needs 6
+
+    await user.type(within(dialog).getByLabelText('Contraseña'), '6')
+    expect(create).toBeEnabled()
+  })
+
+  it('accepts any password of 6 characters or more: letters, spaces, symbols', async () => {
+    const user = userEvent.setup()
+    renderApp()
+    const dialog = await openSignUp(user)
+    await user.type(within(dialog).getByLabelText('Nombre de usuario'), 'Familia Pérez')
+
+    await user.type(within(dialog).getByLabelText('Contraseña'), 'mi café 😀')
+
+    expect(within(dialog).getByRole('button', { name: 'Crear cuenta' })).toBeEnabled()
   })
 
   it('creates the account, signs in and greets the person', async () => {
@@ -234,9 +263,8 @@ describe('«¿No tienes cuenta? Crea una»', () => {
     const { fetchMock } = renderApp({ api: { '/auth/registro': narratorSession, '/auth/yo': NARRATOR } })
     const dialog = await openSignUp(user)
 
-    await user.type(within(dialog).getByLabelText('Tu nombre'), 'Ana Beltrán')
-    await user.type(within(dialog).getByLabelText('Número de celular'), '300 555 0192')
-    await user.type(within(dialog).getByLabelText('Elige una clave de 4 a 6 números'), '4821')
+    await user.type(within(dialog).getByLabelText('Nombre de usuario'), 'Ana Beltrán')
+    await user.type(within(dialog).getByLabelText('Contraseña'), 'mi cafetal')
     await user.click(within(dialog).getByRole('button', { name: 'Crear cuenta' }))
 
     expect(await screen.findByText('Hola, Ana. Ya puedes contar tus historias.')).toBeInTheDocument()
@@ -244,49 +272,88 @@ describe('«¿No tienes cuenta? Crea una»', () => {
     expect(screen.getByText('Ana Beltrán')).toBeInTheDocument()
     expect(localStorage.getItem('agrocultura.token')).toBeTruthy()
     expect(JSON.parse(callsTo(fetchMock, '/auth/registro')[0][1].body)).toEqual({
-      nombre: 'Ana Beltrán',
-      celular: '300 555 0192',
-      pin: '4821',
+      usuario: 'Ana Beltrán',
+      clave: 'mi cafetal',
     })
   })
 
-  it('shows a new PIN in plain sight so it is not mistyped', async () => {
+  it('sends the password exactly as typed, spaces included, and the user name without the spaces around it', async () => {
+    const user = userEvent.setup()
+    const { fetchMock } = renderApp({ api: { '/auth/registro': narratorSession, '/auth/yo': NARRATOR } })
+    const dialog = await openSignUp(user)
+
+    await user.type(within(dialog).getByLabelText('Nombre de usuario'), '  Rosa Elena ')
+    await user.type(within(dialog).getByLabelText('Contraseña'), '  clave con espacios ')
+    await user.click(within(dialog).getByRole('button', { name: 'Crear cuenta' }))
+
+    await screen.findByText(/Hola, /)
+    expect(JSON.parse(callsTo(fetchMock, '/auth/registro')[0][1].body)).toEqual({
+      usuario: 'Rosa Elena',
+      clave: '  clave con espacios ',
+    })
+  })
+
+  it('shows the password while it is chosen so it is not mistyped, and can hide it', async () => {
+    const user = userEvent.setup()
+    renderApp()
+    const dialog = await openSignUp(user)
+    const password = within(dialog).getByLabelText('Contraseña')
+    const toggle = within(dialog).getByRole('checkbox', { name: 'Mostrar la contraseña' })
+
+    expect(toggle).toBeChecked()
+    expect(password).toHaveAttribute('type', 'text')
+
+    await user.click(toggle)
+
+    expect(password).toHaveAttribute('type', 'password')
+  })
+
+  it('says what the user name is for and how long the password must be', async () => {
     const user = userEvent.setup()
     renderApp()
     const dialog = await openSignUp(user)
 
-    expect(within(dialog).getByLabelText('Elige una clave de 4 a 6 números')).toHaveAttribute('type', 'text')
+    expect(within(dialog).getByLabelText('Nombre de usuario')).toHaveAccessibleDescription(/se verá en tus historias/)
+    expect(within(dialog).getByLabelText('Contraseña')).toHaveAccessibleDescription(/Mínimo 6 caracteres/)
   })
 
-  it('shows the server message when that mobile number already has an account', async () => {
+  it('shows the server message when that user name is already taken', async () => {
     const user = userEvent.setup()
-    renderApp({
-      api: { '/auth/registro': () => reply({ detail: 'Ese celular ya tiene una cuenta. Toca «Ingresa» más abajo para entrar con ella.' }, 409) },
-    })
+    renderApp({ api: { '/auth/registro': () => reply({ detail: 'Ese nombre de usuario ya está en uso. Elige otro.' }, 409) } })
     const dialog = await openSignUp(user)
-    await user.type(within(dialog).getByLabelText('Tu nombre'), 'Ana Beltrán')
-    await user.type(within(dialog).getByLabelText('Número de celular'), '3005550192')
-    await user.type(within(dialog).getByLabelText('Elige una clave de 4 a 6 números'), '4821')
+    await user.type(within(dialog).getByLabelText('Nombre de usuario'), 'Ana Beltrán')
+    await user.type(within(dialog).getByLabelText('Contraseña'), 'mi cafetal')
 
     await user.click(within(dialog).getByRole('button', { name: 'Crear cuenta' }))
 
-    expect(await within(dialog).findByRole('alert')).toHaveTextContent('Ese celular ya tiene una cuenta')
-    // ...and the way to the other form is right there, below.
-    expect(within(dialog).getByRole('button', { name: 'Ingresa' })).toBeInTheDocument()
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('Ese nombre de usuario ya está en uso. Elige otro.')
+    expect(within(dialog).getByLabelText('Nombre de usuario')).toHaveValue('Ana Beltrán') // nothing typed is lost
+    expect(localStorage.getItem('agrocultura.token')).toBeNull()
   })
 
   it('drops the message of one form when the person changes to the other', async () => {
     const user = userEvent.setup()
     renderApp({ api: { '/auth/ingreso': () => reply({ detail: 'Usuario o contraseña incorrectos.' }, 401) } })
     const dialog = await openDialog(user)
-    await user.type(within(dialog).getByLabelText('Usuario'), '3005550192')
-    await user.type(within(dialog).getByLabelText('Contraseña'), '0000')
+    await user.type(within(dialog).getByLabelText('Usuario'), 'ana')
+    await user.type(within(dialog).getByLabelText('Contraseña'), '000000')
     await user.click(within(dialog).getByRole('button', { name: 'Ingresar' }))
     await within(dialog).findByRole('alert')
 
     await user.click(within(dialog).getByRole('button', { name: 'Crea una' }))
 
     expect(within(screen.getByRole('dialog', { name: 'Crear cuenta' })).queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  it('does not carry the password typed to sign in into the sign-up form (where it would show in plain sight)', async () => {
+    const user = userEvent.setup()
+    renderApp()
+    const dialog = await openDialog(user)
+    await user.type(within(dialog).getByLabelText('Contraseña'), 'secreta-de-ingreso')
+
+    await user.click(within(dialog).getByRole('button', { name: 'Crea una' }))
+
+    expect(within(screen.getByRole('dialog', { name: 'Crear cuenta' })).getByLabelText('Contraseña')).toHaveValue('')
   })
 
   it('starts again at the sign-in form every time it is opened', async () => {

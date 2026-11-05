@@ -13,6 +13,7 @@ from pymongo.errors import DuplicateKeyError
 from lib.auth import repository
 from lib.auth.constants import ROL_ADMIN, ROL_NARRADOR
 from lib.auth.phone import normalize_phone
+from lib.auth.username import clean_username, username_key
 from lib.core import security
 from lib.core.clock import utcnow
 from lib.core.errors import ConflictError, TooManyRequestsError, UnauthorizedError
@@ -34,15 +35,17 @@ def session_for(user: dict, settings: Settings) -> dict:
 
 
 def register_narrator(
-    db: Database, settings: Settings, *, nombre: str, celular: str, pin: str, now: datetime | None = None
+    db: Database, settings: Settings, *, usuario: str, clave: str, now: datetime | None = None
 ) -> dict:
+    """Creates a narrator account from a user name and a password. The name is also the one their stories show."""
     security.require_secret(settings)  # do not create accounts we cannot give a session to
     now = now or utcnow()
+    name = clean_username(usuario)
     document = {
-        "nombre": nombre,
-        "usuario": celular,
+        "nombre": name,
+        "usuario": username_key(name),
         "rol": ROL_NARRADOR,
-        "clave_hash": security.hash_secret(pin, settings.bcrypt_rounds),
+        "clave_hash": security.hash_secret(clave, settings.bcrypt_rounds),
         "activo": True,
         "creado_en": now,
         "ultimo_ingreso": now,
@@ -50,21 +53,22 @@ def register_narrator(
     try:
         return repository.insert_user(db, document)
     except DuplicateKeyError:
-        raise ConflictError("Ese celular ya tiene una cuenta. Toca «Ingresa» más abajo para entrar con ella.") from None
+        raise ConflictError("Ese nombre de usuario ya está en uso. Elige otro.") from None
 
 
 def _login_name(usuario: str) -> str:
     """The name an account is stored under.
 
-    A narrator's user name is the mobile number (however it is written) and an administrator's is a plain
-    name that never looks like a phone number (see `ensure_admin`), so the name alone tells which account is meant
-    and nobody has to say what kind of person they are.
+    Accounts made by choosing a user name are stored as that name, in lowercase. Narrators who signed up before with
+    their mobile number are stored under the number (however it is written when they sign in). No chosen name can look
+    like a phone number (see `RegistroIn`) and neither can the administrator's (see `ensure_admin`), so the name alone
+    tells which account is meant and nobody has to say what kind of person they are.
     """
-    return normalize_phone(usuario) or usuario.strip().lower()
+    return normalize_phone(usuario) or username_key(usuario)
 
 
 def login(db: Database, settings: Settings, *, usuario: str, clave: str, now: datetime | None = None) -> dict:
-    """Signs in a narrator (mobile number + PIN) or an administrator (user name + password)."""
+    """Signs in with a user name and a password: a narrator or the administrator, whoever the account says it is."""
     security.require_secret(settings)
     now = now or utcnow()
     window = timedelta(minutes=settings.login_window_minutes)
@@ -99,7 +103,7 @@ def ensure_admin(db: Database, settings: Settings, now: datetime | None = None) 
     if not settings.admin_user or not settings.admin_password:
         return "omitido"
     password = settings.admin_password
-    usuario = settings.admin_user.strip().lower()
+    usuario = username_key(settings.admin_user)
     if len(password) < MIN_ADMIN_PASSWORD_LENGTH or len(password.encode("utf-8")) > security.MAX_SECRET_BYTES:
         logger.error(
             "ADMIN_PASSWORD must have %d to %d characters; the administrator was not created",

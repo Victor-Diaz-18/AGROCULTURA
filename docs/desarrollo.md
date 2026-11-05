@@ -152,8 +152,8 @@ La documentación interactiva está en `/api/docs` cuando la API corre. Rutas di
 | `GET /api/salud` | Estado de la API y de la conexión a MongoDB |
 | `GET /api/config` | Nombre del portal, sectores, etiquetas, épocas y motivos de rechazo |
 | `GET /api/estadisticas` | Contadores: historias publicadas, en revisión, formatos |
-| `POST /api/auth/registro` | Crea una cuenta de narrador (nombre, celular, PIN) y devuelve la sesión |
-| `POST /api/auth/ingreso` | Ingreso de todos con `{usuario, clave}`: el celular y el PIN de un narrador, o el usuario y la contraseña de un administrador; el servidor deduce el rol de la cuenta (un `rol` que mande una versión vieja de la app se ignora) |
+| `POST /api/auth/registro` | Crea una cuenta de narrador con `{usuario, clave}` (nombre de usuario único de 3 a 40 caracteres y contraseña de 6 o más) y devuelve la sesión |
+| `POST /api/auth/ingreso` | Ingreso de todos con `{usuario, clave}` (los narradores con cuenta anterior entran con su celular y su PIN); el servidor deduce el rol de la cuenta (un `rol` que mande una versión vieja de la app se ignora) |
 | `GET /api/auth/yo` | El usuario de la sesión actual (requiere sesión) |
 | `POST /api/medios` | Sube una foto o un audio (narrador o administrador); devuelve su URL en Blob |
 | `POST /api/historias` | Envía una historia (solo narradores); queda siempre «en revisión» |

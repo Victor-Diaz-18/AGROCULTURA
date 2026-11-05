@@ -12,14 +12,14 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/registro", response_model=SesionOut, status_code=201)
 def register(body: RegistroIn, db: Database = Depends(get_db), settings: Settings = Depends(get_settings)):
-    """Creates a narrator account (name, mobile number and a 4 to 6 digit PIN) and signs in."""
-    user = service.register_narrator(db, settings, nombre=body.nombre, celular=body.celular, pin=body.pin)
+    """Creates a narrator account (a user name and a password of at least 6 characters) and signs in."""
+    user = service.register_narrator(db, settings, usuario=body.usuario, clave=body.clave)
     return service.session_for(user, settings)
 
 
 @router.post("/ingreso", response_model=SesionOut)
 def login(body: IngresoIn, db: Database = Depends(get_db), settings: Settings = Depends(get_settings)):
-    """Signs in with a user name and a password. A narrator's are the mobile number and the PIN."""
+    """Signs in with a user name and a password (accounts made with a mobile number and a PIN use those)."""
     user = service.login(db, settings, usuario=body.usuario, clave=body.clave)
     return service.session_for(user, settings)
 

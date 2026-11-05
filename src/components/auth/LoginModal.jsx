@@ -5,8 +5,9 @@ import Icon from '../ui/Icon.jsx'
 import Modal from '../ui/Modal.jsx'
 import useSignIn from './useSignIn.js'
 
-const digits = (text) => text.replace(/\D/g, '')
-const isPin = (text) => /^\d{4,6}$/.test(text)
+// The same limits the server checks (lib/auth/username.py): it has the last word and says why when something is not valid.
+const MIN_USERNAME = 3
+const MIN_PASSWORD = 6
 
 function noticeFor({ creating, rol, destino }) {
   if (creating) return 'Crea tu cuenta para contar tus historias.'
@@ -18,21 +19,22 @@ function noticeFor({ creating, rol, destino }) {
 /**
  * One sign-in for everybody: a user name and a password, with «¿No tienes cuenta? Crea una» below.
  * The account says whether it belongs to a narrator or to the team, so nobody has to choose.
- * (A narrator's user name is the mobile number and the password is the short PIN.)
+ * Creating an account asks for the same two things: a user name (the name the stories will show) and any password
+ * of 6 or more characters.
  */
 function LoginForm({ rol, destino, onClose }) {
   const [creating, setCreating] = useState(false)
   const [usuario, setUsuario] = useState('')
   const [clave, setClave] = useState('')
-  const [nombre, setNombre] = useState('')
-  const [celular, setCelular] = useState('')
-  const [pin, setPin] = useState('')
+  const [nuevoUsuario, setNuevoUsuario] = useState('')
+  const [nuevaClave, setNuevaClave] = useState('')
+  const [verClave, setVerClave] = useState(true) // shown while it is chosen, so it is not mistyped (there is no "forgot it" yet)
   const { busy, error, clearError, registerNarrator, signIn } = useSignIn()
   const formRef = useRef(null)
   const switched = useRef(false)
 
   const canSubmit = creating
-    ? nombre.trim().length >= 2 && digits(celular).length >= 10 && isPin(pin)
+    ? nuevoUsuario.trim().length >= MIN_USERNAME && nuevaClave.length >= MIN_PASSWORD
     : usuario.trim() !== '' && clave !== ''
 
   // After changing between the two forms, the person continues at the first field of the new one.
@@ -50,7 +52,7 @@ function LoginForm({ rol, destino, onClose }) {
   const submit = (event) => {
     event.preventDefault()
     if (!canSubmit || busy) return
-    if (creating) registerNarrator({ nombre: nombre.trim(), celular, pin })
+    if (creating) registerNarrator({ usuario: nuevoUsuario.trim(), clave: nuevaClave })
     else signIn({ usuario: usuario.trim(), clave })
   }
 
@@ -74,28 +76,46 @@ function LoginForm({ rol, destino, onClose }) {
       <form ref={formRef} className="ag-login__form" onSubmit={submit} noValidate>
         {creating ? (
           <>
-            <Field label="Tu nombre">
-              <input className="ag-input" type="text" autoComplete="name" value={nombre} onChange={change(setNombre)} />
-            </Field>
-            <Field label="Número de celular">
-              <input className="ag-input" type="tel" inputMode="tel" autoComplete="tel" value={celular} onChange={change(setCelular)} />
-            </Field>
-            <Field label="Elige una clave de 4 a 6 números">
-              <input
-                className="ag-input"
-                // A new PIN is shown so it is not mistyped; a returning one is hidden.
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={6}
-                autoComplete="new-password"
-                value={pin}
-                onChange={change(setPin)}
-              />
-            </Field>
-            <span className="ag-hint">
-              Sin correo: solo tu celular y una clave corta. Elige números que recuerdes; se ven para que no te equivoques.
-            </span>
+            <div className="ag-login__group">
+              <Field label="Nombre de usuario">
+                <input
+                  className="ag-input"
+                  type="text"
+                  autoComplete="username"
+                  autoCapitalize="words"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  aria-describedby="ag-hint-usuario"
+                  value={nuevoUsuario}
+                  onChange={change(setNuevoUsuario)}
+                />
+              </Field>
+              <span id="ag-hint-usuario" className="ag-hint">
+                Es el nombre que se verá en tus historias. Puede ser tu nombre.
+              </span>
+            </div>
+            <div className="ag-login__group">
+              <Field label="Contraseña">
+                <input
+                  className="ag-input"
+                  type={verClave ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  aria-describedby="ag-hint-clave"
+                  value={nuevaClave}
+                  onChange={change(setNuevaClave)}
+                />
+              </Field>
+              <span id="ag-hint-clave" className="ag-hint">
+                Mínimo {MIN_PASSWORD} caracteres: letras, números o lo que quieras, pero que la recuerdes. Sin correo ni celular.
+              </span>
+              <label className="ag-showpass">
+                <input type="checkbox" checked={verClave} onChange={(event) => setVerClave(event.target.checked)} />
+                Mostrar la contraseña
+              </label>
+            </div>
           </>
         ) : (
           <>
@@ -114,7 +134,6 @@ function LoginForm({ rol, destino, onClose }) {
             <Field label="Contraseña">
               <input className="ag-input" type="password" autoComplete="current-password" value={clave} onChange={change(setClave)} />
             </Field>
-            <span className="ag-hint">Si cuentas historias, tu usuario es tu número de celular y tu contraseña es tu clave de 4 a 6 números.</span>
           </>
         )}
 

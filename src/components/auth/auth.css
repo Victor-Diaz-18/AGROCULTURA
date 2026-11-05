@@ -37,6 +37,26 @@
   background: #fff;
   color: var(--texto);
 }
+.ag-login__group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ag-showpass {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 32px;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--texto-2);
+}
+.ag-showpass input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  accent-color: var(--verde-oscuro);
+}
 .ag-login__switch {
   margin: 0;
   padding-top: 16px;

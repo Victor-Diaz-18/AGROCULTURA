@@ -115,7 +115,7 @@ def settings():
 
 # ---- people ---------------------------------------------------------------
 
-NARRATOR = {"nombre": "Ana Beltrán", "celular": "300 555 0192", "pin": "4821"}
+NARRATOR = {"usuario": "Ana Beltrán", "clave": "482193"}
 
 
 def register(client, **overrides):

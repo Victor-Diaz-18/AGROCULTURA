@@ -2,39 +2,40 @@
 
 from __future__ import annotations
 
-import re
-
 from pydantic import BaseModel, Field, field_validator
 
 from lib.auth.phone import normalize_phone
+from lib.auth.username import MAX_USERNAME_LENGTH, MIN_PASSWORD_LENGTH, MIN_USERNAME_LENGTH, clean_username
+from lib.core.security import MAX_SECRET_BYTES
 
 
 class RegistroIn(BaseModel):
-    nombre: str = Field(max_length=200)
-    celular: str = Field(max_length=40)
-    pin: str = Field(max_length=20)
+    """A narrator signs up with a user name and a password. The password can be anything with at least 6 characters."""
 
-    @field_validator("nombre")
+    usuario: str = Field(max_length=200)
+    clave: str = Field(max_length=200)
+
+    @field_validator("usuario")
     @classmethod
-    def clean_name(cls, value: str) -> str:
-        name = re.sub(r"\s+", " ", value).strip()
-        if not 2 <= len(name) <= 60:
-            raise ValueError("Escribe tu nombre (entre 2 y 60 letras).")
+    def check_username(cls, value: str) -> str:
+        name = clean_username(value)
+        if not MIN_USERNAME_LENGTH <= len(name) <= MAX_USERNAME_LENGTH:
+            raise ValueError(
+                f"Escribe un nombre de usuario (entre {MIN_USERNAME_LENGTH} y {MAX_USERNAME_LENGTH} caracteres)."
+            )
+        # Stories show this name to everybody: a phone number is not something to publish by accident.
+        if normalize_phone(name) is not None:
+            raise ValueError("El nombre de usuario no puede incluir un número de celular. Escribe tu nombre o uno que te guste.")
         return name
 
-    @field_validator("celular")
+    @field_validator("clave")
     @classmethod
-    def clean_phone(cls, value: str) -> str:
-        phone = normalize_phone(value)
-        if phone is None:
-            raise ValueError("Escribe un número de celular de 10 dígitos, por ejemplo 300 555 0192.")
-        return phone
-
-    @field_validator("pin")
-    @classmethod
-    def check_pin(cls, value: str) -> str:
-        if not re.fullmatch(r"\d{4,6}", value):
-            raise ValueError("La clave debe tener de 4 a 6 números.")
+    def check_password(cls, value: str) -> str:
+        # Not trimmed and no other rule: whatever the person types is the password, as long as it is long enough.
+        if len(value) < MIN_PASSWORD_LENGTH:
+            raise ValueError(f"La contraseña debe tener al menos {MIN_PASSWORD_LENGTH} caracteres.")
+        if len(value.encode("utf-8")) > MAX_SECRET_BYTES:
+            raise ValueError("La contraseña es demasiado larga. Acórtala un poco.")
         return value
 
 

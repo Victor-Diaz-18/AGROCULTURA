@@ -51,7 +51,7 @@ Un solo repositorio y un solo proyecto de Vercel sirven la interfaz, la API de P
    | `ADMIN_PASSWORD` | Su contraseña (10 caracteres o más). Para cambiarla después: se cambia aquí y se vuelve a desplegar |
    | `BLOB_READ_WRITE_TOKEN` | Ya la creó el paso 3 |
    | `ALLOW_DEMO_RESET` | `true` solo mientras se prueba con datos de ejemplo (ver la lista siguiente) |
-   | `SEED_DEMO_NARRATOR_PHONE` y `SEED_DEMO_NARRATOR_PIN` | Opcionales: una narradora de ejemplo para las demostraciones |
+   | `SEED_DEMO_NARRATOR_PHONE` y `SEED_DEMO_NARRATOR_PIN` | Opcionales: una narradora de ejemplo para las demostraciones (entra con ese celular como usuario y ese PIN como contraseña) |
 
 5. **Desplegar** (o *Redeploy* si cambiaste variables: solo se leen al desplegar).
 6. **Comprobar** (en este orden):

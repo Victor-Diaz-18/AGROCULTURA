@@ -8,19 +8,32 @@ Las decisiones y los cambios respecto al diseño aprobado están en [`plan-v1.md
 - **Un solo ingreso para todos.** El botón «Ingresar» abre una sola ventana con **Usuario** y **Contraseña**, sea quien
   sea la persona (familia o equipo), y debajo «¿No tienes cuenta? **Crea una**», que cambia al formulario de crear cuenta
   (con «¿Ya tienes cuenta? Ingresa» para volver). Nadie tiene que decir qué tipo de persona es: **la cuenta lo dice** y
-  el servidor responde con el rol. Para una familia, el *usuario* es su número de celular y la *contraseña* es su clave
-  corta (la ventana lo explica debajo de los campos). Cualquier fallo responde lo mismo, *«Usuario o contraseña
-  incorrectos.»*, para no revelar si la cuenta existe. La tarjeta de `/admin` («Acceso del equipo») usa el mismo ingreso.
-- **Narrador:** se registra con su nombre, su celular (10 dígitos, empieza por 3; se acepta con `+57`, espacios
-  o guiones) y una clave corta (**PIN de 4 a 6 números**). No usa correo. El PIN se guarda solo con hash
-  (bcrypt), nunca en texto plano. La sesión dura **30 días**, para que pueda usar la aplicación sin señal.
+  el servidor responde con el rol. Cualquier fallo responde lo mismo, *«Usuario o contraseña incorrectos.»*, para no
+  revelar si la cuenta existe. La tarjeta de `/admin` («Acceso del equipo») usa el mismo ingreso.
+- **Narrador:** crea su cuenta con **solo dos datos: un nombre de usuario y una contraseña**. No se piden correo, celular
+  ni nombre aparte.
+  - *Nombre de usuario:* de 3 a 40 caracteres. Es también **el nombre que se muestra en sus historias** (en el mapa, en la
+    ficha y en la revisión), tal como lo escribió. Es **único**: «Ana Beltrán», «ana beltrán» y « ANA  BELTRÁN » son la
+    misma cuenta, y quien llegue después recibe *«Ese nombre de usuario ya está en uso. Elige otro.»*. No puede incluir un
+    número de celular (las historias muestran este nombre a todo el mundo y no debe salir un teléfono por descuido), ni
+    es posible elegir el usuario del administrador. Al ingresar no importan las mayúsculas.
+  - *Contraseña:* **puede ser cualquier cosa** (letras, números, espacios, símbolos, tildes), siempre que no esté vacía y
+    tenga **6 caracteres o más** (el máximo técnico es 72 bytes, por la forma como se protege). No se recorta ni se
+    cambia: se compara tal como se escribió, y aquí sí importan las mayúsculas. En el formulario de crear cuenta se ve
+    mientras se escribe, para no equivocarse (no hay recuperación), con la casilla «Mostrar la contraseña» para ocultarla.
+  - Se guarda solo con hash (bcrypt), nunca en texto plano. La sesión dura **30 días**, para que pueda usar la
+    aplicación sin señal.
+- **Cuentas anteriores (celular y PIN):** las familias que se registraron antes de que existieran los nombres de usuario
+  siguen entrando igual: su usuario es su número de celular (se acepta con `+57`, espacios o guiones) y su contraseña es su
+  PIN de 4 a 6 números. No hace falta migrar nada.
 - **Administrador:** entra con usuario y contraseña. Los define `ADMIN_USER` y `ADMIN_PASSWORD`; la aplicación
   crea al administrador sola en la primera petición. **La variable manda:** para cambiar la contraseña, cambia
   `ADMIN_PASSWORD` en Vercel y haz un Redeploy. La sesión dura **8 horas**.
-- **Intentos fallidos:** como máximo **5 intentos cada 15 minutos por cuenta (celular o usuario)**. Pasado el límite
+- **Intentos fallidos:** como máximo **5 intentos cada 15 minutos por cuenta (según el nombre de usuario, escrito como se escriba)**. Pasado el límite
   se bloquea aunque se escriba la clave correcta, hasta que termine la ventana de 15 minutos.
 - **Narradora de ejemplo (opcional):** si defines `SEED_DEMO_NARRATOR_PHONE` y `SEED_DEMO_NARRATOR_PIN`
-  (y opcionalmente `SEED_DEMO_NARRATOR_NAME`), se crea una cuenta de ejemplo. Nunca se modifica después.
+  (y opcionalmente `SEED_DEMO_NARRATOR_NAME`), se crea una cuenta de ejemplo (una «cuenta anterior»: entra con ese
+  celular como usuario y ese PIN como contraseña). Nunca se modifica después.
 - **Clave olvidada:** en la versión 1 no hay recuperación. Un administrador puede borrar la cuenta en Atlas
   (colección `usuarios`) para que la persona se registre de nuevo.
 - Si el ingreso responde *«Falta configurar JWT_SECRET en el servidor»*, falta esa variable (o es muy corta):

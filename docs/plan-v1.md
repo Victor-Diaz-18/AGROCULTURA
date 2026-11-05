@@ -260,3 +260,9 @@ formulario, Usuario y Contraseña, igual para todos**, y debajo «¿No tienes cu
 de crear cuenta (nombre, celular y clave de 4 a 6 números). Para una familia el usuario es su celular y la contraseña es
 su clave corta, así que las cuentas que ya existían siguen funcionando sin cambios. Los puntos 1 a 3 de arriba quedan
 reemplazados por esto.
+
+**Y luego se simplificó también el alta** (a pedido del equipo): crear una cuenta ya no pide nombre, celular y PIN, sino
+solo un **nombre de usuario** y una **contraseña de cualquier tipo con 6 caracteres o más**. El nombre de usuario es único y
+es el nombre que se muestra en las historias; ya no se guarda el celular de las familias. Las cuentas hechas con celular y PIN
+siguen entrando como antes. Consecuencia a tener en cuenta: sin un dato de contacto, avisar fuera de la plataforma que una
+historia fue rechazada (pendiente por definir) exigiría volver a pedir celular o correo.

@@ -46,7 +46,7 @@ def test_a_resend_never_changes_a_story_an_administrator_already_decided_on(clie
 
 
 def test_two_narrators_can_use_the_same_draft_identifier(client, db, narrator):
-    other = register(client, nombre="Luz Marina", celular="3109998877", pin="1357").json()
+    other = register(client, usuario="Luz Marina", clave="135790").json()
     payload = story_payload()
 
     mine = send(client, narrator["headers"], payload)

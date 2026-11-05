@@ -22,7 +22,7 @@ def test_a_new_narrator_has_no_stories(client, narrator):
 
 
 def test_a_narrator_sees_only_their_own_stories_newest_first(client, narrator):
-    other = register(client, nombre="Luz Marina", celular="3109998877", pin="1357").json()
+    other = register(client, usuario="Luz Marina", clave="135790").json()
     client.post("/api/historias", headers=narrator["headers"], json=story_payload(titulo="La primera"))
     client.post("/api/historias", headers=bearer(other["token"]), json=story_payload(titulo="De otra persona"))
     client.post("/api/historias", headers=narrator["headers"], json=story_payload(titulo="La segunda"))

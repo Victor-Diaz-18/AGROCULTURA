@@ -6,7 +6,7 @@ import { expect, test } from '@playwright/test'
  */
 test.describe.configure({ mode: 'serial' })
 
-const PHONE = `3${String(Date.now()).slice(-9)}` // a new person every run
+const FAMILY = { usuario: `Rosa Elena Pérez ${String(Date.now()).slice(-5)}`, clave: 'mi cafetal 2026' } // a new person every run
 const STORY = `El camino de mulas ${String(Date.now()).slice(-5)}`
 const ADMIN = { usuario: 'admin', clave: 'clave-de-prueba-123' }
 
@@ -15,9 +15,8 @@ async function signUp(page) {
   await page.getByRole('button', { name: /Ingresar/ }).click()
   await page.getByRole('dialog', { name: 'Ingresar' }).getByRole('button', { name: 'Crea una' }).click() // «¿No tienes cuenta? Crea una»
   const dialog = page.getByRole('dialog', { name: 'Crear cuenta' })
-  await dialog.getByLabel('Tu nombre').fill('Rosa Elena Pérez')
-  await dialog.getByLabel('Número de celular').fill(PHONE)
-  await dialog.getByLabel('Elige una clave de 4 a 6 números').fill('4821')
+  await dialog.getByLabel('Nombre de usuario').fill(FAMILY.usuario)
+  await dialog.getByLabel('Contraseña', { exact: true }).fill(FAMILY.clave) // not «Mostrar la contraseña»
   await dialog.getByRole('button', { name: 'Crear cuenta' }).click()
   await expect(page.getByText('Rosa Elena Pérez').first()).toBeVisible()
 }
@@ -97,8 +96,8 @@ test('sin señal la familia guarda su historia en el dispositivo y sale sola al 
   await page.goto('/')
   await page.getByRole('button', { name: /Ingresar/ }).click()
   const dialog = page.getByRole('dialog', { name: 'Ingresar' })
-  await dialog.getByLabel('Usuario').fill(PHONE) // a narrator's user is the mobile number...
-  await dialog.getByLabel('Contraseña').fill('4821') // ...and the password is the short PIN
+  await dialog.getByLabel('Usuario').fill(FAMILY.usuario.toLowerCase()) // the same user name, whatever the capitals
+  await dialog.getByLabel('Contraseña').fill(FAMILY.clave)
   await dialog.getByRole('button', { name: 'Ingresar' }).click()
   await expect(page.getByText('Rosa Elena Pérez').first()).toBeVisible()
 
@@ -122,8 +121,8 @@ test('lo que quedó a medias se recupera al volver', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('button', { name: /Ingresar/ }).click()
   const dialog = page.getByRole('dialog', { name: 'Ingresar' })
-  await dialog.getByLabel('Usuario').fill(PHONE) // a narrator's user is the mobile number...
-  await dialog.getByLabel('Contraseña').fill('4821') // ...and the password is the short PIN
+  await dialog.getByLabel('Usuario').fill(FAMILY.usuario.toLowerCase()) // the same user name, whatever the capitals
+  await dialog.getByLabel('Contraseña').fill(FAMILY.clave)
   await dialog.getByRole('button', { name: 'Ingresar' }).click()
   await page.getByRole('link', { name: /Contar una historia/ }).first().click()
   await page.getByLabel('O escríbela').fill('Algo que no alcancé a terminar.')
