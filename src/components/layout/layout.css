@@ -655,6 +655,119 @@
   color: var(--texto-3);
 }
 
+/* The first farms, and facts about the zone */
+.ag-vhist {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+  gap: 20px 40px;
+  align-items: start;
+  margin-top: 20px;
+}
+.ag-vhist h2 {
+  font-family: var(--font-title);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--verde-oscuro);
+}
+.ag-vhist__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  margin-bottom: 18px;
+}
+.ag-vhist__line {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ag-vhist__line li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  gap: 16px;
+  padding-bottom: 22px;
+}
+/* The line joining one date to the next */
+.ag-vhist__line li::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  bottom: -6px;
+  left: 92px;
+  width: 2px;
+  background: var(--borde-fuerte);
+}
+.ag-vhist__line li:last-child::before {
+  bottom: 22px;
+}
+.ag-vhist__line li > div {
+  padding-left: 18px;
+}
+.ag-vhist__when {
+  font-family: var(--font-title);
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--verde-azulado);
+  text-align: right;
+}
+.ag-vhist__line h3 {
+  margin-bottom: 4px;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--texto);
+}
+.ag-vhist__line p {
+  max-width: 60ch;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--texto-2);
+}
+.ag-vhist__facts {
+  padding: 22px;
+  border: 1px solid var(--borde);
+  border-radius: 16px;
+  background: #fff;
+}
+.ag-vhist__facts ul {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--texto-2);
+}
+.ag-vhist__facts b {
+  display: block;
+  font-family: var(--font-title);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--verde-oscuro);
+}
+.ag-vhist__sources {
+  grid-column: 1 / -1;
+  font-size: 13.5px;
+  color: var(--texto-3);
+}
+.ag-vhist__sources summary {
+  min-height: 32px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.ag-vhist__sources ul {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 6px 0 0;
+  padding-left: 18px;
+  line-height: 1.45;
+}
+
 /* How a story gets here */
 .ag-vhow {
   display: flex;
@@ -802,6 +915,26 @@
   }
   .ag-vhero .ag-btn--outline {
     height: 48px;
+  }
+  .ag-vhist {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ag-vhist__line li {
+    grid-template-columns: 68px minmax(0, 1fr);
+    gap: 8px;
+  }
+  .ag-vhist__line li::before {
+    left: 72px;
+  }
+  .ag-vhist__line li > div {
+    padding-left: 14px;
+  }
+  .ag-vhist__when {
+    font-size: 16px;
+    white-space: nowrap;
+  }
+  .ag-vhist__facts {
+    padding: 18px 16px;
   }
   .ag-vhow__invite {
     padding: 18px 16px;

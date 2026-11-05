@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import MapFilters from '../../components/map/MapFilters.jsx'
 import StoryList from '../../components/map/StoryList.jsx'
 import StoryMap from '../../components/map/StoryMap.jsx'
+import VisitorHistory from '../../components/map/VisitorHistory.jsx'
 import VisitorIntro, { VisitorHowItWorks } from '../../components/map/VisitorIntro.jsx'
 import PageHeader from '../../components/layout/PageHeader.jsx'
 import { StoryCardLoader } from '../../components/story/StoryCard.jsx'
@@ -219,6 +220,7 @@ export default function MapPage() {
         </div>
       </div>
 
+      {isVisitor && <VisitorHistory />}
       {isVisitor && <VisitorHowItWorks />}
 
       {openCode && <StoryCardLoader key={openCode} code={openCode} onClose={() => setOpenCode(null)} />}

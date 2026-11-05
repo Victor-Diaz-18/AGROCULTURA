@@ -103,6 +103,39 @@ describe('La vista de un visitante sin cuenta', () => {
     expect(within(screen.getByRole('navigation', { name: 'Próximamente' })).getByRole('link', { name: 'Recorridos 360°' })).toBeInTheDocument()
   })
 
+  it('tells the first farms below the map, with the dates of the academic source and its sources', async () => {
+    visit()
+
+    const farms = await screen.findByRole('region', { name: 'Las primeras fincas' })
+    expect(within(farms).getByRole('heading', { name: 'Hacienda Minca' })).toBeInTheDocument()
+    const victoria = within(farms).getByRole('heading', { name: 'La Victoria' }).closest('li')
+    expect(victoria).toHaveTextContent('1896')
+    expect(victoria).not.toHaveTextContent('1892')
+    expect(within(farms).getByRole('heading', { name: 'Datos de la zona' })).toBeInTheDocument()
+    expect(within(farms).getByRole('link', { name: /Aroma de café/ })).toHaveAttribute('href', expect.stringContaining('redalyc.org'))
+    expect(screen.getByRole('heading', { name: 'Mapa de historias' }).compareDocumentPosition(farms)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+  })
+
+  it('names no people in the history of the farms', async () => {
+    visit()
+
+    const farms = await screen.findByRole('region', { name: 'Las primeras fincas' })
+    for (const name of ['Oligós', 'Díaz Granados', 'de Mier', 'Leiva', 'Balaguera', 'Crane', 'Flye', 'Weber', 'Carriker', 'Bowden', 'Viloria', 'Reátiga', 'Becerra', 'Pineda', 'Cucunubá']) {
+      expect(farms).not.toHaveTextContent(name)
+    }
+  })
+
+  it('can be listened to', async () => {
+    const user = userEvent.setup()
+    visit()
+
+    await user.click(await screen.findByRole('button', { name: 'Escuchar esta sección' }))
+
+    const spoken = window.speechSynthesis.speak.mock.calls.map(([utterance]) => utterance.text).join(' ')
+    expect(spoken).toContain('La Victoria, 1896.')
+    expect(spoken).toContain('Datos de la zona.')
+  })
+
   it('signing in brings the working frame back, on the same page', async () => {
     renderApp({ user: NARRATOR, api: { '/estadisticas': stats, '/historias': [mapStory()] } })
 

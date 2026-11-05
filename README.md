@@ -46,6 +46,7 @@ esta captura porque se tomó sin acceso a internet; en la plataforma real se ve 
 
 | Qué | Cómo funciona |
 |---|---|
+| **Portada para visitantes** | Quien entra sin cuenta ve qué es el proyecto, el mapa, la historia de las primeras fincas con sus fuentes, datos de la zona y cómo llega una historia al mapa. El logo y la foto de la portada son provisionales |
 | **Mapa de historias** | Un mapa real con un pin por historia (rojo: de la comunidad; verde azulado: del proyecto) que se agrupan cuando están cerca. La lista de al lado muestra solo las de la zona que se ve. Los nombres de los sectores salen al acercarse. Ver [la captura](docs/capturas/01-mapa.jpg) |
 | **Filtros y búsqueda** | Por sector (con cuántas historias hay en cada uno), origen, época y formato; la búsqueda ignora tildes y mayúsculas («cafe» encuentra «café») |
 | **Ficha de la historia** | Foto(s), video, audio con reproductor, quién la cuenta, dónde y cuándo, su texto y sus etiquetas; «Abrir en Google Maps» o «Apple Maps»; «Ver en el mapa» y un enlace para compartir |
