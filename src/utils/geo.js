@@ -1,4 +1,4 @@
-import { OTHER_PLACE } from '../config/constants.js'
+import { NO_LOCATION, OTHER_PLACE } from '../config/constants.js'
 import { SECTOR_RADIUS_KM, ZONE } from '../config/map.js'
 
 /** Distance in km between two { lat, lon } points (haversine). */
@@ -33,10 +33,17 @@ export function sectorAt(point, sectors, { includeProvisional = false } = {}) {
 export const inZone = ({ lat, lon }) => lat >= ZONE.south && lat <= ZONE.north && lon >= ZONE.west && lon <= ZONE.east
 
 /**
+ * Is the story on the map? A story published without a place has no point (and no sector, and no place name: those are for
+ * the administrators). Answers from before that option existed do not say, but they do have a point.
+ */
+export const hasLocation = (story) => story.con_ubicacion !== false && Number.isFinite(story.lat) && Number.isFinite(story.lon)
+
+/**
  * Where a story happened, in words: the name its narrator gave to the place plus the sector it is in
- * ("Finca La Esperanza, La Tagua"), or just one of them, or "Otro lugar de la zona".
+ * ("Finca La Esperanza, La Tagua"), or just one of them, or "Otro lugar de la zona". A story with no place says so.
  */
 export function placeLine(story, sectors) {
+  if (story.con_ubicacion === false) return NO_LOCATION
   const sector = sectors.find((item) => item.id === story.sector_id)?.nombre
   if (story.lugar_nombre) return sector ? `${story.lugar_nombre}, ${sector}` : story.lugar_nombre
   return sector ?? OTHER_PLACE
@@ -45,14 +52,18 @@ export function placeLine(story, sectors) {
 /** The name to show for a story's sector, or "Otro lugar de la zona" when it has none. */
 export const placeName = (sectorId, sectors) => sectors.find((sector) => sector.id === sectorId)?.nombre ?? OTHER_PLACE
 
-/** Is the story's point inside the map's view? `bounds` is { south, west, north, east }; no bounds means "everything". */
+/**
+ * Is the story's point inside the map's view? `bounds` is { south, west, north, east }; no bounds means "everything".
+ * A story with no place is never "in" the view: it is not on the map at all.
+ */
 export function inBounds(bounds, story) {
+  if (!hasLocation(story)) return false
   if (!bounds) return true
   return story.lat >= bounds.south && story.lat <= bounds.north && story.lon >= bounds.west && story.lon <= bounds.east
 }
 
-/** The points of a list of stories as [lat, lon] pairs (what Leaflet wants). */
-export const pointsOf = (stories) => stories.map((story) => [story.lat, story.lon])
+/** The points of the stories that are on the map, as [lat, lon] pairs (what Leaflet wants). */
+export const pointsOf = (stories) => stories.filter(hasLocation).map((story) => [story.lat, story.lon])
 
 /** Opens a point in Google Maps (the official "Maps URLs", no key needed). */
 export const googleMapsUrl = ({ lat, lon }) => `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`

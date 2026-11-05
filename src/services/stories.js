@@ -1,3 +1,4 @@
+import { consentPayload } from '../utils/consent.js'
 import { request } from './http.js'
 
 /**
@@ -29,17 +30,26 @@ export const fetchPublishedStories = () => request('/historias', { auth: false }
 /** The card of a published story (public). */
 export const fetchStory = (codigo) => request(`/historias/${encodeURIComponent(codigo)}`, { auth: false })
 
-/** The body POST /api/historias expects, from what the person filled in and the uploaded files. */
+/**
+ * The body POST /api/historias expects, from what the person filled in and the uploaded files.
+ * `draft.ubicacionModo`: "aproximada" (the default, and what drafts kept before this option have) sends the point;
+ * "ninguna" sends no point at all, only the name of the place as a reference. `draft.anonima`: publish without the name.
+ * `draft.consentimiento`: what `acceptConsent` kept when the box was ticked.
+ */
 export function buildStoryPayload(draft, medios) {
+  const modo = draft.ubicacionModo ?? 'aproximada'
   return {
     client_id: draft.clientId,
     titulo: draft.titulo,
     texto: draft.texto,
     epoca: draft.epoca,
     etiquetas: draft.etiquetas,
-    ubicacion: { lat: draft.location.lat, lon: draft.location.lon },
-    ubicacion_origen: draft.location.origen,
+    ubicacion_modo: modo,
+    ...(modo === 'aproximada' ? { ubicacion: { lat: draft.location.lat, lon: draft.location.lon }, ubicacion_origen: draft.location.origen } : {}),
     ...(draft.lugar ? { lugar_nombre: draft.lugar } : {}),
+    ...(draft.finca ? { finca_nombre: draft.finca } : {}),
+    anonima: Boolean(draft.anonima),
+    ...(draft.consentimiento ? { consentimiento: consentPayload(draft.consentimiento) } : {}),
     medios: medios.map(({ tipo, url, mime, bytes, duracion_s: duracion }) => ({
       tipo,
       url,

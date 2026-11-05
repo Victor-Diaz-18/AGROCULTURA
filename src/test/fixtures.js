@@ -58,6 +58,20 @@ export const mapStory = (overrides = {}) => ({
   ...overrides,
 })
 
+/** A published story that has no place on the map, as the public gets it: no point, no sector, no place name. */
+export const storyWithoutPlace = (overrides = {}) =>
+  mapStory({
+    codigo: 'HIS-2026-040',
+    titulo: 'Lo que contaba mi abuela',
+    sector_id: null,
+    lugar_nombre: null,
+    lat: null,
+    lon: null,
+    con_ubicacion: false,
+    aproximada: false,
+    ...overrides,
+  })
+
 /** The card of a published story (/api/historias/{codigo}). */
 export const storyCard = (overrides = {}) => ({
   ...mapStory(),

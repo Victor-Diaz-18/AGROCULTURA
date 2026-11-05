@@ -26,6 +26,9 @@ export const MAX_PLACE_NAME = 80
 
 export const LIMITS = { tituloMin: 3, tituloMax: 120, textoMax: 5000, fotos: 6, etiquetas: 6 }
 
+/** What the list and the card say of a story published without a place on the map (nothing about where it is is public). */
+export const NO_LOCATION = 'Sin ubicación en el mapa'
+
 /** What a story is said to be in when its point is far from every sector (the zone is wider than the four sectors). */
 export const OTHER_PLACE = 'Otro lugar de la zona'
 

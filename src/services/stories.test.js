@@ -30,9 +30,55 @@ describe('buildStoryPayload', () => {
       texto: 'Texto',
       epoca: 'Antes de 1960',
       etiquetas: ['#café'],
+      ubicacion_modo: 'aproximada',
       ubicacion: { lat: 11.14, lon: -74.118 },
       ubicacion_origen: 'sector',
+      anonima: false,
       medios: [{ tipo: 'audio', url: 'https://x/a.webm', mime: 'audio/webm', bytes: 10, duracion_s: 30 }],
+    })
+  })
+
+  describe('where, whose name and the authorization', () => {
+    const accepted = { version: '2026-11-1', variante: 'aproximada_con_nombre', aceptadoEn: '2026-11-04T10:00:00.000Z' }
+
+    it('sends no point at all when the story has no place on the map, only the reference name', () => {
+      const payload = buildStoryPayload(draft({ ubicacionModo: 'ninguna', lugar: 'Finca Los Mangos' }), [])
+
+      expect(payload.ubicacion_modo).toBe('ninguna')
+      expect(payload).not.toHaveProperty('ubicacion')
+      expect(payload).not.toHaveProperty('ubicacion_origen')
+      expect(payload.lugar_nombre).toBe('Finca Los Mangos')
+      expect(JSON.stringify(payload)).not.toContain('11.14') // not even a point left in the form
+    })
+
+    it('sends no point for a story without a place even if the draft has none chosen', () => {
+      expect(() => buildStoryPayload(draft({ ubicacionModo: 'ninguna', location: null }), [])).not.toThrow()
+    })
+
+    it('a draft kept before this option existed still sends its point', () => {
+      const payload = buildStoryPayload(draft(), [])
+
+      expect(payload.ubicacion_modo).toBe('aproximada')
+      expect(payload.ubicacion).toEqual({ lat: 11.14, lon: -74.118 })
+    })
+
+    it('sends "publicar sin mi nombre" as a choice, never the name', () => {
+      expect(buildStoryPayload(draft({ anonima: true }), []).anonima).toBe(true)
+      expect(buildStoryPayload(draft(), []).anonima).toBe(false)
+    })
+
+    it('sends the name of the farm only when there is one', () => {
+      expect(buildStoryPayload(draft({ finca: 'Café Don Aurelio' }), []).finca_nombre).toBe('Café Don Aurelio')
+      expect(buildStoryPayload(draft({ finca: '' }), [])).not.toHaveProperty('finca_nombre')
+    })
+
+    it('sends the consent with the version of the text and the moment it was ticked', () => {
+      expect(buildStoryPayload(draft({ consentimiento: accepted }), []).consentimiento).toEqual({
+        aceptado: true,
+        version: '2026-11-1',
+        aceptado_en: '2026-11-04T10:00:00.000Z',
+      })
+      expect(buildStoryPayload(draft(), [])).not.toHaveProperty('consentimiento')
     })
   })
 

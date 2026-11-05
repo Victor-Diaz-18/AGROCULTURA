@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { CONFIG } from '../test/fixtures.js'
-import { appleMapsUrl, distanceKm, googleMapsUrl, inBounds, inZone, placeLine, placeName, pointsOf, sectorAt } from './geo.js'
+import { CONFIG, mapStory, storyWithoutPlace } from '../test/fixtures.js'
+import { appleMapsUrl, distanceKm, googleMapsUrl, hasLocation, inBounds, inZone, placeLine, placeName, pointsOf, sectorAt } from './geo.js'
 
 describe('distanceKm', () => {
   it('is zero for the same point and about 111 km per degree of latitude', () => {
@@ -98,6 +98,29 @@ describe('inBounds', () => {
 describe('pointsOf', () => {
   it('gives [lat, lon] pairs', () => {
     expect(pointsOf([{ lat: 1, lon: 2 }, { lat: 3, lon: 4 }])).toEqual([[1, 2], [3, 4]])
+  })
+
+  it('leaves out the stories that are not on the map', () => {
+    expect(pointsOf([{ lat: 1, lon: 2 }, storyWithoutPlace(), { lat: 3, lon: 4 }])).toEqual([[1, 2], [3, 4]])
+  })
+})
+
+describe('a story published without a place', () => {
+  it('has no location, and says so; a story with a point has one, even if an older answer does not say it', () => {
+    expect(hasLocation(storyWithoutPlace())).toBe(false)
+    expect(hasLocation(mapStory())).toBe(true)
+    expect(hasLocation({ lat: 11.1, lon: -74.1 })).toBe(true) // from before the option existed
+    expect(hasLocation({ con_ubicacion: true, lat: null, lon: null })).toBe(false) // a point is what makes it "on the map"
+  })
+
+  it('is never inside the view of the map, with or without a known view', () => {
+    expect(inBounds({ south: -90, west: -180, north: 90, east: 180 }, storyWithoutPlace())).toBe(false)
+    expect(inBounds(null, storyWithoutPlace())).toBe(false)
+  })
+
+  it('says it has no place on the map instead of "Otro lugar de la zona"', () => {
+    expect(placeLine(storyWithoutPlace(), CONFIG.sectores)).toBe('Sin ubicación en el mapa')
+    expect(placeLine(storyWithoutPlace({ lugar_nombre: 'Finca Los Mangos' }), CONFIG.sectores)).toBe('Sin ubicación en el mapa') // never the reference
   })
 })
 
