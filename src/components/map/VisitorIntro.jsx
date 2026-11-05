@@ -40,7 +40,7 @@ export default function VisitorIntro({ sectors, stats, readAloud }) {
           <Button variant="primary" icon="mas" onClick={() => openLogin({ rol: 'narrador', destino: '/contar' })}>
             Contar una historia
           </Button>
-          <ListenButton title="Mapa de historias" text={readAloud} />
+          <ListenButton title="Mapa de historias" text={readAloud} piece="portada" />
         </div>
         {facts.length > 0 && (
           <ul className="ag-vhero__facts" aria-label="Lo que hay en el mapa">

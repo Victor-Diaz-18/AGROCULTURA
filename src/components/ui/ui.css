@@ -353,26 +353,6 @@
   font-size: 14px;
   line-height: 1.35;
 }
-.ag-reading__voice {
-  display: flex;
-  flex: 1 1 100%;
-  order: 3;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 700;
-}
-.ag-reading__voice select {
-  flex: 1;
-  min-width: 0;
-  height: 36px;
-  padding: 0 8px;
-  border: 0;
-  border-radius: 8px;
-  background: #f3f6f1;
-  color: var(--texto);
-  font-size: 13px;
-}
 .ag-reading__stop {
   flex: none;
   height: 32px;

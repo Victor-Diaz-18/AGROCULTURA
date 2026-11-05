@@ -1,7 +1,10 @@
-import { describe, expect, it } from 'vitest'
-import { act, screen, within } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { act, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { renderApp } from '../test/renderApp.jsx'
+import { CONFIG } from '../test/fixtures.js'
+import { renderApp, callsTo, reply } from '../test/renderApp.jsx'
+import { setSimulatedOffline } from '../offline/connectivity.js'
+import { cacheSet } from '../offline/store.js'
 import { prepareForSpeech, spanishVoices, splitForSpeech } from './SpeechContext.jsx'
 
 describe('voice guide (F9)', () => {
@@ -68,7 +71,6 @@ describe('voice guide (F9)', () => {
     await user.click(screen.getByRole('button', { name: 'Escuchar' }))
 
     expect(window.speechSynthesis.speak.mock.calls[0][0].voice.name).toBe('Paulina')
-    expect(within(screen.getByLabelText('Voz')).queryByRole('option', { name: /Grandma/ })).not.toBeInTheDocument()
   })
 
   it('puts the neural voices first, whatever the country', () => {
@@ -81,27 +83,6 @@ describe('voice guide (F9)', () => {
     ]).map((voice) => voice.name)
 
     expect(names).toEqual(['Microsoft Salome Online (Natural) - Spanish (Colombia)', 'Google español de Estados Unidos', 'Paulina', 'Local Colombia'])
-  })
-
-  it('lets the person choose another voice: it starts over with it, and remembers it', async () => {
-    const user = userEvent.setup()
-    window.speechSynthesis.getVoices.mockReturnValue([
-      { lang: 'es-MX', name: 'Paulina' },
-      { lang: 'es-ES', name: 'Mónica' },
-    ])
-    const { unmount } = renderApp()
-    await user.click(screen.getByRole('button', { name: 'Escuchar' }))
-    window.speechSynthesis.speak.mockClear()
-
-    await user.selectOptions(screen.getByLabelText('Voz'), 'Mónica')
-
-    expect(window.speechSynthesis.speak.mock.calls[0][0].voice.name).toBe('Mónica')
-    unmount()
-    window.speechSynthesis.speak.mockClear()
-    renderApp()
-    await user.click(screen.getByRole('button', { name: 'Escuchar' }))
-    expect(window.speechSynthesis.speak.mock.calls[0][0].voice.name).toBe('Mónica')
-    localStorage.removeItem('agrocultura.voz')
   })
 
   it('says numbers and units in words a voice can read', () => {
@@ -148,5 +129,93 @@ describe('voice guide (F9)', () => {
     expect(chunks.length).toBeGreaterThan(1)
     expect(chunks.every((chunk) => chunk.length <= 160)).toBe(true)
     expect(chunks.join(' ')).toBe(Array(12).fill(sentence).join(' '))
+  })
+
+  describe('la voz del portal', () => {
+    const withVoice = (api = {}) => renderApp({ api: { '/config': { ...CONFIG, voz_disponible: true }, ...api } })
+    let play
+    beforeEach(() => {
+      play = vi.spyOn(window.HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined)
+      vi.spyOn(window.HTMLMediaElement.prototype, 'pause').mockImplementation(() => {})
+    })
+    afterEach(() => vi.restoreAllMocks())
+
+    it('plays the audio the server made, and the voice of the device stays quiet', async () => {
+      const user = userEvent.setup()
+      const { fetchMock } = withVoice({ '/voz/portada': { url: 'https://audio.test/portada.mp3' } })
+      await waitFor(() => expect(callsTo(fetchMock, '/config').length).toBeGreaterThan(0))
+      await act(async () => {})
+
+      await user.click(screen.getByRole('button', { name: 'Escuchar' }))
+
+      await waitFor(() => expect(callsTo(fetchMock, '/voz/portada')).toHaveLength(1))
+      expect(play).toHaveBeenCalled()
+      expect(window.speechSynthesis.speak).not.toHaveBeenCalled()
+      expect(await screen.findByText(/Leyendo en voz alta/)).toBeInTheDocument()
+    })
+
+    it('when the service fails, the voice of the device reads instead', async () => {
+      const user = userEvent.setup()
+      const { fetchMock } = withVoice({ '/voz/portada': () => reply({ detail: 'x' }, 503) })
+      await waitFor(() => expect(callsTo(fetchMock, '/config').length).toBeGreaterThan(0))
+      await act(async () => {})
+
+      await user.click(screen.getByRole('button', { name: 'Escuchar' }))
+
+      await waitFor(() => expect(window.speechSynthesis.speak).toHaveBeenCalled())
+    })
+
+    it('when the phone refuses to play it, the voice of the device reads instead', async () => {
+      const user = userEvent.setup()
+      const { fetchMock } = withVoice({ '/voz/portada': { url: 'https://audio.test/portada.mp3' } })
+      await waitFor(() => expect(callsTo(fetchMock, '/config').length).toBeGreaterThan(0))
+      await act(async () => {})
+      play.mockResolvedValueOnce(undefined).mockRejectedValueOnce(new Error('blocked'))
+
+      await user.click(screen.getByRole('button', { name: 'Escuchar' }))
+
+      await waitFor(() => expect(window.speechSynthesis.speak).toHaveBeenCalled())
+    })
+
+    it('with no signal, it plays what this device kept, without asking the server', async () => {
+      const user = userEvent.setup()
+      await cacheSet('voz:portada', { url: 'https://audio.test/portada.mp3', bytes: new ArrayBuffer(8), type: 'audio/mpeg' })
+      URL.createObjectURL = vi.fn(() => 'blob:guardado')
+      const { fetchMock } = withVoice()
+      await waitFor(() => expect(callsTo(fetchMock, '/config').length).toBeGreaterThan(0))
+      await act(async () => {})
+      act(() => setSimulatedOffline(true))
+
+      await user.click(screen.getByRole('button', { name: 'Escuchar' }))
+
+      await waitFor(() => expect(URL.createObjectURL).toHaveBeenCalled())
+      expect(callsTo(fetchMock, '/voz/portada')).toHaveLength(0)
+      expect(window.speechSynthesis.speak).not.toHaveBeenCalled()
+    })
+
+    it('with no signal and nothing kept, the voice of the device reads', async () => {
+      const user = userEvent.setup()
+      const { fetchMock } = withVoice()
+      await waitFor(() => expect(callsTo(fetchMock, '/config').length).toBeGreaterThan(0))
+      await act(async () => {})
+      act(() => setSimulatedOffline(true))
+
+      await user.click(screen.getByRole('button', { name: 'Escuchar' }))
+
+      await waitFor(() => expect(window.speechSynthesis.speak).toHaveBeenCalled())
+    })
+
+    it('"Detener" stops the audio', async () => {
+      const user = userEvent.setup()
+      const { fetchMock } = withVoice({ '/voz/portada': { url: 'https://audio.test/portada.mp3' } })
+      await waitFor(() => expect(callsTo(fetchMock, '/config').length).toBeGreaterThan(0))
+      await act(async () => {})
+      await user.click(screen.getByRole('button', { name: 'Escuchar' }))
+
+      await user.click(await screen.findByRole('button', { name: 'Detener' }))
+
+      expect(window.HTMLMediaElement.prototype.pause).toHaveBeenCalled()
+      expect(screen.queryByText(/Leyendo en voz alta/)).not.toBeInTheDocument()
+    })
   })
 })

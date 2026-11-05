@@ -48,3 +48,4 @@ class ConfigPublica(BaseModel):
     epocas: list[str]
     motivos_rechazo: list[MotivoRechazo]
     consentimiento: Consentimiento
+    voz_disponible: bool = False  # the server can read public content with the voice of the portal

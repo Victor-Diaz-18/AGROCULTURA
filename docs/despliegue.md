@@ -23,6 +23,7 @@ sin mostrar mensajes ni claves. También queda escrito, al inicio, en los regist
 | `causa` | `codigo` | Qué significa | Qué revisar |
 |---|---|---|---|
 | `OperationFailure` | 18 | Usuario o contraseña incorrectos | La contraseña en `MONGODB_URI`: que no quede `<db_password>`, que no tenga espacios y que sus símbolos especiales estén codificados (una contraseña solo con letras y números evita el problema). Que el usuario exista en Atlas |
+| `OperationFailure` | 8000 | Atlas rechazó la autenticación (es su forma de decir lo mismo que el 18) | Lo mismo que el 18: usuario y contraseña de `MONGODB_URI` |
 | `OperationFailure` | 13 | El usuario no tiene permiso | En Atlas → Database Access, el usuario debe tener `readWrite` sobre la base `agrocultura` (escrita igual que `MONGODB_DB`) |
 | `ServerSelectionTimeoutError` | — | No se llega al cluster | Network Access con `0.0.0.0/0`; que el cluster no esté pausado |
 | `ConfigurationError` o `InvalidURI` | — | La cadena de conexión está mal formada | Volver a copiarla desde Atlas (Connect → Drivers) |
@@ -50,7 +51,8 @@ Un solo repositorio y un solo proyecto de Vercel sirven la interfaz, la API de P
    | `ADMIN_USER` | El usuario del administrador inicial |
    | `ADMIN_PASSWORD` | Su contraseña (10 caracteres o más). Para cambiarla después: se cambia aquí y se vuelve a desplegar |
    | `BLOB_READ_WRITE_TOKEN` | Ya la creó el paso 3 |
-   | `ALLOW_DEMO_RESET` | `true` solo mientras se prueba con datos de ejemplo (ver la lista siguiente) |
+   | `AZURE_SPEECH_KEY` y `AZURE_SPEECH_REGION` | Opcionales: la clave y la región de un recurso **Speech** de Azure (plan gratuito **F0**). Con ellas, la portada, las primeras fincas y las fichas publicadas se leen con la voz del portal; sin ellas, con la voz de cada dispositivo. `AZURE_SPEECH_VOICE` elige la voz (por defecto `es-CO-SalomeNeural`) y `VOZ_MAX_CARACTERES_DIA` limita el gasto diario (15000) |
+| `ALLOW_DEMO_RESET` | `true` solo mientras se prueba con datos de ejemplo (ver la lista siguiente) |
    | `SEED_DEMO_NARRATOR_PHONE` y `SEED_DEMO_NARRATOR_PIN` | Opcionales: una narradora de ejemplo para las demostraciones (entra con ese celular como usuario y ese PIN como contraseña) |
 
 5. **Desplegar** (o *Redeploy* si cambiaste variables: solo se leen al desplegar).

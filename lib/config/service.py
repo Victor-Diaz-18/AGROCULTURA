@@ -30,6 +30,7 @@ def get_public_config(db: Database, settings: Settings) -> dict:
         "epocas": list(EPOCAS),
         "motivos_rechazo": [dict(motivo) for motivo in MOTIVOS_RECHAZO],
         "consentimiento": consent.public_texts(),
+        "voz_disponible": bool(settings.azure_speech_key and settings.azure_speech_region),
     }
 
 

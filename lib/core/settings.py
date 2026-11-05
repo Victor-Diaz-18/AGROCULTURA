@@ -53,6 +53,12 @@ class Settings:
     login_max_attempts: int = 5
     login_window_minutes: int = 15
 
+    # The voice of the portal (Azure Speech). Without the key the app reads with the voice of each device.
+    azure_speech_key: str | None = None
+    azure_speech_region: str | None = None
+    azure_speech_voice: str = "es-CO-SalomeNeural"  # the same for everybody; each voice keeps its own audios
+    voz_max_caracteres_dia: int = 15000  # the free Azure plan gives 500,000 a month: this keeps it from running out
+
     @property
     def is_test(self) -> bool:
         return self.env == "test"
@@ -78,6 +84,11 @@ def _flag(environ: Mapping[str, str], name: str) -> bool:
     return (environ.get(name) or "").strip().lower() in _TRUE
 
 
+def _whole(environ: Mapping[str, str], name: str, default: int) -> int:
+    value = _text(environ, name)
+    return int(value) if value and value.isdigit() else default
+
+
 def load_settings(environ: Mapping[str, str]) -> Settings:
     """Build settings from a mapping of environment variables."""
     # Vercel sets VERCEL=1; treat it as production unless APP_ENV says otherwise.
@@ -94,6 +105,10 @@ def load_settings(environ: Mapping[str, str]) -> Settings:
         "demo_narrator_phone": _text(environ, "SEED_DEMO_NARRATOR_PHONE"),
         "demo_narrator_pin": _text(environ, "SEED_DEMO_NARRATOR_PIN"),
         "allow_demo_reset": _flag(environ, "ALLOW_DEMO_RESET"),
+        "azure_speech_key": _text(environ, "AZURE_SPEECH_KEY"),
+        "azure_speech_region": _text(environ, "AZURE_SPEECH_REGION"),
+        "azure_speech_voice": _text(environ, "AZURE_SPEECH_VOICE") or "es-CO-SalomeNeural",
+        "voz_max_caracteres_dia": _whole(environ, "VOZ_MAX_CARACTERES_DIA", 15000),
     }
 
     if env == "test":

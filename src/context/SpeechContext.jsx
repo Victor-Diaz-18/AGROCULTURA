@@ -1,11 +1,15 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import Icon from '../components/ui/Icon.jsx'
+import { isOnline } from '../offline/connectivity.js'
+import { cacheDelete, cacheGet, cacheSet } from '../offline/store.js'
+import { fetchVoice } from '../services/voice.js'
 import { useToast } from './ToastContext.jsx'
 
 /**
- * Voice guide (F9): reads a page aloud with the browser's speech synthesis, in
- * Spanish. The "Leyendo en voz alta" bar shows what is being read and stops it.
+ * Voice guide (F9). The public content is read with the voice of the portal, the same for everybody: audio made by the server,
+ * kept on this device once heard so it also plays with no signal. Everything else, or when that audio cannot be had, is read
+ * with the browser's speech synthesis, in Spanish. The "Leyendo en voz alta" bar shows what is being read and stops it.
  */
 
 const SpeechContext = createContext({
@@ -16,7 +20,10 @@ const SpeechContext = createContext({
 })
 
 const MAX_CHUNK = 160 // short pieces: some browsers cut long ones off, and the breath between them sounds less like a machine
-const VOICE_KEY = 'agrocultura.voz' // the voice the person chose, on this device
+const SAVED_INDEX = 'voz:guardadas' // which audios this device keeps, oldest first
+const MAX_SAVED = 12 // about 1 MB each at most: enough for what a person listens to, without filling a phone
+// A moment of silence. Phones only let a page play sound during a tap; playing this during it lets the real audio start later.
+const SILENCE = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA='
 
 const synth = () => (typeof window !== 'undefined' ? window.speechSynthesis : undefined)
 
@@ -74,35 +81,34 @@ export function spanishVoices(voices) {
     .sort((a, b) => voiceScore(b) - voiceScore(a))
 }
 
-function readStoredVoice() {
-  try {
-    return localStorage.getItem(VOICE_KEY)
-  } catch {
-    return null // storage can be blocked (private mode)
-  }
+/** The audio this device kept of a piece, as an address the player can open; or null. */
+async function savedAudio(piece) {
+  const saved = await cacheGet(`voz:${piece}`)
+  if (!saved?.bytes) return null
+  return URL.createObjectURL(new Blob([saved.bytes], { type: saved.type }))
 }
 
-function storeVoice(name) {
+/** Keeps the audio on the device, for when there is no signal. If it cannot be kept, nothing is lost: it only needs signal next time. */
+async function keepAudio(piece, url) {
   try {
-    localStorage.setItem(VOICE_KEY, name)
+    const key = `voz:${piece}`
+    if ((await cacheGet(key))?.url === url) return
+    const response = await fetch(url)
+    if (!response.ok) return
+    await cacheSet(key, { url, bytes: await response.arrayBuffer(), type: response.headers.get('Content-Type') || 'audio/mpeg' })
+    const kept = [...((await cacheGet(SAVED_INDEX)) ?? []).filter((item) => item !== key), key]
+    await Promise.all(kept.slice(0, -MAX_SAVED).map((old) => cacheDelete(old)))
+    await cacheSet(SAVED_INDEX, kept.slice(-MAX_SAVED))
   } catch {
-    /* it still applies to this visit */
+    /* the file store does not let this be read, or the phone has no room */
   }
-}
-
-/** Only the voices worth offering; the machine ones stay out as long as there is any other. */
-function offeredVoices() {
-  const all = spanishVoices(synth()?.getVoices?.() ?? [])
-  const human = all.filter((voice) => !MACHINE_VOICES.test(voice.name ?? ''))
-  return (human.length > 0 ? human : all).slice(0, 8)
 }
 
 export function SpeechProvider({ children }) {
   const supported = Boolean(synth()) && typeof SpeechSynthesisUtterance !== 'undefined'
   const [reading, setReading] = useState('')
-  const [voices, setVoices] = useState([])
-  const [voiceName, setVoiceName] = useState(readStoredVoice)
-  const current = useRef(null) // what is being read, to start over when the person picks another voice
+  const [preparing, setPreparing] = useState(false) // the server is making the audio: it takes a moment the first time
+  const player = useRef(null)
   const session = useRef(0) // identifies the current reading so a stale "end" event is ignored
   const location = useLocation()
   const toast = useToast()
@@ -110,33 +116,23 @@ export function SpeechProvider({ children }) {
   const stop = useCallback(() => {
     session.current += 1
     synth()?.cancel()
+    player.current?.pause()
     setReading('')
+    setPreparing(false)
   }, [])
 
-  // Browsers load their voices late: the list is empty on the first call, and the best ones arrive afterwards.
-  useEffect(() => {
-    const engine = synth()
-    if (!engine) return undefined
-    const load = () => setVoices(offeredVoices())
-    load()
-    engine.addEventListener?.('voiceschanged', load)
-    return () => engine.removeEventListener?.('voiceschanged', load)
-  }, [])
-
-  const speak = useCallback(
-    (title, text, chosenName = voiceName) => {
-      if (!supported) return false
-      synth().cancel()
-      const mine = ++session.current
-      current.current = { title, text }
+  const speakWithDevice = useCallback(
+    (text, mine) => {
+      if (!supported) {
+        setReading('')
+        return false
+      }
       const chunks = splitForSpeech(prepareForSpeech(text))
       if (chunks.length === 0) {
         setReading('')
         return true
       }
-      const offered = offeredVoices()
-      setVoices(offered)
-      const voice = offered.find((item) => item.name === chosenName) ?? offered[0]
+      const voice = spanishVoices(synth()?.getVoices?.() ?? [])[0] // the list comes the most human first
       chunks.forEach((chunk, index) => {
         const utterance = new SpeechSynthesisUtterance(chunk)
         utterance.lang = voice?.lang || 'es-CO'
@@ -158,24 +154,80 @@ export function SpeechProvider({ children }) {
         }
         synth().speak(utterance)
       })
-      setReading(title)
       return true
     },
-    [supported, toast, voiceName],
+    [supported, toast],
   )
 
-  const chooseVoice = (name) => {
-    setVoiceName(name)
-    storeVoice(name)
-    if (current.current) speak(current.current.title, current.current.text, name)
-  }
+  /** The voice of the portal: with signal the server says where the audio is; without it, what this device kept. Else, the device reads. */
+  const speakWithPortalVoice = useCallback(
+    async (piece, text, mine) => {
+      const audio = player.current
+      let source = null
+      let url = null
+      if (isOnline()) {
+        try {
+          url = (await fetchVoice(piece)).url
+          source = url
+        } catch {
+          /* the service is down or used up for today: what the device kept, or its own voice */
+        }
+      }
+      if (session.current !== mine) return
+      if (!source) source = await savedAudio(piece)
+      if (session.current !== mine) return
+      setPreparing(false)
+      try {
+        if (!source) throw new Error('no audio')
+        audio.onended = () => {
+          if (session.current === mine) setReading('')
+        }
+        audio.onerror = null
+        audio.src = source
+        await audio.play()
+        if (url) keepAudio(piece, url)
+      } catch {
+        if (session.current !== mine) return
+        if (!speakWithDevice(text, mine)) toast('Este dispositivo no puede leer en voz alta.', 'info')
+      }
+    },
+    [speakWithDevice, toast],
+  )
+
+  const speak = useCallback(
+    (title, text, piece) => {
+      if (!supported && !piece) return false
+      synth()?.cancel()
+      player.current?.pause()
+      const mine = ++session.current
+      setPreparing(false)
+      if (piece) {
+        player.current ??= new Audio()
+        player.current.src = SILENCE
+        player.current.play()?.catch?.(() => {}) // during the tap, or the phone would not let the audio start after the wait
+        setReading(title)
+        setPreparing(true)
+        speakWithPortalVoice(piece, text, mine)
+        return true
+      }
+      setReading(title)
+      return speakWithDevice(text, mine)
+    },
+    [supported, speakWithDevice, speakWithPortalVoice],
+  )
 
   // A page change must not keep reading the previous page.
   useEffect(() => {
     stop()
   }, [location.pathname, stop])
 
-  useEffect(() => () => synth()?.cancel(), [])
+  useEffect(
+    () => () => {
+      synth()?.cancel()
+      player.current?.pause()
+    },
+    [],
+  )
 
   const value = useMemo(() => ({ supported, reading, speak, stop }), [supported, reading, speak, stop])
 
@@ -186,20 +238,8 @@ export function SpeechProvider({ children }) {
         <div role="status" className="ag-reading">
           <Icon name="altavoz" size={20} />
           <span className="ag-reading__text">
-            Leyendo en voz alta: <b>{reading}</b>
+            {preparing ? 'Preparando la voz' : 'Leyendo en voz alta'}: <b>{reading}</b>
           </span>
-          {voices.length > 1 && (
-            <label className="ag-reading__voice">
-              Voz
-              <select value={voices.some((item) => item.name === voiceName) ? voiceName : voices[0].name} onChange={(event) => chooseVoice(event.target.value)}>
-                {voices.map((item) => (
-                  <option key={item.name} value={item.name}>
-                    {item.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
           <button type="button" className="ag-reading__stop" onClick={stop}>
             Detener
           </button>

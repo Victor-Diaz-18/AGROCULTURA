@@ -72,7 +72,8 @@ export default function StoryCard({ story, onClose }) {
           <OriginBadge origen={story.origen} />
           <span className="ag-card-story__kicker">Ficha de historia{SHOW_CODES ? ' · F8' : ''}</span>
         </div>
-        <ListenButton title={story.titulo} text={readAloud} size="sm" />
+        {/* Only what is already public may go to the voice service: an answer of the public API has no `estado`. */}
+        <ListenButton title={story.titulo} text={readAloud} piece={story.estado === undefined ? `historias/${story.codigo}` : undefined} size="sm" />
         <button type="button" className="ag-close" aria-label="Cerrar" onClick={onClose}>
           <Icon name="cerrar" size={16} strokeWidth={2.4} />
         </button>

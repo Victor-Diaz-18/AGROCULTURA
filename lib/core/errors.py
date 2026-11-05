@@ -68,3 +68,10 @@ class StorageUnavailableError(DomainError):
 
     status_code = 503
     code = "almacen_no_disponible"
+
+
+class VoiceUnavailableError(DomainError):
+    """The voice of the portal is not set up or its service failed: the app reads with the voice of the device."""
+
+    status_code = 503
+    code = "voz_no_disponible"
