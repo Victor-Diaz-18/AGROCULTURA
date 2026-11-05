@@ -74,14 +74,18 @@ La plataforma nace con datos y avisos de **demostración**. Antes de recibir his
   todas las historias**, también las reales, con el botón «Reiniciar datos de ejemplo» (pide escribir `REINICIAR`, pero conviene
   que el botón no exista). Desaparece de la pantalla de Configuración.
 - [ ] **Quitar «datos de ejemplo»** del encabezado: *Configuración → Portal → «Mostrar “datos de ejemplo”»* en apagado.
-- [ ] **Sin historias de ejemplo.** Si en algún momento se pulsó «Reiniciar datos de ejemplo», hay 12 historias de ejemplo (`HIS-2026-001` a
-  `012`, marcadas `ejemplo: true`) mezcladas con las reales en el mapa. Se quitan en Atlas: *Browse Collections → `agrocultura` → `historias`*,
+- [ ] **Sin historias de ejemplo.** Si en algún momento se pulsó «Reiniciar datos de ejemplo», hay 14 historias de ejemplo (`HIS-2026-001` a
+  `014`, marcadas `ejemplo: true`) mezcladas con las reales en el mapa. Se quitan en Atlas: *Browse Collections → `agrocultura` → `historias`*,
   filtro `{ "ejemplo": true }`, seleccionarlas y borrarlas (no tocan ninguna historia real). **El botón de reinicio no sirve para esto**: borra
-  todo y *vuelve a cargar* los ejemplos. Los códigos siguen desde la `013`.
+  todo y *vuelve a cargar* los ejemplos. Los códigos siguen desde la `015`.
 - [ ] **Sin narradora de ejemplo.** Quita `SEED_DEMO_NARRATOR_*` de Vercel; la cuenta que ya se creó se borra en Atlas (colección `usuarios`, el
   documento de «Ana Beltrán» o el nombre que le hayas puesto).
 - [ ] **Cambiar la contraseña del administrador** por una que no se haya compartido (variable `ADMIN_PASSWORD` y *Redeploy*).
 - [ ] **Poner el nombre definitivo del portal** (*Configuración → Portal*). Hoy dice «AGROCULTURA».
+- [ ] **Revisar con el profesor los textos de la autorización** (`lib/stories/consentimiento.json`: cuatro para las familias y cuatro para el
+  equipo). Es lo que cada persona acepta al enviar su historia. Si se cambia una palabra, se cambia también la `version` del archivo. Las
+  historias en revisión que se enviaron **antes** de que existiera la autorización no se pueden publicar (se rechazan con el motivo «Falta la
+  autorización» o se reinician los ejemplos); los borradores guardados en un teléfono antes del cambio hay que volver a enviarlos.
 - [ ] **Decidir si se avisa al narrador cuando se rechaza su historia.** La opción existe pero todavía **no envía nada** (no hay correo,
   SMS ni WhatsApp conectado); hoy el narrador lo ve en «Mis historias».
 - [ ] **Confirmar con las familias la posición de los sectores.** Minca, La Tagua y San Lorenzo ya tienen un punto (el de San Lorenzo es

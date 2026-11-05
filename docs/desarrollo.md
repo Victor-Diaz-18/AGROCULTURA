@@ -150,22 +150,22 @@ La documentación interactiva está en `/api/docs` cuando la API corre. Rutas di
 | Ruta | Qué devuelve |
 |---|---|
 | `GET /api/salud` | Estado de la API y de la conexión a MongoDB |
-| `GET /api/config` | Nombre del portal, sectores, etiquetas, épocas y motivos de rechazo |
-| `GET /api/estadisticas` | Contadores: historias publicadas, en revisión, formatos |
+| `GET /api/config` | Nombre del portal, sectores, etiquetas, épocas, motivos de rechazo y los textos de la autorización (con su versión) |
+| `GET /api/estadisticas` | Contadores: historias publicadas (todas, también sin ubicación), en revisión, formatos, `sin_ubicacion` y los sectores con historias en el mapa |
 | `POST /api/auth/registro` | Crea una cuenta de narrador con `{usuario, clave}` (nombre de usuario único de 3 a 40 caracteres y contraseña de 6 o más) y devuelve la sesión |
 | `POST /api/auth/ingreso` | Ingreso de todos con `{usuario, clave}` (los narradores con cuenta anterior entran con su celular y su PIN); el servidor deduce el rol de la cuenta (un `rol` que mande una versión vieja de la app se ignora) |
 | `GET /api/auth/yo` | El usuario de la sesión actual (requiere sesión) |
 | `POST /api/medios` | Sube una foto o un audio (narrador o administrador); devuelve su URL en Blob |
-| `POST /api/historias` | Envía una historia (solo narradores); queda siempre «en revisión» |
-| `GET /api/historias` | Las historias publicadas que dibuja el mapa (público) |
+| `POST /api/historias` | Envía una historia (solo narradores); queda siempre «en revisión». Lleva `ubicacion_modo` (`aproximada` con `ubicacion`, o `ninguna` sin punto), `anonima`, `finca_nombre` y `consentimiento` `{aceptado, version, aceptado_en}`, **obligatorio** (422 sin él) |
+| `GET /api/historias` | Las historias publicadas (público). Las anónimas traen «Narrador anónimo»; las que no tienen ubicación, `con_ubicacion: false` y sin punto, sector ni nombre de lugar |
 | `GET /api/historias/{codigo}` | La ficha de una historia publicada (público; 404 si no está publicada) |
 | `GET /api/historias/mias` | Las historias del narrador que ingresó, con su estado y el motivo si no se publicó |
 | `POST /api/historias/{codigo}/video` | Agrega a una historia propia, todavía en revisión, el video ya subido a Blob (solo narradores) |
 | `POST /api/blob-token` | **Función de Node** (`api/blob-token.js`, no está en la API de Python): entrega el permiso para subir un video directo a Blob (narradores y administradores) |
-| `GET /api/admin/historias` | Historias con todo su contenido, filtradas por `estado` y `origen` (administrador) |
-| `POST /api/admin/historias/{codigo}/aprobar` | Publica una historia en revisión; exige las tres comprobaciones |
+| `GET /api/admin/historias` | Historias con todo su contenido, filtradas por `estado` y `origen` (administrador): el nombre real, la referencia de una historia sin ubicación, la finca y la autorización (versión, texto y fecha) |
+| `POST /api/admin/historias/{codigo}/aprobar` | Publica una historia en revisión; exige las cuatro comprobaciones y que la historia tenga registrada la autorización de su narrador |
 | `POST /api/admin/historias/{codigo}/rechazar` | Rechaza una historia en revisión; exige un motivo de la lista |
-| `POST /api/admin/historias-proyecto` | Publica una historia del equipo (origen «proyecto») |
+| `POST /api/admin/historias-proyecto` | Publica una historia del equipo (origen «proyecto»), con las mismas opciones de lugar y nombre y la autorización de quien la cuenta |
 | `PATCH /api/admin/portal` | Cambia el nombre, «avisar al rechazar» o la etiqueta de datos de ejemplo |
 | `POST` / `DELETE /api/admin/etiquetas` | Agrega o quita una etiqueta |
 | `POST /api/admin/reiniciar-ejemplo` | Borra todas las historias y carga las de ejemplo (solo con `ALLOW_DEMO_RESET`) |

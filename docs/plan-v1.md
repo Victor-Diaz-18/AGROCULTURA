@@ -266,3 +266,28 @@ solo un **nombre de usuario** y una **contraseña de cualquier tipo con 6 caract
 es el nombre que se muestra en las historias; ya no se guarda el celular de las familias. Las cuentas hechas con celular y PIN
 siguen entrando como antes. Consecuencia a tener en cuenta: sin un dato de contacto, avisar fuera de la plataforma que una
 historia fue rechazada (pendiente por definir) exigiría volver a pedir celular o correo.
+
+### Ajustes de privacidad y consentimiento que salen de las entrevistas
+
+Las entrevistas (agrónomo de la Federación, coordinadora de sistemas de información geográfica, docente de ingeniería y estudiante de
+agronomía de familia caficultora) confirmaron el stack tal como está (React + Vite, Python, MongoDB Atlas, Vercel) y pidieron lo siguiente,
+que ya está construido:
+
+1. **Autorización obligatoria** en el paso «Revisar y enviar»: una casilla con un texto corto que cambia según lo elegido (con o sin nombre,
+   con lugar aproximado o sin ubicación). La historia guarda la versión del texto y la fecha. «El narrador dio su consentimiento» es una
+   comprobación más de la revisión.
+2. **«Publicar sin mi nombre»**: el público lee «Narrador anónimo» en el mapa, la lista y la ficha; el nombre real solo lo ve el equipo.
+3. **Privacidad del lugar, solo dos opciones**: *lugar aproximado* (el punto redondeado a unos 500 m, como hasta ahora) o *sin ubicación*
+   (sin ícono en el mapa; la historia sí está en la lista, la búsqueda y la ficha, que dice que no tiene ubicación en el mapa). Con «sin
+   ubicación» no se guarda ningún punto y el nombre de referencia solo lo ve el equipo.
+4. **Los sectores no son un límite del territorio**: son nombres de referencia. La comprobación y el motivo de rechazo ya no dicen «ocurrió en
+   Minca o en un sector aledaño» sino «se relaciona con la zona cafetera de Minca y sus alrededores». El área del mapa para elegir el lugar
+   es una sola constante, `ZONE`, y cubre la vertiente del Magdalena de la Sierra Nevada de Santa Marta. «Todos» no esconde las historias
+   sin ubicación y los contadores las incluyen.
+5. **Nombre de la finca o marca**, opcional, en la ficha.
+6. **No se construye ahora**: comentarios anónimos (idea futura, pendiente de lo que diga el profesor).
+
+Decisiones tomadas con el equipo al planearlo: en «sin ubicación» no se pide ni se guarda el punto exacto; el nombre de la finca se muestra
+también sin ubicación (con un aviso al escribirlo); «sectores con historias» solo cuenta las historias que están en el mapa; las historias del
+equipo tienen las mismas opciones y una autorización de quien las cuenta; las historias enviadas antes de la autorización no se pueden publicar.
+

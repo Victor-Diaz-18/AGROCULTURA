@@ -85,16 +85,19 @@ Las decisiones y los cambios respecto al diseño aprobado están en [`plan-v1.md
   y `JWT_SECRET`, que ya existen.
 - Un video que se sube y nunca llega a una historia (la persona cierra todo a mitad) queda en Blob sin usar, como
   una foto. Se puede limpiar desde el panel de Vercel.
-- El lugar se elige tocando un sector, tocando el mapa o con el botón «Usar mi ubicación» (el GPS del
-  teléfono funciona sin señal). Se guarda como un punto GeoJSON `[longitud, latitud]` con un índice `2dsphere`.
+- El lugar tiene **dos opciones** (ver «Privacidad: lugar, nombre y autorización»): *Lugar aproximado*, que se elige tocando un sector, tocando
+  el mapa o con el botón «Usar mi ubicación» (el GPS del teléfono funciona sin señal) y se guarda como un punto GeoJSON `[longitud, latitud]`
+  con un índice `2dsphere`; y *Sin ubicación*, que no guarda ningún punto (el campo `ubicacion` ni existe en la historia: el índice
+  salta lo que no tiene punto).
 
 ## Mapa y ficha de la historia
 
 - **Filtros y búsqueda (F11).** Sobre el mapa está la barra del diseño: pestañas de **sector** (con cuántas historias
-  muestra cada una con los otros filtros; aparece «Otro lugar» si hay historias fuera de los sectores), de
+  muestra cada una con los otros filtros; «Todos» incluye **todas**, también las que no tienen ubicación; aparece «Otro lugar» si hay historias
+  con un lugar fuera de los sectores, y las historias sin ubicación no están en ningún sector), de
   **origen** (Todas, Comunidad, Proyecto), una **búsqueda** y los menús de **época** y **formato**. Filtran el mapa y
   la lista a la vez y funcionan sin conexión (se hacen en el teléfono con las historias que ya tiene). La búsqueda
-  mira el título, quién la cuenta, el nombre del lugar, el sector, la época y las etiquetas, **sin importar tildes ni
+  mira el título, quién la cuenta (el nombre que lee el público), el nombre del lugar, la finca, el sector, la época y las etiquetas, **sin importar tildes ni
   mayúsculas** («cafe» encuentra «café») y exige todas las palabras, en cualquier orden. Al cambiar un filtro el mapa
   se acerca a lo que queda (la búsqueda espera a que se deje de escribir). Sin resultados dice «No hay historias con
   estos filtros» y ofrece «Quitar los filtros». Por eso `GET /api/historias` ahora trae también las `etiquetas`.
@@ -102,10 +105,12 @@ Las decisiones y los cambios respecto al diseño aprobado están en [`plan-v1.md
 - **Qué se ve en el mapa.** `GET /api/historias` es público y devuelve **solo** las historias publicadas (más
   nuevas primero, hasta 1000), con lo que necesita el mapa: código, título, quién la cuenta, sector, época,
   formatos, origen, el punto y la primera foto. **Nunca** lleva el texto, el autor, el identificador del borrador
-  ni nada de la revisión. `GET /api/historias/{codigo}` es la ficha: también pública y también solo de historias
+  ni nada de la revisión. Una historia sin ubicación viene con `con_ubicacion: false` y **sin punto, sin sector y sin nombre
+  de lugar**; una publicada sin nombre trae «Narrador anónimo» y `anonima: true`. `GET /api/historias/{codigo}` es la ficha: también pública y también solo de historias
   publicadas (una en revisión, rechazada o inexistente responde 404).
 - **La zona visible.** El mapa carga todas las publicadas de una vez, las agrupa cuando están cerca y la lista
-  de al lado muestra solo las que están en la zona que se ve (se actualiza al mover o acercar el mapa). Así
+  de al lado muestra las que están en la zona que se ve (se actualiza al mover o acercar el mapa) **y siempre las que no tienen
+  ubicación**, que nunca están «en una zona» y llevan la etiqueta «Sin ubicación en el mapa». Así
   también funciona sin conexión, sin pedir datos al servidor cada vez que se mueve el mapa.
   El índice `2dsphere` de `ubicacion` queda listo por si algún día hace falta consultar por zona en el servidor.
 - **Fondo del mapa.** OpenStreetMap, en una sola constante (`src/config/map.js`) para cambiarlo después por un
@@ -113,55 +118,48 @@ Las decisiones y los cambios respecto al diseño aprobado están en [`plan-v1.md
   [normas de uso](https://operations.osmfoundation.org/policies/tiles/) para poco tráfico; si el proyecto crece
   habrá que pasar a un proveedor propio. Los pedazos que la persona ya vio se guardan para el modo sin conexión
   (el proveedor debe permitir CORS; el de OpenStreetMap lo permite).
-- **El lugar puede ser cualquiera de la zona.** «Minca y sectores aledaños» es toda la zona, no solo los
-  sectores. Al contar una historia se toca **cualquier punto del mapa** (o «Usar mi ubicación»); los botones de
-  sector son atajos. Un punto fuera de la zona (`ZONE` en `src/config/map.js`, unos 90 km alrededor de Minca) no se
-  acepta, y el mapa del formulario no deja alejarse más. El **sector se calcula en el servidor a partir del
-  punto**: es el más cercano dentro de 3 km (`SECTOR_RADIUS_KM`), o ninguno, y entonces se muestra «Otro lugar
-  de la zona». Lo que mande el teléfono como sector se ignora. Un sector con punto provisional solo cuenta si la
-  persona lo eligió. Que un punto esté en la zona lo revisa además el administrador (comprobación «Ocurrió en
-  Minca o en un sector aledaño»).
-- **Privacidad del lugar.** Quien cuenta una historia puede estar en su casa, y las historias del equipo también
-  pueden ser de un lugar privado. Por eso el servidor guarda el punto exacto, **que solo ven los administradores**
-  (al revisar y en «Historias del proyecto»), y el mapa, la lista y la ficha públicos muestran **un punto
-  redondeado a una cuadrícula de unos 500 m** (`GRID_DEGREES` en `lib/stories/privacy.py`), **sea de la comunidad
-  o del proyecto**: las historias de una misma cuadrícula se ven en el mismo sitio y los números exactos no salen en
-  ninguna respuesta pública. La ficha y los enlaces a Google/Apple Maps usan ese punto aproximado y lo avisan. No se
-  redondean las historias ubicadas con un botón de sector (es el centro del sector, no la posición de nadie). Los
-  formularios (el de contar una historia y el de «Nueva historia del proyecto») también lo dicen.
-- **Nombre del lugar (opcional).** Quien cuenta puede escribir cómo se llama el lugar («Finca La Esperanza»,
-  hasta 80 letras). Se muestra en la ficha pública y en las listas junto al sector («Finca La Esperanza, La Tagua»),
-  y entra en la búsqueda. El administrador lo ve al revisar (la comprobación «No expone datos personales de otras
-  personas» lo cubre).
-- **Dónde están los sectores.** Cada sector tiene un punto central (en `lib/seed/catalog.py`) que usan las
-  historias que se ubican «en el sector». **Minca, La Tagua y San Lorenzo están confirmados** (los dos últimos
-  con puntos de Google Maps que pasó el equipo; el de San Lorenzo cae en «Cuchillas San Lorenzo», una cresta de
-  montaña: hay que confirmar con las familias si su San Lorenzo es otro punto cercano). **Tijereras sigue
-  provisional** (`centro_provisional`) y así se queda mientras no haga falta: el mapa no escribe su nombre, el
-  formulario no le ofrece botón de atajo (pondría la historia en un lugar inventado) y la pantalla de configuración
-  lo avisa. Quien viva ahí toca el lugar exacto en el mapa. Solo sirve de sector para las historias de ejemplo. Para corregirlos: cambia las coordenadas y **sube `SECTORES_VERSION`**. En el siguiente arranque
-  la aplicación mueve los sectores guardados y también las historias ubicadas «en el sector» (con la misma
-  distancia); las historias con punto propio (GPS o un toque en el mapa) no se mueven.
-- **Nombres de los sectores en el mapa.** Se comportan como los nombres de un mapa real: con el mapa alejado no se
-  escribe ninguno; solo salen cuando se está cerca (desde el nivel 13, `SECTOR_LABELS_MIN_ZOOM` en
-  `src/config/map.js`, una vista de unos 15 km) y **solo los de los sectores que están a la vista**: al acercarse
-  a La Tagua se lee «LA TAGUA», y al mover el mapa a otro lado el nombre se va. Un sector sin punto confirmado no se
-  escribe y, si dos nombres quedaran uno sobre otro, se deja uno.
-- **Pines.** Rojo: comunidad. Verde azulado: proyecto. Un pin marcado se ve oscuro, más grande y con su título.
-  Los títulos y los nombres de sector se muestran siempre como texto, nunca como HTML.
-- **Ficha (F8).** Fotos (varias, con miniaturas), video, audio y los datos de la historia. «Abrir en Google Maps» y
-  «Abrir en Apple Maps» abren el punto de la historia en esas aplicaciones (son enlaces normales: no usan llaves ni
-  tienen costo). «Ver en el mapa» la marca en el mapa (`/?historia=HIS-2026-001`: ese enlace también se puede compartir). Las historias de ejemplo
-  no tienen archivos: la ficha muestra los marcadores de posición del diseño y dice que no hay audio.
-
-## Sin conexión (F10)
-
-Está pensado para quien cuenta su historia en la finca, donde casi nunca hay señal.
+- **El lugar puede ser cualquiera del área del mapa.** Los sectores **no son un límite** del territorio: son nombres de referencia.
+  Al contar una historia con *lugar aproximado* se toca **cualquier punto del mapa** (o «Usar mi ubicación»); los botones de sector son
+  atajos. El área del mapa del formulario es **una sola constante**, `ZONE` en `src/config/map.js` (sur 10.15, norte 11.50, oeste −74.70,
+  este −73.20: unos 150 × 164 km, la vertiente del Magdalena de la Sierra Nevada de Santa Marta con holgura, desde la costa hasta más allá
+  de la cumbre y desde la Ciénaga Grande hasta el pie de monte de Aracataca y Fundación). Un punto fuera de ella no se acepta y el mapa no
+  deja alejarse más; el zoom mínimo se calcula a partir de la constante. Para ensancharla o estrecharla se cambian esas cuatro cifras. Quien
+  esté más lejos puede elegir «Sin ubicación». El **sector se calcula en el servidor a partir del punto**: es el más cercano dentro de 3 km
+  (`SECTOR_RADIUS_KM`), o ninguno, y entonces se muestra «Otro lugar de la zona». Lo que mande el teléfono como sector se ignora. Un sector con
+  punto provisional solo cuenta si la persona lo eligió. Nada del servidor ni de la revisión decide que una historia está «dentro» o «fuera»:
+  el equipo confirma que *se relaciona con la zona cafetera de Minca y sus alrededores*.
+- **Privacidad: lugar, nombre y autorización.** Es lo que sale de las entrevistas.
+  - **Lugar, dos opciones** (`ubicacion_modo`). *Aproximada*: el servidor guarda el punto exacto, **que solo ven los administradores** (al
+    revisar y en «Historias del proyecto»), y el mapa, la lista y la ficha públicos muestran **un punto redondeado a una cuadrícula de unos
+    500 m** (`GRID_DEGREES` en `lib/stories/privacy.py`), **sea de la comunidad o del proyecto**: las historias de una misma cuadrícula se ven
+    en el mismo sitio y los números exactos no salen en ninguna respuesta pública. La ficha y los enlaces a Google/Apple Maps usan ese punto
+    aproximado y lo avisan. No se redondean las historias ubicadas con un botón de sector (es el centro del sector, no la posición de nadie).
+    *Ninguna* («Sin ubicación»): **no se guarda ningún punto**, aunque el teléfono lo mande; tampoco sector. Lo único que se guarda es el
+    **nombre de referencia** que la persona escriba, y lo ven solo los administradores. El público recibe `lat`, `lon`, `sector_id` y
+    `lugar_nombre` vacíos y `con_ubicacion: false`; la ficha dice «Esta historia no tiene ubicación en el mapa» y no ofrece mapas.
+  - **«Publicar sin mi nombre»** (`anonima`). El nombre real se guarda siempre (`narrador_nombre`) para el equipo y para su narrador; en
+    todas las respuestas **públicas** (lista, ficha, búsqueda) sale «Narrador anónimo». El texto de búsqueda que se guarda tampoco lleva el
+    nombre real. Se avisa que tampoco escriba su nombre en el título ni en la historia.
+  - **Autorización obligatoria** (`consentimiento`). En el paso «Revisar y enviar» hay una casilla con el texto de lo que se eligió:
+    *con nombre / sin nombre* × *lugar aproximado / sin ubicación* (cuatro textos, en `lib/stories/consentimiento.json`, el mismo archivo
+    que lee la aplicación: así lo que se ve es lo que el servidor tiene versionado, también sin señal). Si se cambia lo que el texto dice,
+    la casilla se desmarca. Sin marcarla no se puede enviar ni guardar en el dispositivo. La historia guarda `{version, variante, de,
+    aceptado_en}`; la fecha es la del teléfono (una historia guardada sin señal se envía días después) si es creíble, y si no, la del
+    servidor. Si la versión del texto cambió y el teléfono tiene una antigua, el servidor la rechaza con «El texto de la autorización
+    cambió. Actualiza la página». El interruptor es `EXIGIR_CONSENTIMIENTO` en `lib/stories/consent.py` (está encendido). Las historias del
+    equipo también llevan su autorización (de quien la cuenta, confirmada por el equipo).
+  - **Los contadores** («Historias publicadas») cuentan todas, también las que no tienen ubicación, y aparece «N sin ubicación en el mapa».
+    «Sectores con historias» solo cuenta las que están en el mapa: si contara las otras, delataría el sector que se quiso ocultar.
+- **Nombre del lugar (opcional).** Quien cuenta puede escribir cómo se llama el lugar («Finca La Esperanza», hasta 80 letras). Con lugar
+  aproximado se muestra en la ficha pública y en las listas junto al sector («Finca La Esperanza, La Tagua»), y entra en la búsqueda. Sin
+  ubicación pasa a ser el *nombre de referencia*, solo para el equipo. El administrador lo ve al revisar.
+- **Nombre de la finca o marca (opcional).** Hasta 80 letras. Se muestra en la ficha pública y entra en la búsqueda, también en las
+  historias sin ubicación (si dice dónde queda, es decisión de quien la escribe: el formulario lo avisa).
 
 **Qué funciona sin señal** (después de haber abierto la página una vez con señal):
 
 - La aplicación abre, también si se recarga la página. Se puede **instalar** como una aplicación en el teléfono.
-- Se puede contar una historia completa: voz, texto, fotos y «Usar mi ubicación» (el GPS no necesita señal). Los
+- Se puede contar una historia completa: voz, texto, fotos y «Usar mi ubicación» (el GPS no necesita señal), con la autorización marcada. Los
   sectores, las etiquetas y las épocas son los de la última vez que hubo conexión.
 - Lo que se va escribiendo o grabando **se guarda en el teléfono** (cada vez que se hace una pausa, y al cambiar de
   paso). Si se cierra la página a medias, al volver aparece «Recuperamos la historia que dejaste a medias» con la
@@ -235,8 +233,11 @@ Todo lo de `/api/admin/*` exige una sesión de administrador: el guardián está
 recorre **todas** las rutas `/api/admin/*` del esquema de la API (también las que se agreguen) comprobando que un
 visitante recibe 401 y un narrador 403.
 
-- **Revisión (F6).** Para **aprobar** hay que marcar las tres comprobaciones (cultura cafetera, territorio, datos
-  personales): el servidor las exige, no solo el botón. Para **rechazar** hace falta un motivo de la lista; el
+- **Revisión (F6).** Para **aprobar** hay que marcar las **cuatro** comprobaciones (cultura cafetera, *relación con la zona cafetera de
+  Minca y sus alrededores*, datos personales y *el narrador dio su consentimiento*): el servidor las exige, no solo el botón. El diálogo
+  de revisión muestra además lo que el público no ve (el nombre real de una historia sin nombre, la referencia de una sin ubicación y la
+  finca) y la autorización del narrador: el texto que aceptó, su versión y el día. Una historia **sin registro de autorización** (enviada antes
+  de que existiera) no se puede publicar: se rechaza con el motivo «Falta la autorización». Para **rechazar** hace falta un motivo de la lista; el
   narrador lo lee en «Mis historias» y se guarda tal como se escribió (si la lista cambia después, no se reescribe
   la historia). Una historia se decide **una sola vez**: la decisión es una sola operación atómica sobre las que
   siguen «en revisión», así que dos administradores no pueden decidir la misma a la vez (el segundo recibe 409).
@@ -244,14 +245,17 @@ visitante recibe 401 y un narrador 403.
 - **Historias del proyecto (F12).** Se publican de una vez y quedan marcadas «del proyecto». Los archivos los sube
   el propio administrador (las fotos y el audio por `POST /api/medios`; el video directo a Blob, ver «Video») y una
   historia solo puede apuntar a archivos que subió quien la crea.
-  Sin punto en el mapa, queda en el centro de su sector.
+  Tiene las mismas opciones que la de una familia (lugar aproximado o sin ubicación, publicar sin el nombre de quien la cuenta, finca) y una
+  casilla «Tengo la autorización de quien cuenta la historia…» con el texto del equipo. Sin punto en el mapa (por la API), queda en el
+  centro de su sector.
 - **Configuración (F7).** Nombre del portal, «avisar al narrador si se rechaza» (se guarda, pero todavía no envía
   ningún aviso: está por definir con el profesor), la etiqueta «datos de ejemplo» del encabezado y las etiquetas
   (se normalizan como `#café-viejo`; máximo 40; quitar una no cambia las historias que ya la tienen). **Los
   sectores son de solo lectura.**
 - **Reiniciar datos de ejemplo.** Solo con `ALLOW_DEMO_RESET` activo y con un administrador con sesión. Borra
-  **todas** las historias, también las reales, y los archivos a los que apuntan, y carga las 12 historias de
-  ejemplo del diseño (`HIS-2026-001` a `012`; la siguiente historia real será la `013`). Pide escribir la palabra
+  **todas** las historias, también las reales, y los archivos a los que apuntan, y carga las 14 historias de
+  ejemplo (las 12 del diseño, `HIS-2026-001` a `012`, más la `013` publicada sin ubicación y la `014` publicada sin el nombre de su
+  narrador y con finca; la siguiente historia real será la `015`). Llevan su registro de autorización, como si hubieran entrado por la app. Pide escribir la palabra
   `REINICIAR`. Si hay una narradora de ejemplo (`SEED_DEMO_NARRATOR_*`), se queda con dos de ellas, como Ana en el
   diseño. **Para quitar la función:** borra `lib/seed/demo.py`, `lib/admin/demo_router.py`, su línea en
   `api/index.py`, `src/components/admin/DemoResetDialog.jsx` y la tarjeta «Datos de ejemplo» de
