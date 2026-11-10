@@ -11,7 +11,7 @@ from pymongo.database import Database
 from pymongo.errors import DuplicateKeyError
 
 from lib.auth import repository
-from lib.auth.constants import ROL_ADMIN, ROL_NARRADOR
+from lib.auth.constants import MIN_ADMIN_PASSWORD_LENGTH, ROL_ADMIN, ROL_NARRADOR
 from lib.auth.phone import normalize_phone
 from lib.auth.username import clean_username, username_key
 from lib.core import security
@@ -21,7 +21,6 @@ from lib.core.settings import Settings
 
 logger = logging.getLogger(__name__)
 
-MIN_ADMIN_PASSWORD_LENGTH = 10
 # One message for every failure (unknown user, wrong secret, deactivated account), whoever is signing in.
 _BAD_CREDENTIALS = "Usuario o contraseña incorrectos."
 
@@ -139,10 +138,15 @@ def ensure_admin(db: Database, settings: Settings, now: datetime | None = None) 
     if existing["rol"] != ROL_ADMIN:
         logger.error("ADMIN_USER matches an existing account that is not an administrator; left untouched")
         return "omitido"
+    changed = False
+    if not existing.get("activo", True):
+        # The main administrator cannot be deactivated from the panel; this keeps it so whatever happened to the record.
+        repository.set_active(db, existing["_id"], {"activo": True}, unset=("desactivado_por", "desactivado_por_usuario", "desactivado_en"))
+        changed = True
     if not security.verify_secret(password, existing["clave_hash"]):
         repository.update_secret_hash(db, existing["_id"], security.hash_secret(password, settings.bcrypt_rounds))
-        return "actualizado"
-    return "sin_cambios"
+        changed = True
+    return "actualizado" if changed else "sin_cambios"
 
 
 def ensure_demo_narrator(db: Database, settings: Settings, now: datetime | None = None) -> str:

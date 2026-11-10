@@ -29,6 +29,15 @@ export const removeTag = (nombre) => request(`/admin/etiquetas${query({ nombre }
 /** Deletes EVERY story and loads the examples. Only works when the server allows it. */
 export const resetDemoData = () => request('/admin/reiniciar-ejemplo', { method: 'POST', body: { confirmar: true } })
 
+/** Administrators: the list (with who created each one), a new one, and deactivate or reactivate. */
+export const fetchAdmins = () => request('/admin/administradores')
+
+export const createAdmin = ({ usuario, nombre, clave }) => request('/admin/administradores', { method: 'POST', body: { usuario, nombre, clave } })
+
+export const deactivateAdmin = (id) => request(`/admin/administradores/${encodeURIComponent(id)}/desactivar`, { method: 'POST' })
+
+export const reactivateAdmin = (id) => request(`/admin/administradores/${encodeURIComponent(id)}/reactivar`, { method: 'POST' })
+
 export const createProjectStory = (payload) => request('/admin/historias-proyecto', { method: 'POST', body: payload })
 
 /**

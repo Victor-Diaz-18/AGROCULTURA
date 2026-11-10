@@ -1,6 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { resetConnectivityForTests } from '../offline/connectivity.js'
-import { approveStory, fetchAdminStories, publishProjectStory, rejectStory, removeTag, resetDemoData } from './admin.js'
+import {
+  approveStory,
+  createAdmin,
+  deactivateAdmin,
+  fetchAdminStories,
+  fetchAdmins,
+  publishProjectStory,
+  reactivateAdmin,
+  rejectStory,
+  removeTag,
+  resetDemoData,
+} from './admin.js'
 
 const jsonResponse = (body, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
@@ -112,5 +123,24 @@ describe('publishProjectStory', () => {
     await publishProjectStory(same, { uploaded })
 
     expect(fetchMock.mock.calls.filter(([url]) => url === '/api/medios')).toHaveLength(2) // once each, not four
+  })
+})
+
+describe('administrators', () => {
+  it('lists, creates, deactivates and reactivates through the administrator routes', async () => {
+    await fetchAdmins()
+    expect(lastCall()[0]).toBe('/api/admin/administradores')
+
+    await createAdmin({ usuario: 'marta', nombre: 'Marta', clave: 'clave-larga-123', otro: 'no se envía' })
+    expect(lastCall()[0]).toBe('/api/admin/administradores')
+    expect(lastCall()[1].method).toBe('POST')
+    expect(JSON.parse(lastCall()[1].body)).toEqual({ usuario: 'marta', nombre: 'Marta', clave: 'clave-larga-123' })
+
+    await deactivateAdmin('a/b')
+    expect(lastCall()[0]).toBe('/api/admin/administradores/a%2Fb/desactivar')
+    expect(lastCall()[1].method).toBe('POST')
+
+    await reactivateAdmin('abc')
+    expect(lastCall()[0]).toBe('/api/admin/administradores/abc/reactivar')
   })
 })

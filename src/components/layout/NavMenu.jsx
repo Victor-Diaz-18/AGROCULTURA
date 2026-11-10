@@ -22,7 +22,7 @@ export default function NavMenu({ groups, variant = 'portal', ariaLabel, top, ch
                 <span className={`ag-nav__count${item.alert ? ' ag-nav__count--alerta' : ''}`}>{item.count}</span>
               )}
               {item.locked && <Icon name="candado" size={14} className="ag-nav__lock" label="Solo administradores" />}
-              {SHOW_CODES && (
+              {SHOW_CODES && item.code && (
                 <span className={`ag-nav__code${item.future ? ' ag-nav__code--futura' : ''}`}>{item.code}</span>
               )}
             </NavLink>

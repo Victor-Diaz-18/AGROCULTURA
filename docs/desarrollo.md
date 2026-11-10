@@ -52,7 +52,7 @@ Están descritas en [`.env.example`](../.env.example). Las principales:
 | `MONGODB_URI` | Cadena de conexión de MongoDB Atlas |
 | `MONGODB_DB` | Nombre de la base (por defecto `agrocultura`) |
 | `JWT_SECRET` | Firma de las sesiones (la API de Python la firma y la función de video `api/blob-token.js` la verifica con el mismo secreto). Cadena aleatoria de **32 caracteres o más**; sin ella el ingreso y la subida de videos responden 503 |
-| `ADMIN_USER`, `ADMIN_PASSWORD` | Administrador inicial. La contraseña tiene **10 caracteres o más** |
+| `ADMIN_USER`, `ADMIN_PASSWORD` | Administrador principal (no se desactiva desde el panel; los demás se crean en *Administradores*). La contraseña tiene **10 caracteres o más** |
 | `SEED_DEMO_NARRATOR_*` | Narradora de ejemplo (opcional) |
 | `BLOB_READ_WRITE_TOKEN` | Token de Vercel Blob, donde se guardan las fotos, los audios y los videos. Aparece solo al conectar un *Blob store* al proyecto (Storage → Create → Blob, con acceso **Public**) |
 | `ALLOW_DEMO_RESET` | Muestra y permite el botón «Reiniciar datos de ejemplo» (**borra todas las historias**). Sin esta variable (o con `false`) el botón no existe. Se quita antes de usar la plataforma con familias reales |

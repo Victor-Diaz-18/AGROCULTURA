@@ -15,7 +15,7 @@ def admin_routes(app):
 
 
 def call(client, method, path, headers=None):
-    return client.request(method, path.replace("{codigo}", "HIS-2026-001"), headers=headers, json={} if method != "GET" else None)
+    return client.request(method, path.replace("{codigo}", "HIS-2026-001").replace("{user_id}", "665f1c2e8a1b2c3d4e5f6a7b"), headers=headers, json={} if method != "GET" else None)
 
 
 def test_the_administration_routes_exist(app):

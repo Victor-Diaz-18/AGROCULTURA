@@ -10,6 +10,8 @@ from pymongo import ReturnDocument
 from pymongo.database import Database
 from pymongo.errors import DuplicateKeyError
 
+from lib.auth.constants import ROL_ADMIN
+
 USUARIOS = "usuarios"
 INTENTOS = "intentos_ingreso"
 
@@ -42,6 +44,18 @@ def insert_user(db: Database, document: dict) -> dict:
 
 def update_secret_hash(db: Database, user_id: ObjectId, secret_hash: str) -> None:
     db[USUARIOS].update_one({"_id": user_id}, {"$set": {"clave_hash": secret_hash}})
+
+
+def list_admins(db: Database) -> list[dict]:
+    return list(db[USUARIOS].find({"rol": ROL_ADMIN}).sort("creado_en", 1))
+
+
+def set_active(db: Database, user_id: ObjectId, fields: dict, unset: tuple[str, ...] = ()) -> dict:
+    """Changes `activo` (and the record of who did it) and returns the updated user."""
+    update: dict = {"$set": fields}
+    if unset:
+        update["$unset"] = {name: "" for name in unset}
+    return db[USUARIOS].find_one_and_update({"_id": user_id}, update, return_document=ReturnDocument.AFTER)
 
 
 def mark_login(db: Database, user_id: ObjectId, now: datetime) -> None:

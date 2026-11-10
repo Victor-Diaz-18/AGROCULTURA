@@ -5,6 +5,7 @@ import PortalShell from './components/layout/PortalShell.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
 import ProjectStoriesPage from './pages/admin/ProjectStoriesPage.jsx'
 import ReviewPage from './pages/admin/ReviewPage.jsx'
+import AdminsPage from './pages/admin/AdminsPage.jsx'
 import SettingsPage from './pages/admin/SettingsPage.jsx'
 import SummaryPage from './pages/admin/SummaryPage.jsx'
 import CreditsPage from './pages/portal/CreditsPage.jsx'
@@ -41,6 +42,7 @@ export default function AppRoutes() {
         <Route path="revision" element={<ReviewPage variant="admin" />} />
         <Route path="historias" element={<ProjectStoriesPage variant="admin" />} />
         <Route path="configuracion" element={<SettingsPage variant="admin" />} />
+        <Route path="administradores" element={<AdminsPage />} />
         <Route path="proximamente/:id" element={<FuturePage variant="admin" />} />
       </Route>
     </Routes>

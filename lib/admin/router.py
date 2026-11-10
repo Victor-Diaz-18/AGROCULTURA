@@ -4,7 +4,9 @@ from fastapi import APIRouter, Depends, Query, Response
 from pymongo.database import Database
 
 from lib.admin.schemas import EtiquetaIn, PortalCambios
+from lib.auth import admins
 from lib.auth.deps import require_admin
+from lib.auth.schemas import AdminNuevoIn, AdminOut
 from lib.catalog import service as catalog
 from lib.config import service as config
 from lib.config.schemas import PortalPublico
@@ -57,6 +59,43 @@ def create_project_story(
     if not created:
         response.status_code = 200
     return story
+
+
+# ---- administrators ------------------------------------------------------------
+
+
+@router.get("/administradores", response_model=list[AdminOut])
+def list_admins(db: Database = Depends(get_db), settings: Settings = Depends(get_settings)):
+    """Every administrator, active or not, with who created each one and when."""
+    return admins.list_admins(db, settings)
+
+
+@router.post("/administradores", response_model=AdminOut, status_code=201)
+def create_admin(
+    body: AdminNuevoIn,
+    admin: dict = Depends(require_admin),
+    db: Database = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+):
+    """Creates another administrator (password of 10 or more characters). Records who created it."""
+    return admins.create_admin(db, settings, creator=admin, usuario=body.usuario, nombre=body.nombre, clave=body.clave)
+
+
+@router.post("/administradores/{user_id}/desactivar", response_model=AdminOut)
+def deactivate_admin(
+    user_id: str,
+    admin: dict = Depends(require_admin),
+    db: Database = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+):
+    """Deactivates an administrator: their session stops working at once. Not the main one, not yourself."""
+    return admins.deactivate_admin(db, settings, actor=admin, user_id=user_id)
+
+
+@router.post("/administradores/{user_id}/reactivar", response_model=AdminOut)
+def reactivate_admin(user_id: str, db: Database = Depends(get_db), settings: Settings = Depends(get_settings)):
+    """Lets a deactivated administrator sign in again."""
+    return admins.reactivate_admin(db, settings, user_id=user_id)
 
 
 # ---- portal options (F7) -------------------------------------------------------
