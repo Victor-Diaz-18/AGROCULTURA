@@ -25,6 +25,6 @@ def login(body: IngresoIn, db: Database = Depends(get_db), settings: Settings = 
 
 
 @router.get("/yo", response_model=UsuarioOut)
-def me(user: dict = Depends(get_current_user)):
+def me(user: dict = Depends(get_current_user), settings: Settings = Depends(get_settings)):
     """The user of the current session."""
-    return service.public_user(user)
+    return service.public_user(user, settings)

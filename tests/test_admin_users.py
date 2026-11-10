@@ -1,4 +1,4 @@
-"""An administrator can create other administrators, deactivate and reactivate them. The main one always stays."""
+"""The main administrator (ADMIN_USER) creates other administrators, deactivates and reactivates them. Only it can."""
 
 from dataclasses import replace
 
@@ -123,31 +123,59 @@ def test_it_records_who_deactivated_and_when(client, db, admin, settings):
     assert stored["desactivado_por"] == db.usuarios.find_one({"usuario": settings.admin_user})["_id"]
 
 
-def test_the_main_administrator_cannot_be_deactivated_even_by_another_administrator(client, db, admin, settings):
-    _, headers = second_admin(client, admin)
+def test_the_main_administrator_cannot_be_deactivated_not_even_by_itself(client, db, admin, settings):
     main_id = str(db.usuarios.find_one({"usuario": settings.admin_user})["_id"])
 
-    response = client.post(f"{URL}/{main_id}/desactivar", headers=headers)
+    response = client.post(f"{URL}/{main_id}/desactivar", headers=admin["headers"])
 
     assert response.status_code == 403
     assert db.usuarios.find_one({"usuario": settings.admin_user})["activo"] is True
     assert sign_in(client, settings.admin_user, settings.admin_password).status_code == 200
 
 
-def test_nobody_can_deactivate_their_own_account(client, admin):
-    record, headers = second_admin(client, admin)
-
-    assert client.post(f"{URL}/{record['id']}/desactivar", headers=headers).status_code == 403
-    assert client.get("/api/auth/yo", headers=headers).status_code == 200
-
-
-def test_an_administrator_can_deactivate_another_one_who_is_not_the_main(client, admin):
+def test_an_administrator_created_from_the_panel_cannot_create_administrators(client, db, admin):
     _, headers = second_admin(client, admin)
-    other = create(client, admin, usuario="Luis Gómez", nombre="Luis", clave="otra-clave-larga-1").json()
 
-    assert client.post(f"{URL}/{other['id']}/desactivar", headers=headers).status_code == 200
+    response = client.post(URL, json={**NEW, "usuario": "Luis Gómez", "nombre": "Luis"}, headers=headers)
+
+    assert response.status_code == 403
+    assert "principal" in response.json()["detail"]
+    assert db.usuarios.find_one({"usuario": "luis gómez"}) is None
+    assert db.usuarios.count_documents({"rol": "administrador"}) == 2
+
+
+def test_an_administrator_created_from_the_panel_cannot_list_deactivate_or_reactivate(client, db, admin, settings):
+    record, headers = second_admin(client, admin)
+    other = create(client, admin, usuario="Luis Gómez", nombre="Luis", clave="otra-clave-larga-1").json()
+    main_id = str(db.usuarios.find_one({"usuario": settings.admin_user})["_id"])
+
+    assert client.get(URL, headers=headers).status_code == 403
+    for target in (other["id"], record["id"], main_id):
+        assert client.post(f"{URL}/{target}/desactivar", headers=headers).status_code == 403
+    client.post(f"{URL}/{other['id']}/desactivar", headers=admin["headers"])
+    assert client.post(f"{URL}/{other['id']}/reactivar", headers=headers).status_code == 403
+
     rows = {row["usuario"]: row["activo"] for row in client.get(URL, headers=admin["headers"]).json()}
-    assert rows["luis gómez"] is False and rows["marta ríos"] is True
+    assert rows == {settings.admin_user: True, "marta ríos": True, "luis gómez": False}
+
+
+def test_an_administrator_created_from_the_panel_still_does_the_rest_of_the_administration(client, admin):
+    _, headers = second_admin(client, admin)
+
+    assert client.get("/api/admin/historias", headers=headers).status_code == 200
+    assert client.post("/api/admin/etiquetas", json={"nombre": "#trapiche"}, headers=headers).status_code == 201
+
+
+def test_the_session_says_who_is_the_main_administrator(client, admin, narrator):
+    assert admin["usuario"]["principal"] is True
+    assert client.get("/api/auth/yo", headers=admin["headers"]).json()["principal"] is True
+
+    create(client, admin)
+    session = sign_in(client, NEW["usuario"], NEW["clave"]).json()
+    assert session["usuario"]["principal"] is False
+    assert client.get("/api/auth/yo", headers=bearer(session["token"])).json()["principal"] is False
+
+    assert narrator["usuario"]["principal"] is False
 
 
 def test_deactivating_twice_or_an_unknown_administrator_is_refused(client, admin, narrator):

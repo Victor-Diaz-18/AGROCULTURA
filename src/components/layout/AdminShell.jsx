@@ -23,7 +23,8 @@ export default function AdminShell() {
         { to: '/admin/revision', label: 'Revisión', icon: 'bandeja', code: 'F6', count: stats.en_revision, alert: true },
         { to: '/admin/historias', label: 'Historias del proyecto', icon: 'bandera', code: 'F12' },
         { to: '/admin/configuracion', label: 'Configuración', icon: 'engranaje', code: 'F7' },
-        { to: '/admin/administradores', label: 'Administradores', icon: 'usuario' },
+        // Only the main administrator manages the others: nobody else sees the entry.
+        ...(user?.principal ? [{ to: '/admin/administradores', label: 'Administradores', icon: 'usuario' }] : []),
       ],
     },
     {

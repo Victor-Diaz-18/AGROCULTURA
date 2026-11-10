@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { ADMIN, NARRATOR } from '../../test/auth.js'
+import { ADMIN, NARRATOR, OTHER_ADMIN } from '../../test/auth.js'
 import { callsTo, renderApp, reply } from '../../test/renderApp.jsx'
 
 const row = (overrides) => ({
@@ -70,12 +70,36 @@ describe('Administradores', () => {
 
   it('marks the account of whoever is signed in, and does not offer to deactivate it', async () => {
     const server = adminsApi({ extra: [row({ id: 'm1', nombre: 'Marta Ríos', usuario: 'marta' })] })
-    renderApp({ route: '/admin/administradores', user: { id: 'm1', nombre: 'Marta Ríos', rol: 'administrador' }, api: server.api })
+    renderApp({ route: '/admin/administradores', user: { ...ADMIN, id: 'p1' }, api: server.api })
 
-    const marta = (await screen.findByText('Marta Ríos', { selector: 'b' })).closest('li')
-    expect(within(marta).getByText('Tú')).toBeInTheDocument()
-    expect(within(marta).queryByRole('button')).not.toBeInTheDocument()
-    expect(within(screen.getByText('Administración', { selector: 'b' }).closest('li')).queryByText('Tú')).not.toBeInTheDocument()
+    const main = (await screen.findByText('Administración', { selector: 'b' })).closest('li')
+    expect(within(main).getByText('Tú')).toBeInTheDocument()
+    expect(within(main).queryByRole('button')).not.toBeInTheDocument()
+    expect(within(screen.getByText('Marta Ríos', { selector: 'b' }).closest('li')).queryByText('Tú')).not.toBeInTheDocument()
+  })
+
+  describe('an administrator created from the panel (not the main one)', () => {
+    it('is told only the main administrator manages administrators, and the list is not even asked for', async () => {
+      const { fetchMock } = renderApp({ route: '/admin/administradores', user: OTHER_ADMIN, api: adminsApi().api })
+
+      expect(await screen.findByText(/Solo el administrador principal puede crear/)).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Crear administrador' })).not.toBeInTheDocument()
+      expect(screen.queryByLabelText('Usuario')).not.toBeInTheDocument()
+      expect(callsTo(fetchMock, '/admin/administradores')).toHaveLength(0)
+    })
+
+    it('does not see the entry in either menu, and still sees the rest of the administration', async () => {
+      const panel = renderApp({ route: '/admin/configuracion', user: OTHER_ADMIN })
+      const adminMenu = await screen.findByRole('navigation', { name: 'Secciones de administración' })
+      expect(within(adminMenu).queryByRole('link', { name: /Administradores/ })).not.toBeInTheDocument()
+      expect(within(adminMenu).getByRole('link', { name: /Configuración/ })).toBeInTheDocument()
+      panel.unmount()
+
+      renderApp({ route: '/configuracion', user: OTHER_ADMIN })
+      const portalMenu = await screen.findByRole('navigation', { name: 'Secciones' })
+      expect(within(portalMenu).queryByRole('link', { name: /Administradores/ })).not.toBeInTheDocument()
+      expect(within(portalMenu).getByRole('link', { name: /Revisión/ })).toBeInTheDocument()
+    })
   })
 
   it('creates an administrator and shows it in the list', async () => {

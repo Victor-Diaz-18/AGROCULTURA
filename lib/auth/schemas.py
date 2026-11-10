@@ -53,6 +53,7 @@ class UsuarioOut(BaseModel):
     id: str
     nombre: str
     rol: str
+    principal: bool = False  # the main administrator: the only one who manages administrators
 
 
 class SesionOut(BaseModel):

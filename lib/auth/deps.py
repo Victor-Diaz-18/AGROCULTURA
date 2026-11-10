@@ -7,6 +7,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pymongo.database import Database
 
 from lib.auth import repository
+from lib.auth.admins import is_main
 from lib.auth.constants import ROL_ADMIN
 from lib.core.db import get_db
 from lib.core.errors import ForbiddenError, UnauthorizedError
@@ -43,3 +44,10 @@ def require_roles(*roles: str):
 
 
 require_admin = require_roles(ROL_ADMIN)
+
+
+def require_main_admin(user: dict = Depends(require_admin), settings: Settings = Depends(get_settings)) -> dict:
+    """Only the administrator named by ADMIN_USER gets through: the ones it creates cannot manage administrators."""
+    if not is_main(user, settings):
+        raise ForbiddenError("Solo el administrador principal puede gestionar a los administradores.")
+    return user

@@ -30,9 +30,10 @@ Las decisiones y los cambios respecto al diseño aprobado están en [`plan-v1.md
   crea al administrador sola en la primera petición. **La variable manda:** para cambiar la contraseña, cambia
   `ADMIN_PASSWORD` en Vercel y haz un Redeploy. La sesión dura **8 horas**.
   Ese es el **administrador principal**: no se puede desactivar desde el panel. Desde **Administradores** (menú de
-  administración) cualquier administrador puede crear otros (usuario, nombre y contraseña de **10 caracteres o más**),
-  desactivarlos y reactivarlos. Cada cuenta guarda quién la creó y cuándo, y quién la desactivó. Desactivar cierra su
-  sesión de inmediato; nadie puede desactivar su propia cuenta.
+  administración) **solo él** puede crear otros administradores (usuario, nombre y contraseña de **10 caracteres o
+  más**), desactivarlos y reactivarlos. Los administradores creados así hacen todo lo demás (revisar, publicar,
+  configurar), pero no ven esa sección ni pueden gestionar administradores. Cada cuenta guarda quién la creó y cuándo,
+  y quién la desactivó. Desactivar cierra su sesión de inmediato.
 - **Intentos fallidos:** como máximo **5 intentos cada 15 minutos por cuenta (según el nombre de usuario, escrito como se escriba)**. Pasado el límite
   se bloquea aunque se escriba la clave correcta, hasta que termine la ventana de 15 minutos.
 - **Narradora de ejemplo (opcional):** si defines `SEED_DEMO_NARRATOR_PHONE` y `SEED_DEMO_NARRATOR_PIN`

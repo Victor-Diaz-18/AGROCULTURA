@@ -9,7 +9,7 @@ import NavMenu from './NavMenu.jsx'
 export default function SideMenu() {
   const { stats } = usePortalData()
   const { stories: mine } = useMyStories()
-  const { role, openLogin } = useAuth()
+  const { user, role, openLogin } = useAuth()
   const locked = role !== 'administrador'
 
   // Pages that need a role: without it, ask for sign-in instead of navigating (as the design does).
@@ -40,7 +40,8 @@ export default function SideMenu() {
         needs({ to: '/revision', label: 'Revisión', icon: 'bandeja', code: 'F6', count: stats.en_revision, alert: true, locked }, 'administrador'),
         needs({ to: '/historias-propias', label: 'Historias propias', icon: 'bandera', code: 'F12', locked }, 'administrador'),
         needs({ to: '/configuracion', label: 'Configuración', icon: 'engranaje', code: 'F7', locked }, 'administrador'),
-        needs({ to: '/administradores', label: 'Administradores', icon: 'usuario', locked }, 'administrador'),
+        // Only the main administrator manages the others: nobody else sees the entry.
+        ...(user?.principal ? [{ to: '/administradores', label: 'Administradores', icon: 'usuario' }] : []),
       ],
     },
     {

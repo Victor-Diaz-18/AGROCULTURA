@@ -11,6 +11,7 @@ from pymongo.database import Database
 from pymongo.errors import DuplicateKeyError
 
 from lib.auth import repository
+from lib.auth.admins import is_main
 from lib.auth.constants import MIN_ADMIN_PASSWORD_LENGTH, ROL_ADMIN, ROL_NARRADOR
 from lib.auth.phone import normalize_phone
 from lib.auth.username import clean_username, username_key
@@ -25,12 +26,18 @@ logger = logging.getLogger(__name__)
 _BAD_CREDENTIALS = "Usuario o contraseña incorrectos."
 
 
-def public_user(user: dict) -> dict:
-    return {"id": str(user["_id"]), "nombre": user["nombre"], "rol": user["rol"]}
+def public_user(user: dict, settings: Settings) -> dict:
+    """What the app knows about who is signed in. `principal`: the administrator from the environment, who manages the others."""
+    return {
+        "id": str(user["_id"]),
+        "nombre": user["nombre"],
+        "rol": user["rol"],
+        "principal": user["rol"] == ROL_ADMIN and is_main(user, settings),
+    }
 
 
 def session_for(user: dict, settings: Settings) -> dict:
-    return {"token": security.create_token(user, settings), "usuario": public_user(user)}
+    return {"token": security.create_token(user, settings), "usuario": public_user(user, settings)}
 
 
 def register_narrator(

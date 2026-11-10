@@ -19,7 +19,7 @@ describe('SideMenu', () => {
     renderApp({ user: NARRATOR })
     const nav = screen.getByRole('navigation', { name: 'Secciones' })
 
-    expect(within(nav).getAllByRole('img', { name: 'Solo administradores' })).toHaveLength(4)
+    expect(within(nav).getAllByRole('img', { name: 'Solo administradores' })).toHaveLength(3)
   })
 
   it('marks the current page', () => {

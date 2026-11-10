@@ -26,7 +26,7 @@ const AuthContext = createContext({
 })
 
 /** Pages that need a session: signing out on one of them goes back to the map. */
-const PROTECTED_PATHS = ['/contar', '/mis-historias', '/revision', '/historias-propias', '/configuracion']
+const PROTECTED_PATHS = ['/contar', '/mis-historias', '/revision', '/historias-propias', '/configuracion', '/administradores']
 
 export function AuthProvider({ children }) {
   const toast = useToast()

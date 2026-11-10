@@ -307,7 +307,7 @@ def test_who_am_i_needs_a_session(client):
 def test_who_am_i_returns_the_profile(client, narrator):
     body = client.get("/api/auth/yo", headers=narrator["headers"]).json()
 
-    assert body == {"id": narrator["usuario"]["id"], "nombre": "Ana Beltrán", "rol": "narrador"}
+    assert body == {"id": narrator["usuario"]["id"], "nombre": "Ana Beltrán", "rol": "narrador", "principal": False}
 
 
 def test_a_tampered_token_is_refused(client, narrator):

@@ -37,9 +37,10 @@ export default function AdminsPage() {
     }
   }, [])
 
+  const isMain = Boolean(user?.principal)
   useEffect(() => {
-    load()
-  }, [load])
+    if (isMain) load()
+  }, [load, isMain])
 
   const change = (field) => (event) => {
     setFormError('')
@@ -73,6 +74,19 @@ export default function AdminsPage() {
     }
     toast(admin.activo ? 'Administrador desactivado.' : 'Administrador reactivado.')
     await load()
+  }
+
+  if (!isMain) {
+    return (
+      <>
+        <PageHeader title="Administradores" subtitle="Quiénes pueden administrar el portal, y quién creó cada cuenta." />
+        <div className="ag-settings">
+          <section className="ag-card" aria-label="Administradores del portal">
+            <span className="ag-card__help">Solo el administrador principal puede crear, desactivar o reactivar administradores.</span>
+          </section>
+        </div>
+      </>
+    )
   }
 
   return (
@@ -130,7 +144,7 @@ export default function AdminsPage() {
 
         <section className="ag-card" aria-label="Nuevo administrador">
           <h2>Nuevo administrador</h2>
-          <span className="ag-card__help">Podrá entrar al panel con este usuario y esta contraseña. Quedará registrado que lo creaste tú.</span>
+          <span className="ag-card__help">Podrá entrar al panel con este usuario y esta contraseña, pero no crear ni desactivar a otros administradores. Quedará registrado que lo creaste tú.</span>
           <form className="ag-card__form" onSubmit={submit}>
             <label className="ag-card__field">
               Nombre
