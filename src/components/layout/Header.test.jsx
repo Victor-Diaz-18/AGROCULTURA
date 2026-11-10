@@ -77,6 +77,24 @@ describe('Header', () => {
     expect(fetchMock).toHaveBeenCalled()
   })
 
+  it('shows each administrator their own name and initials, not one name for all of them', async () => {
+    const jeison = { id: 'a2', nombre: 'jeison', rol: 'administrador' }
+    const { container } = renderApp({ user: jeison })
+
+    expect(await screen.findByText('jeison', { selector: '.ag-user__name' })).toBeInTheDocument()
+    expect(container.querySelector('.ag-user__avatar')).toHaveTextContent('J')
+    expect(screen.getByText(/Administrador/, { selector: '.ag-user__role' })).toBeInTheDocument()
+    expect(screen.queryByText('Administración', { selector: '.ag-user__name' })).not.toBeInTheDocument()
+  })
+
+  it('shows the same in the administration panel', async () => {
+    const jeison = { id: 'a2', nombre: 'Jeison Díaz', rol: 'administrador' }
+    const { container } = renderApp({ user: jeison, route: '/admin/configuracion' })
+
+    expect(await screen.findByText('Jeison Díaz', { selector: '.ag-user__name' })).toBeInTheDocument()
+    expect(container.querySelector('.ag-user__avatar')).toHaveTextContent('JD')
+  })
+
   it('offers sign-in to visitors', () => {
     renderApp()
 

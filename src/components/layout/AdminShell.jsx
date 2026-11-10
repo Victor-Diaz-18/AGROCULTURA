@@ -6,6 +6,7 @@ import useFocusOnNavigation from '../../hooks/useFocusOnNavigation.js'
 import { usePortalData } from '../../context/PortalDataContext.jsx'
 import Icon from '../ui/Icon.jsx'
 import NavMenu from './NavMenu.jsx'
+import initials from '../../utils/initials.js'
 
 /** Frame of the administration panel (F6, F7, F12). Meant mostly for desktop. */
 export default function AdminShell() {
@@ -58,7 +59,7 @@ export default function AdminShell() {
           </Link>
           {isAdmin && (
             <div className="ag-user">
-              <div className="ag-user__avatar">AD</div>
+              <div className="ag-user__avatar">{initials(user.nombre)}</div>
               <div className="ag-user__text">
                 <span className="ag-user__name">{user.nombre}</span>
                 <span className="ag-user__role">Administrador</span>

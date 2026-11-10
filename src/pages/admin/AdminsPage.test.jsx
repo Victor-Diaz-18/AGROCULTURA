@@ -65,6 +65,17 @@ describe('Administradores', () => {
     const marta = screen.getByText('Marta Ríos', { selector: 'b' }).closest('li')
     expect(within(marta).getByText(/Creado por admin-prueba el/)).toBeInTheDocument()
     expect(within(marta).getByRole('button', { name: 'Desactivar a Marta Ríos' })).toBeInTheDocument()
+    expect(screen.queryByText('Tú')).not.toBeInTheDocument() // whoever is signed in here is not in this list
+  })
+
+  it('marks the account of whoever is signed in, and does not offer to deactivate it', async () => {
+    const server = adminsApi({ extra: [row({ id: 'm1', nombre: 'Marta Ríos', usuario: 'marta' })] })
+    renderApp({ route: '/admin/administradores', user: { id: 'm1', nombre: 'Marta Ríos', rol: 'administrador' }, api: server.api })
+
+    const marta = (await screen.findByText('Marta Ríos', { selector: 'b' })).closest('li')
+    expect(within(marta).getByText('Tú')).toBeInTheDocument()
+    expect(within(marta).queryByRole('button')).not.toBeInTheDocument()
+    expect(within(screen.getByText('Administración', { selector: 'b' }).closest('li')).queryByText('Tú')).not.toBeInTheDocument()
   })
 
   it('creates an administrator and shows it in the list', async () => {

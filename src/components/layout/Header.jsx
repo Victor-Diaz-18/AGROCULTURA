@@ -5,15 +5,7 @@ import { usePortalData } from '../../context/PortalDataContext.jsx'
 import useConnectivity from '../../hooks/useConnectivity.js'
 import FCode from '../ui/FCode.jsx'
 import Icon from '../ui/Icon.jsx'
-
-function initials(name = '') {
-  return name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0].toUpperCase())
-    .join('')
-}
+import initials from '../../utils/initials.js'
 
 /** Portal header: name, public counters, the "Simular conexión" demo switch and the user. */
 export default function Header() {
@@ -72,9 +64,10 @@ export default function Header() {
 
         {user ? (
           <div className="ag-user">
-            <div className="ag-user__avatar">{isAdmin ? 'AD' : initials(user.nombre)}</div>
+            {/* Each person sees their own name: there can be several administrators. */}
+            <div className="ag-user__avatar">{initials(user.nombre)}</div>
             <div className="ag-user__text">
-              <span className="ag-user__name">{isAdmin ? 'Administración' : user.nombre}</span>
+              <span className="ag-user__name">{user.nombre}</span>
               <span className="ag-user__role">
                 {isAdmin ? 'Administrador' : 'Narrador'}
                 {SHOW_CODES && (isAdmin ? ' · F7' : ' · F2')}

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import PageHeader from '../../components/layout/PageHeader.jsx'
+import { useAuth } from '../../context/AuthContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { createAdmin, deactivateAdmin, fetchAdmins, reactivateAdmin } from '../../services/admin.js'
 import { ApiError, OfflineError } from '../../services/http.js'
@@ -19,6 +20,7 @@ const formatDate = (iso) =>
 /** Administrators: who they are, who created each one, and who is deactivated (only an administrator gets here). */
 export default function AdminsPage() {
   const toast = useToast()
+  const { user } = useAuth()
   const [admins, setAdmins] = useState(null)
   const [loadError, setLoadError] = useState('')
   const [form, setForm] = useState({ nombre: '', usuario: '', clave: '' })
@@ -91,6 +93,7 @@ export default function AdminsPage() {
               <li key={admin.id} className="ag-admins__row">
                 <div className="ag-admins__who">
                   <b>{admin.nombre}</b> <span className="ag-card__note">({admin.usuario})</span>
+                  {admin.id === user?.id && <span className="ag-admins__tag"> Tú</span>}
                   {admin.principal && <span className="ag-admins__tag"> Principal</span>}
                   {!admin.activo && <span className="ag-admins__tag ag-admins__tag--off"> Desactivado</span>}
                   <span className="ag-card__note">
@@ -101,6 +104,7 @@ export default function AdminsPage() {
                   </span>
                 </div>
                 {!admin.principal &&
+                  admin.id !== user?.id &&
                   (confirming === admin.id ? (
                     <div className="ag-admins__confirm">
                       <button type="button" className="ag-card__danger" onClick={() => toggle(admin)}>

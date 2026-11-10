@@ -8,7 +8,7 @@ import { ApiError, OfflineError } from '../../services/http.js'
 const firstName = (name) => name.split(' ')[0]
 
 const welcome = (usuario) =>
-  usuario.rol === 'administrador' ? 'Ingresaste como administrador.' : `Hola, ${firstName(usuario.nombre)}. Ya puedes contar tus historias.`
+  usuario.rol === 'administrador' ? `Ingresaste como ${usuario.nombre} (administrador).` : `Hola, ${firstName(usuario.nombre)}. Ya puedes contar tus historias.`
 
 /** Sign-up / sign-in actions shared by the dialog and the admin card. */
 export default function useSignIn() {

@@ -99,7 +99,7 @@ describe('Sign-in dialog', () => {
     await user.type(within(dialog).getByLabelText('Contraseña'), 'una-clave-larga-1234')
     await user.click(within(dialog).getByRole('button', { name: 'Ingresar' }))
 
-    expect(await screen.findByText('Ingresaste como administrador.')).toBeInTheDocument()
+    expect(await screen.findByText('Ingresaste como Administración (administrador).')).toBeInTheDocument()
     expect(screen.getByText('Administración')).toBeInTheDocument()
     expect(JSON.parse(callsTo(fetchMock, '/auth/ingreso')[0][1].body)).toEqual({
       usuario: 'admin',
