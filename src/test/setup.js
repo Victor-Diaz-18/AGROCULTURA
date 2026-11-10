@@ -38,7 +38,7 @@ afterEach(async () => {
   sessionStorage.clear()
   resetConnectivityForTests()
   setRetryDelayForTests()
-  resetUpdatesForTests()
+  resetUpdatesForTests({ reload: () => {} }) // a test never reloads the page for real
   vi.unstubAllGlobals()
   delete navigator.mediaDevices // set by tests that fake a microphone
 })

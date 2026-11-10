@@ -1,8 +1,8 @@
-import { beforeEach, describe, expect, it } from 'vitest'
-import { act, screen } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { act, fireEvent, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { breakStoreForTests } from '../../offline/store.js'
-import { watchForUpdates } from '../../offline/updates.js'
+import { SLOW_AFTER_MS, watchForUpdates } from '../../offline/updates.js'
 import { pwa } from '../../test/pwaRegister.js'
 import { renderApp } from '../../test/renderApp.jsx'
 
@@ -10,6 +10,7 @@ beforeEach(() => {
   pwa.updated = 0
   watchForUpdates({ enabled: true })
 })
+afterEach(() => vi.useRealTimers())
 
 const newVersionArrives = () => act(() => pwa.options.onNeedRefresh())
 
@@ -48,6 +49,24 @@ describe('"Hay una versión nueva"', () => {
     await user.click(await screen.findByRole('button', { name: 'Actualizar' }))
 
     expect(pwa.updated).toBe(1)
+    // It says so while the page is about to reload, and cannot be pressed twice.
+    expect(await screen.findByRole('button', { name: 'Actualizando…' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Después' })).toBeDisabled()
+  })
+
+  it('says what is holding the update when it takes long, and can still be put away', async () => {
+    renderApp()
+    newVersionArrives()
+    act(() => pwa.options.onRegisteredSW('/sw.js', { waiting: {}, update: async () => {} })) // the new version does not take over
+    const button = await screen.findByRole('button', { name: 'Actualizar' })
+
+    vi.useFakeTimers()
+    fireEvent.click(button)
+    await act(() => vi.advanceTimersByTimeAsync(SLOW_AFTER_MS))
+
+    expect(screen.getByText(/abierta en otra pestaña o ventana/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Actualizando…' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Después' })).toBeEnabled()
   })
 
   it('"Después" hides it and leaves the app as it is', async () => {
