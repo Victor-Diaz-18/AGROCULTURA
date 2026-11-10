@@ -40,6 +40,7 @@ export default function SideMenu() {
         needs({ to: '/revision', label: 'Revisión', icon: 'bandeja', code: 'F6', count: stats.en_revision, alert: true, locked }, 'administrador'),
         needs({ to: '/historias-propias', label: 'Historias propias', icon: 'bandera', code: 'F12', locked }, 'administrador'),
         needs({ to: '/configuracion', label: 'Configuración', icon: 'engranaje', code: 'F7', locked }, 'administrador'),
+        needs({ to: '/administradores', label: 'Administradores', icon: 'usuario', locked }, 'administrador'),
       ],
     },
     {

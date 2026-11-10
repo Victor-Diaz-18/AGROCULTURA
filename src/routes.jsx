@@ -32,6 +32,7 @@ export default function AppRoutes() {
         <Route path="revision" element={<RequireRole role="administrador"><ReviewPage variant="portal" /></RequireRole>} />
         <Route path="historias-propias" element={<RequireRole role="administrador"><ProjectStoriesPage variant="portal" /></RequireRole>} />
         <Route path="configuracion" element={<RequireRole role="administrador"><SettingsPage variant="portal" /></RequireRole>} />
+        <Route path="administradores" element={<RequireRole role="administrador"><AdminsPage /></RequireRole>} />
         <Route path="proximamente/:id" element={<FuturePage variant="portal" />} />
         <Route path="creditos" element={<CreditsPage />} />
         <Route path="*" element={<NotFoundPage />} />

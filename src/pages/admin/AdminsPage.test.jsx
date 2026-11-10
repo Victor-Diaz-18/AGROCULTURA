@@ -138,4 +138,25 @@ describe('Administradores', () => {
     const menu = await screen.findByRole('navigation', { name: 'Secciones de administración' })
     expect(within(menu).getByRole('link', { name: /Administradores/ })).toHaveAttribute('href', '/admin/administradores')
   })
+
+  it('is reached from the portal menu too, where an administrator also works', async () => {
+    const server = adminsApi({ extra: [row({ id: 'm1', nombre: 'Marta Ríos', usuario: 'marta' })] })
+    renderApp({ route: '/configuracion', user: ADMIN, api: server.api })
+    const user = userEvent.setup()
+
+    const menu = await screen.findByRole('navigation', { name: 'Secciones' })
+    await user.click(within(menu).getByRole('link', { name: /Administradores/ }))
+
+    expect(await screen.findByRole('heading', { name: 'Administradores', level: 1 })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: 'Desactivar a Marta Ríos' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Crear administrador' })).toBeInTheDocument()
+  })
+
+  it('is not opened from the portal by a narrator', async () => {
+    const { fetchMock } = renderApp({ route: '/administradores', user: NARRATOR, api: adminsApi().api })
+
+    await screen.findByRole('navigation', { name: 'Secciones' })
+    expect(screen.queryByRole('heading', { name: 'Administradores', level: 1 })).not.toBeInTheDocument()
+    expect(callsTo(fetchMock, '/admin/administradores')).toHaveLength(0)
+  })
 })
