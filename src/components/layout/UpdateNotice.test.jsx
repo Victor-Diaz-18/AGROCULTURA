@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, fireEvent, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { breakStoreForTests } from '../../offline/store.js'
-import { SLOW_AFTER_MS, watchForUpdates } from '../../offline/updates.js'
+import { TAKEOVER_WAIT_MS, watchForUpdates } from '../../offline/updates.js'
 import { pwa } from '../../test/pwaRegister.js'
 import { renderApp } from '../../test/renderApp.jsx'
 
@@ -54,19 +54,22 @@ describe('"Hay una versión nueva"', () => {
     expect(screen.getByRole('button', { name: 'Después' })).toBeDisabled()
   })
 
-  it('says what is holding the update when it takes long, and can still be put away', async () => {
+  it('says so when it could not update for lack of signal, and lets the person try again', async () => {
     renderApp()
     newVersionArrives()
-    act(() => pwa.options.onRegisteredSW('/sw.js', { waiting: {}, update: async () => {} })) // the new version does not take over
+    // The new version does not take over, and the server cannot be reached to fetch it directly.
+    act(() => pwa.options.onRegisteredSW('/sw.js', { waiting: {}, update: async () => {}, unregister: vi.fn() }))
     const button = await screen.findByRole('button', { name: 'Actualizar' })
+    vi.stubGlobal('fetch', vi.fn(async () => Promise.reject(new TypeError('Failed to fetch'))))
 
     vi.useFakeTimers()
     fireEvent.click(button)
-    await act(() => vi.advanceTimersByTimeAsync(SLOW_AFTER_MS))
+    await act(() => vi.advanceTimersByTimeAsync(TAKEOVER_WAIT_MS))
 
-    expect(screen.getByText(/abierta en otra pestaña o ventana/)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Actualizando…' })).toBeDisabled()
+    expect(screen.getByText(/No se pudo actualizar: parece que no hay señal/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Actualizar' })).toBeEnabled()
     expect(screen.getByRole('button', { name: 'Después' })).toBeEnabled()
+    expect(screen.queryByText(/otra pestaña/)).not.toBeInTheDocument() // nobody is asked to close anything
   })
 
   it('"Después" hides it and leaves the app as it is', async () => {
