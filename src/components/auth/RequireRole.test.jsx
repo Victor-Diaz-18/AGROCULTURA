@@ -17,12 +17,10 @@ describe('pages that need a role', () => {
     expect(screen.queryByRole('heading', { name: 'Contar una historia' })).not.toBeInTheDocument()
   })
 
-  it('asks a visitor for administrator access on the review page', async () => {
+  it('takes a visitor from the old review address to the team panel, which asks for its sign-in', async () => {
     renderApp({ route: '/revision' })
 
-    const dialog = await screen.findByRole('dialog', { name: 'Ingresar' })
-    expect(within(dialog).getByText('Esta sección es solo para administradores.')).toBeInTheDocument()
-    expect(within(dialog).getByLabelText('Usuario')).toBeInTheDocument()
+    expect(await heading('Acceso del equipo')).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Revisión de historias' })).not.toBeInTheDocument()
   })
 
@@ -36,8 +34,7 @@ describe('pages that need a role', () => {
   it('refuses a narrator on an administrator page', async () => {
     renderApp({ route: '/revision', user: NARRATOR })
 
-    const dialog = await screen.findByRole('dialog', { name: 'Ingresar' })
-    expect(within(dialog).getByText('Esta sección es solo para administradores.')).toBeInTheDocument()
+    expect(await heading('Acceso del equipo')).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Revisión de historias' })).not.toBeInTheDocument()
   })
 
@@ -63,23 +60,6 @@ describe('pages that need a role', () => {
     expect(await heading('Contar una historia')).toBeInTheDocument()
   })
 
-  it('does not send a narrator who signs in from an administrator page to a page that would turn them back', async () => {
-    const user = userEvent.setup()
-    renderApp({
-      route: '/revision',
-      api: { '/auth/ingreso': () => reply({ token: fakeToken(), usuario: NARRATOR }), '/auth/yo': NARRATOR },
-    })
-    const dialog = await screen.findByRole('dialog', { name: 'Ingresar' })
-
-    await user.type(within(dialog).getByLabelText('Usuario'), '3005550192')
-    await user.type(within(dialog).getByLabelText('Contraseña'), '4821')
-    await user.click(within(dialog).getByRole('button', { name: 'Ingresar' }))
-
-    expect(await screen.findByText('Hola, Ana. Ya puedes contar tus historias.')).toBeInTheDocument()
-    expect(await heading('Mapa de historias')).toBeInTheDocument() // stays where it was...
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument() // ...and the dialog does not open again
-  })
-
   it('asks for sign-in from the side menu without leaving the current page', async () => {
     const user = userEvent.setup()
     renderApp({ route: '/proximamente/ra' })
@@ -88,14 +68,6 @@ describe('pages that need a role', () => {
 
     expect(screen.getByRole('dialog', { name: 'Ingresar' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Avatares en realidad aumentada' })).toBeInTheDocument()
-  })
-
-  it('asks a narrator for administrator access when it opens an administration page', async () => {
-    renderApp({ route: '/revision', user: NARRATOR })
-
-    const dialog = await screen.findByRole('dialog', { name: 'Ingresar' })
-    expect(dialog).toBeInTheDocument()
-    expect(within(dialog).getByText('Esta sección es solo para administradores.')).toBeInTheDocument()
   })
 
   it('does not reopen the sign-in dialog when someone signs out on a protected page', async () => {

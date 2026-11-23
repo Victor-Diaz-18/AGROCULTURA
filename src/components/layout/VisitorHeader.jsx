@@ -25,6 +25,8 @@ export default function VisitorHeader() {
   const { online, simulatedOffline, toggleSimulated } = useConnectivity()
   const { user, role, openLogin, logout } = useAuth()
   const narrator = role === 'narrador'
+  const team = role === 'administrador'
+  const signedIn = narrator || team
   const { stories } = useMyStories()
   const { pathname } = useLocation()
 
@@ -59,10 +61,18 @@ export default function VisitorHeader() {
             {narrator && <Icon name="mapa" size={20} />}
             <span>Mapa de historias</span>
           </NavLink>
-          <NavLink to="/contar" className="ag-vnav__item" onClick={narrator ? undefined : askToTell}>
-            {narrator && <Icon name="mic" size={20} />}
-            <span>Contar una historia</span>
-          </NavLink>
+          {!team && (
+            <NavLink to="/contar" className="ag-vnav__item" onClick={narrator ? undefined : askToTell}>
+              {narrator && <Icon name="mic" size={20} />}
+              <span>Contar una historia</span>
+            </NavLink>
+          )}
+          {team && (
+            <NavLink to="/admin/inicio" className="ag-vnav__item">
+              <Icon name="inicio" size={18} />
+              <span>Panel del equipo</span>
+            </NavLink>
+          )}
           {narrator && (
             <NavLink to="/mis-historias" className="ag-vnav__item">
               <Icon name="lista" size={20} />
@@ -73,7 +83,7 @@ export default function VisitorHeader() {
         </nav>
 
         {/* The narrator keeps the demo switch: the team shows with it how a story is kept with no signal. A visitor only sees it while it is on. */}
-        {narrator || simulatedOffline ? (
+        {signedIn || simulatedOffline ? (
           <button type="button" className="ag-hchip ag-hchip--toggle ag-hchip--compact" aria-pressed={simulatedOffline} data-offline={!online} onClick={toggleSimulated}>
             <span className="ag-hchip__dot" />
             <span className="ag-hchip__text">
@@ -90,7 +100,7 @@ export default function VisitorHeader() {
           )
         )}
 
-        {narrator ? (
+        {signedIn ? (
           <div className="ag-vuser">
             <span className="ag-vuser__avatar" aria-hidden="true">
               {initials(user.nombre)}

@@ -38,17 +38,9 @@ describe('without VITE_SHOW_CODES the people who use the platform never see the 
     noCodes()
   })
 
-  it('the counters of the map, for the team', async () => {
-    renderApp({ user: ADMIN, api: { '/historias': [mapStory()] } })
-    await screen.findByRole('list', { name: 'Historias en esta zona del mapa' })
-
-    expect(screen.getByText(/No salen en el mapa hasta que un administrador las aprueba\./)).toBeInTheDocument()
-    noCodes()
-  })
-
   it('the side menu says only what each section is, with no codes, also the ones that are coming', async () => {
-    renderApp({ user: ADMIN })
-    const nav = await screen.findByRole('navigation', { name: 'Secciones' })
+    renderApp({ route: '/admin', user: ADMIN })
+    const nav = await screen.findByRole('navigation', { name: 'Secciones de administración' })
 
     expect(within(nav).getByRole('link', { name: 'Recorridos 360°' })).toBeInTheDocument()
     expect(within(nav).getByRole('link', { name: 'Avatares en RA' })).toBeInTheDocument()
@@ -129,13 +121,13 @@ describe('without VITE_SHOW_CODES the people who use the platform never see the 
 
   it('the review and the new team story dialogs', async () => {
     const user = userEvent.setup()
-    const first = renderApp({ route: '/revision', user: ADMIN, api: { '/admin/historias': [adminStory()] } })
+    const first = renderApp({ route: '/admin/revision', user: ADMIN, api: { '/admin/historias': [adminStory()] } })
     await user.click(await screen.findByRole('button', { name: 'Revisar' }))
     await screen.findByRole('dialog')
     noCodes()
     first.unmount()
 
-    renderApp({ route: '/historias-propias?nueva=1', user: ADMIN, api: { '/admin/historias': [] } })
+    renderApp({ route: '/admin/historias?nueva=1', user: ADMIN, api: { '/admin/historias': [] } })
     await screen.findByRole('dialog', { name: 'Nueva historia del proyecto' })
     noCodes()
   })

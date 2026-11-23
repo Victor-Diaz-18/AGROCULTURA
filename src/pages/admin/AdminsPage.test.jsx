@@ -94,11 +94,6 @@ describe('Administradores', () => {
       expect(within(adminMenu).queryByRole('link', { name: /Administradores/ })).not.toBeInTheDocument()
       expect(within(adminMenu).getByRole('link', { name: /Configuración/ })).toBeInTheDocument()
       panel.unmount()
-
-      renderApp({ route: '/configuracion', user: OTHER_ADMIN })
-      const portalMenu = await screen.findByRole('navigation', { name: 'Secciones' })
-      expect(within(portalMenu).queryByRole('link', { name: /Administradores/ })).not.toBeInTheDocument()
-      expect(within(portalMenu).getByRole('link', { name: /Revisión/ })).toBeInTheDocument()
     })
   })
 
@@ -174,13 +169,9 @@ describe('Administradores', () => {
     expect(within(menu).getByRole('link', { name: /Administradores/ })).toHaveAttribute('href', '/admin/administradores')
   })
 
-  it('is reached from the portal menu too, where an administrator also works', async () => {
+  it('its old portal address takes the administrator to the panel', async () => {
     const server = adminsApi({ extra: [row({ id: 'm1', nombre: 'Marta Ríos', usuario: 'marta' })] })
-    renderApp({ route: '/configuracion', user: ADMIN, api: server.api })
-    const user = userEvent.setup()
-
-    const menu = await screen.findByRole('navigation', { name: 'Secciones' })
-    await user.click(within(menu).getByRole('link', { name: /Administradores/ }))
+    renderApp({ route: '/administradores', user: ADMIN, api: server.api })
 
     expect(await screen.findByRole('heading', { name: 'Administradores', level: 1 })).toBeInTheDocument()
     expect(await screen.findByRole('button', { name: 'Desactivar a Marta Ríos' })).toBeInTheDocument()
@@ -190,7 +181,7 @@ describe('Administradores', () => {
   it('is not opened from the portal by a narrator', async () => {
     const { fetchMock } = renderApp({ route: '/administradores', user: NARRATOR, api: adminsApi().api })
 
-    await screen.findByRole('navigation', { name: 'Secciones' })
+    await screen.findByRole('heading', { name: 'Acceso del equipo' })
     expect(screen.queryByRole('heading', { name: 'Administradores', level: 1 })).not.toBeInTheDocument()
     expect(callsTo(fetchMock, '/admin/administradores')).toHaveLength(0)
   })

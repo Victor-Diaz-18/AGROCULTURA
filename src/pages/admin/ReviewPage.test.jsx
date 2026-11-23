@@ -80,16 +80,6 @@ describe('Revisión: la bandeja (F6)', () => {
     expect(await screen.findByText(/No hay historias por revisar/)).toBeInTheDocument()
   })
 
-  it('shows the portal counters above the table only in the portal', async () => {
-    const { unmount } = open('portal')
-    expect(await screen.findByText('Aprobadas de la comunidad')).toBeInTheDocument()
-    unmount()
-
-    open('admin')
-    await screen.findByText('El beneficiadero comunitario')
-    expect(screen.queryByText('Aprobadas de la comunidad')).not.toBeInTheDocument()
-  })
-
   it('the approved and rejected tabs list them; a rejected one shows why, and neither can be reviewed again', async () => {
     const user = userEvent.setup()
     const { fetchMock } = open(
@@ -245,18 +235,6 @@ describe('Revisión: aprobar', () => {
     expect(await screen.findByText('Publicada: ya aparece en el mapa.')).toBeInTheDocument()
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
     expect(await screen.findByText(/No hay historias por revisar/)).toBeInTheDocument()
-  })
-
-  it('in the portal it closes after deciding instead of opening the next one', async () => {
-    const user = userEvent.setup()
-    open('portal')
-    await user.click((await screen.findAllByRole('button', { name: 'Revisar' }))[0])
-    await tickAll(user)
-
-    await user.click(screen.getByRole('button', { name: 'Aprobar y publicar' }))
-
-    expect(await screen.findByText('Publicada: ya aparece en el mapa.')).toBeInTheDocument()
-    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
   })
 
   it('tells the reviewer when somebody else already decided that story, and refreshes the list', async () => {

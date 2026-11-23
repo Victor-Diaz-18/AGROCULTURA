@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import RequireRole from './components/auth/RequireRole.jsx'
 import AdminShell from './components/layout/AdminShell.jsx'
 import PortalShell from './components/layout/PortalShell.jsx'
@@ -31,10 +31,10 @@ export default function AppRoutes() {
         <Route path="inicio" element={<RequireRole role="narrador"><LauncherPage who="narrador" /></RequireRole>} />
         <Route path="contar" element={<RequireRole role="narrador"><TellPage /></RequireRole>} />
         <Route path="mis-historias" element={<RequireRole role="narrador"><MyStoriesPage /></RequireRole>} />
-        <Route path="revision" element={<RequireRole role="administrador"><ReviewPage variant="portal" /></RequireRole>} />
-        <Route path="historias-propias" element={<RequireRole role="administrador"><ProjectStoriesPage variant="portal" /></RequireRole>} />
-        <Route path="configuracion" element={<RequireRole role="administrador"><SettingsPage variant="portal" /></RequireRole>} />
-        <Route path="administradores" element={<RequireRole role="administrador"><AdminsPage /></RequireRole>} />
+        <Route path="revision" element={<Navigate to="/admin/revision" replace />} />
+        <Route path="historias-propias" element={<Navigate to="/admin/historias" replace />} />
+        <Route path="configuracion" element={<Navigate to="/admin/configuracion" replace />} />
+        <Route path="administradores" element={<Navigate to="/admin/administradores" replace />} />
         <Route path="proximamente/:id" element={<FuturePage variant="portal" />} />
         <Route path="creditos" element={<CreditsPage />} />
         <Route path="*" element={<NotFoundPage />} />

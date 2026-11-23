@@ -26,7 +26,7 @@ export default function MapPage() {
   const { user, role } = useAuth()
   const isVisitor = !user
   const narrator = role === 'narrador'
-  const light = isVisitor || narrator // the visitor and the narrator share the look of the public page
+  const light = true // everybody sees the public page; the team's counters are in its panel
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const { stories, status, reload } = usePublishedStories()
@@ -114,7 +114,7 @@ export default function MapPage() {
 
   return (
     <>
-      {isVisitor ? (
+      {!narrator ? (
         <VisitorIntro sectors={config.sectores} stats={stats} readAloud={readAloud} />
       ) : narrator ? (
         <NarratorIntro sectors={config.sectores} readAloud={readAloud} />

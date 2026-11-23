@@ -20,7 +20,7 @@ describe('opening the app without signal', () => {
     renderApp({ route: '/', user: ADMIN })
 
     expect(await screen.findByText('Memoria de Minca')).toBeInTheDocument()
-    expect(await screen.findByText('9 publicadas')).toBeInTheDocument()
+    expect(await screen.findByRole('list', { name: 'Lo que hay en el mapa' })).toHaveTextContent('9 historias publicadas')
   })
 
   it('lets the narrator fill the form with the sectors and tags of the last visit', async () => {
@@ -71,8 +71,8 @@ describe('with signal', () => {
 
     renderApp({ route: '/', user: ADMIN, api: { '/estadisticas': { ...STATS, publicadas: 6 } } })
 
-    expect(await screen.findByText('6 publicadas')).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByRole('list', { name: 'Lo que hay en el mapa' })).toHaveTextContent('6 historias publicadas'))
     await new Promise((resolve) => setTimeout(resolve, 50))
-    expect(screen.getByText('6 publicadas')).toBeInTheDocument()
+    expect(screen.getByRole('list', { name: 'Lo que hay en el mapa' })).toHaveTextContent('6 historias publicadas')
   })
 })

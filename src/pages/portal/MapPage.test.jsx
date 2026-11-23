@@ -153,15 +153,6 @@ describe('Mapa de historias (F1)', () => {
     expect(await screen.findByText('Las historias se cargan cuando vuelva la conexión.')).toBeInTheDocument()
   })
 
-  it('keeps the live counters of the design for someone signed in, with their codes in the list', async () => {
-    renderApp({ user: ADMIN, api: { '/estadisticas': stats, '/historias': NEAR } })
-
-    expect(await within(await screen.findByRole('list', { name: 'Historias en esta zona del mapa' })).findByRole('button', { name: /El camino de mulas/ })).toHaveTextContent('HIS-2026-001')
-
-    expect(await screen.findByText('Historias publicadas')).toBeInTheDocument()
-    expect(await screen.findByText('5 de la comunidad · 2 del proyecto')).toBeInTheDocument()
-  })
-
   it('reads aloud how many stories are in the zone', async () => {
     const user = userEvent.setup()
     open()

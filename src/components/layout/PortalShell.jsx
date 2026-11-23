@@ -1,8 +1,6 @@
 import { Outlet } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext.jsx'
 import useFocusOnNavigation from '../../hooks/useFocusOnNavigation.js'
-import Header from './Header.jsx'
-import SideMenu from './SideMenu.jsx'
 import VisitorFooter from './VisitorFooter.jsx'
 import VisitorHeader from './VisitorHeader.jsx'
 
@@ -15,15 +13,14 @@ export default function PortalShell() {
   const { user, role } = useAuth()
   useFocusOnNavigation()
   // The visitor and the narrator share the light frame and its look; only the team keeps the working frame with the side menu.
-  const light = !user || role === 'narrador'
+  const light = true // the portal looks the same for everybody; the team works in its own panel (/admin)
   return (
     <div className={`ag-app${light ? ' ag-app--visitor' : ''}${role === 'narrador' ? ' ag-app--narrator' : ''}`}>
       <a href="#contenido" className="ag-skip">
         Saltar al contenido
       </a>
-      {light ? <VisitorHeader /> : <Header />}
+      <VisitorHeader />
       <div className="ag-body">
-        {!light && <SideMenu />}
         <main id="contenido" tabIndex={-1} className="ag-main">
           <Outlet />
         </main>

@@ -6,17 +6,10 @@ import { STATS } from '../../test/fixtures.js'
 import { renderApp } from '../../test/renderApp.jsx'
 
 describe('Header', () => {
-  it('shows the public counters from the API', async () => {
-    renderApp({ user: ADMIN, api: { '/estadisticas': { ...STATS, publicadas: 7, en_revision: 4 } } })
-
-    expect(await screen.findByText('7 publicadas')).toBeInTheDocument()
-    expect(screen.getByText('4 historias')).toBeInTheDocument()
-  })
-
   it('shows "datos de ejemplo" while the portal holds sample data', async () => {
     renderApp({ user: ADMIN })
 
-    expect(await screen.findByText(/datos de ejemplo/)).toBeInTheDocument()
+    expect(await screen.findByText(/datos de ejemplo/i)).toBeInTheDocument()
   })
 
   it('"Simular conexión" switches between "En línea" and "Sin señal"', async () => {
@@ -66,14 +59,14 @@ describe('Header', () => {
   it('does not call the API while the demo switch simulates no signal, and reloads when it ends', async () => {
     const user = userEvent.setup()
     const { fetchMock } = renderApp({ user: ADMIN })
-    await screen.findByText('0 publicadas')
+    await screen.findByRole('heading', { level: 1 })
     fetchMock.mockClear()
 
     await user.click(screen.getByRole('button', { name: /Simular conexión/ }))
     expect(fetchMock).not.toHaveBeenCalled()
 
     await user.click(screen.getByRole('button', { name: /Simular conexión/ }))
-    await screen.findByText('0 publicadas')
+    await screen.findByRole('heading', { level: 1 })
     expect(fetchMock).toHaveBeenCalled()
   })
 
@@ -81,10 +74,9 @@ describe('Header', () => {
     const jeison = { id: 'a2', nombre: 'jeison', rol: 'administrador' }
     const { container } = renderApp({ user: jeison })
 
-    expect(await screen.findByText('jeison', { selector: '.ag-user__name' })).toBeInTheDocument()
-    expect(container.querySelector('.ag-user__avatar')).toHaveTextContent('J')
-    expect(screen.getByText(/Administrador/, { selector: '.ag-user__role' })).toBeInTheDocument()
-    expect(screen.queryByText('Administración', { selector: '.ag-user__name' })).not.toBeInTheDocument()
+    expect(await screen.findByText('jeison', { selector: '.ag-vuser__name' })).toBeInTheDocument()
+    expect(container.querySelector('.ag-vuser__avatar')).toHaveTextContent('J')
+    expect(screen.queryByText('Administración', { selector: '.ag-vuser__name' })).not.toBeInTheDocument()
   })
 
   it('shows the same in the administration panel', async () => {
