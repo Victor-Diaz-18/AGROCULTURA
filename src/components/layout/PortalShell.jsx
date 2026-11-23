@@ -7,26 +7,28 @@ import VisitorFooter from './VisitorFooter.jsx'
 import VisitorHeader from './VisitorHeader.jsx'
 
 /**
- * Frame of the public portal and the narrator area. A signed-in person gets the working frame (header with counters and side
- * menu); a visitor gets a lighter one, with no menu of things they cannot use. The page stays in the same place of the tree
+ * Frame of the public portal and the narrator area. The team gets the working frame (header with counters and side menu); a
+ * visitor and a narrator get the lighter one, with no menu of things they cannot use. The page stays in the same place of the tree
  * either way, so signing in does not reload the map or lose the filters.
  */
 export default function PortalShell() {
-  const { user } = useAuth()
+  const { user, role } = useAuth()
   useFocusOnNavigation()
+  // The visitor and the narrator share the light frame and its look; only the team keeps the working frame with the side menu.
+  const light = !user || role === 'narrador'
   return (
-    <div className={`ag-app${user ? '' : ' ag-app--visitor'}`}>
+    <div className={`ag-app${light ? ' ag-app--visitor' : ''}${role === 'narrador' ? ' ag-app--narrator' : ''}`}>
       <a href="#contenido" className="ag-skip">
         Saltar al contenido
       </a>
-      {user ? <Header /> : <VisitorHeader />}
+      {light ? <VisitorHeader /> : <Header />}
       <div className="ag-body">
-        {user && <SideMenu />}
+        {!light && <SideMenu />}
         <main id="contenido" tabIndex={-1} className="ag-main">
           <Outlet />
         </main>
       </div>
-      {!user && <VisitorFooter />}
+      {light && <VisitorFooter />}
     </div>
   )
 }

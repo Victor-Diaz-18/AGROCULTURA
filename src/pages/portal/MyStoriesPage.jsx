@@ -117,7 +117,7 @@ export default function MyStoriesPage() {
         </div>
       )}
 
-      <div className="ag-table-card">
+      <div className="ag-table-card ag-table-card--cards">
         <div className="ag-table-card__bar">
           <SegmentedTabs items={items} value={tab} onChange={setTab} label="Filtrar por estado" />
         </div>

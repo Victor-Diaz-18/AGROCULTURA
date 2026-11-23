@@ -38,8 +38,8 @@ describe('without VITE_SHOW_CODES the people who use the platform never see the 
     noCodes()
   })
 
-  it('the counters of the map, for someone signed in', async () => {
-    renderApp({ user: NARRATOR, api: { '/historias': [mapStory()] } })
+  it('the counters of the map, for the team', async () => {
+    renderApp({ user: ADMIN, api: { '/historias': [mapStory()] } })
     await screen.findByRole('list', { name: 'Historias en esta zona del mapa' })
 
     expect(screen.getByText(/No salen en el mapa hasta que un administrador las aprueba\./)).toBeInTheDocument()
@@ -47,7 +47,7 @@ describe('without VITE_SHOW_CODES the people who use the platform never see the 
   })
 
   it('the side menu says only what each section is, with no codes, also the ones that are coming', async () => {
-    renderApp({ user: NARRATOR })
+    renderApp({ user: ADMIN })
     const nav = await screen.findByRole('navigation', { name: 'Secciones' })
 
     expect(within(nav).getByRole('link', { name: 'Recorridos 360°' })).toBeInTheDocument()

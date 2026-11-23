@@ -10,7 +10,7 @@ describe('session', () => {
     renderApp({ user: NARRATOR })
 
     expect(screen.getByText('Ana Beltrán')).toBeInTheDocument()
-    expect(screen.getByText(/Narrador/, { selector: '.ag-user__role' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: 'Hola, Ana' })).toBeInTheDocument() // the narrator's own opening
     expect(screen.getByRole('button', { name: 'Salir' })).toBeInTheDocument()
   })
 

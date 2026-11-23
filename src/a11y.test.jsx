@@ -172,7 +172,7 @@ describe('a keyboard and a screen reader', () => {
 
     await user.click(screen.getByRole('link', { name: /Mapa de historias/ }))
 
-    await waitFor(() => expect(screen.getByRole('heading', { name: 'Mapa de historias' })).toHaveFocus())
+    await waitFor(() => expect(screen.getByRole('heading', { level: 1, name: /^Hola, / })).toHaveFocus())
   })
 
   it('a dialog keeps Tab inside, in both directions, and gives the focus back when it closes', async () => {

@@ -1,4 +1,6 @@
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext.jsx'
+import { useMyStories } from '../../context/MyStoriesContext.jsx'
 import usePageTitle from '../../hooks/usePageTitle.js'
 import Button from '../ui/Button.jsx'
 import Icon from '../ui/Icon.jsx'
@@ -51,6 +53,57 @@ export default function VisitorIntro({ sectors, stats, readAloud }) {
             ))}
           </ul>
         )}
+      </div>
+    </section>
+  )
+}
+
+const STATE_WORDS = [
+  ['borrador', 'guardada en tu teléfono', 'guardadas en tu teléfono'],
+  ['revision', 'en revisión', 'en revisión'],
+  ['publicada', 'publicada', 'publicadas'],
+  ['rechazada', 'no publicada', 'no publicadas'],
+]
+
+/** The opening for a narrator: the same look as the visitor's, with a greeting, the way to tell a story and how theirs are going. */
+export function NarratorIntro({ sectors, readAloud }) {
+  const { user } = useAuth()
+  const { stories } = useMyStories()
+  const navigate = useNavigate()
+  usePageTitle('Mapa de historias')
+  const firstName = (user?.nombre ?? '').split(' ')[0]
+  const counts = STATE_WORDS.map(([state, one, many]) => {
+    const value = (stories ?? []).filter((story) => story.estado === state).length
+    return [value, value === 1 ? one : many]
+  }).filter(([value]) => value > 0)
+
+  return (
+    <section className="ag-vhero">
+      <div className="ag-vhero__inner">
+        {sectors.length > 0 && <p className="ag-vhero__places">{sectors.map((sector) => sector.nombre).join(' · ')}</p>}
+        <h1 tabIndex={-1}>Hola, {firstName}</h1>
+        <p className="ag-vhero__lead">Cuenta otra historia del café o mira en qué van las tuyas. Las historias de todos están en el mapa.</p>
+        <div className="ag-vhero__actions">
+          <Button variant="primary" icon="mas" onClick={() => navigate('/contar')}>
+            Contar una historia
+          </Button>
+          <button type="button" className="ag-btn ag-vhero__explore" onClick={() => navigate('/mis-historias')}>
+            <Icon name="lista" size={18} />
+            Mis historias
+          </button>
+          <ListenButton title="Mapa de historias" text={readAloud} piece="mapa" />
+        </div>
+        <ul className="ag-vhero__facts" aria-label="Tus historias">
+          {counts.length > 0 ? (
+            counts.map(([value, label]) => (
+              <li key={label}>
+                <b>{value}</b> {label}
+              </li>
+            ))
+          ) : (
+            <li>Todavía no has contado ninguna historia.</li>
+          )}
+        </ul>
       </div>
     </section>
   )

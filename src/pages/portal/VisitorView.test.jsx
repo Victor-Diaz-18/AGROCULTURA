@@ -159,13 +159,28 @@ describe('La vista de un visitante sin cuenta', () => {
     expect(document.querySelector('.ag-vscene')).toHaveAttribute('aria-hidden', 'true')
   })
 
-  it('signing in brings the working frame back, on the same page', async () => {
-    renderApp({ user: NARRATOR, api: { '/estadisticas': stats, '/historias': [mapStory()] } })
+  it('a narrator keeps the look of the public page, with its greeting, its three places and no administration', async () => {
+    renderApp({ user: NARRATOR, api: { '/estadisticas': stats, '/historias': [mapStory()], '/historias/mias': [{ codigo: 'HIS-2026-001', titulo: 'Una', sector_id: 'minca', epoca: 'Antes de 1960', formatos: ['Texto'], estado: 'revision', motivo_rechazo: null, enviada_en: '2026-09-14T15:20:00Z' }] } })
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Mapa de historias' })).toBeInTheDocument()
-    expect(screen.getByText('NARRADOR')).toBeInTheDocument()
-    expect(screen.queryByRole('contentinfo')).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Simular conexión/ })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Hola, Ana' })).toBeInTheDocument()
+    const nav = screen.getByRole('navigation', { name: 'Secciones' })
+    for (const name of [/Mapa de historias/, /Contar una historia/, /Mis historias/]) expect(within(nav).getByRole('link', { name })).toBeInTheDocument()
+    expect(await within(screen.getByRole('list', { name: 'Tus historias' })).findByText(/en revisión/)).toBeInTheDocument()
+    expect(screen.queryByText('ADMINISTRACIÓN')).not.toBeInTheDocument()
+    expect(screen.queryByText(/Esperando revisión/)).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Salir' })).toBeInTheDocument()
+    expect(screen.getByRole('contentinfo')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Simular conexión/ })).toHaveTextContent('En línea') // for showing the offline mode
+  })
+
+  it('a narrator goes to tell a story straight away, with no sign-in dialog', async () => {
+    const user = userEvent.setup()
+    renderApp({ user: NARRATOR, api: { '/historias/mias': [] } })
+
+    await user.click(within(screen.getByRole('navigation', { name: 'Secciones' })).getByRole('link', { name: /Contar una historia/ }))
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Contar una historia' })).toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 })
 

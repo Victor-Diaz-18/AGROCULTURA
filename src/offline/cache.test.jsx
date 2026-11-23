@@ -4,7 +4,7 @@ import { setSimulatedOffline } from './connectivity.js'
 import { cacheGet, cacheSet } from './store.js'
 import { CONFIG, STATS, mapStory } from '../test/fixtures.js'
 import { mockMapSize } from '../test/layout.js'
-import { NARRATOR } from '../test/auth.js'
+import { ADMIN, NARRATOR } from '../test/auth.js'
 import { renderApp } from '../test/renderApp.jsx'
 
 /** Opening the app: what the phone remembers from the last time with signal (F10). */
@@ -17,7 +17,7 @@ describe('opening the app without signal', () => {
     })
     setSimulatedOffline(true)
 
-    renderApp({ route: '/', user: NARRATOR })
+    renderApp({ route: '/', user: ADMIN })
 
     expect(await screen.findByText('Memoria de Minca')).toBeInTheDocument()
     expect(await screen.findByText('9 publicadas')).toBeInTheDocument()
@@ -69,7 +69,7 @@ describe('with signal', () => {
   it('shows what the server says, not an older copy', async () => {
     await cacheSet('portal', { config: CONFIG, stats: { ...STATS, publicadas: 1 } })
 
-    renderApp({ route: '/', user: NARRATOR, api: { '/estadisticas': { ...STATS, publicadas: 6 } } })
+    renderApp({ route: '/', user: ADMIN, api: { '/estadisticas': { ...STATS, publicadas: 6 } } })
 
     expect(await screen.findByText('6 publicadas')).toBeInTheDocument()
     await new Promise((resolve) => setTimeout(resolve, 50))

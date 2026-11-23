@@ -287,7 +287,7 @@ describe('«¿No tienes cuenta? Crea una»', () => {
     await user.type(within(dialog).getByLabelText('Contraseña'), '  clave con espacios ')
     await user.click(within(dialog).getByRole('button', { name: 'Crear cuenta' }))
 
-    await screen.findByText(/Hola, /)
+    await screen.findByText(/Ya puedes contar tus historias/)
     expect(JSON.parse(callsTo(fetchMock, '/auth/registro')[0][1].body)).toEqual({
       usuario: 'Rosa Elena',
       clave: '  clave con espacios ',

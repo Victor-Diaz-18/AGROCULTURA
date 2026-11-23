@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { screen, within } from '@testing-library/react'
-import { NARRATOR } from '../../test/auth.js'
+import { ADMIN, NARRATOR } from '../../test/auth.js'
 import { STATS } from '../../test/fixtures.js'
 import { renderApp } from '../../test/renderApp.jsx'
 
 describe('SideMenu', () => {
   it('groups the entries as in the design', () => {
-    renderApp({ user: NARRATOR })
+    renderApp({ user: ADMIN })
     const nav = screen.getByRole('navigation', { name: 'Secciones' })
 
     for (const title of ['EXPLORAR', 'NARRADOR', 'ADMINISTRACIÓN', 'PRÓXIMAMENTE']) {
@@ -15,15 +15,15 @@ describe('SideMenu', () => {
     expect(within(nav).getByText(/Cada página tiene un botón «Escuchar»/)).toBeInTheDocument()
   })
 
-  it('locks the administration entries for people who are not administrators', () => {
+  it('is only for the team: a narrator never sees the administration entries', () => {
     renderApp({ user: NARRATOR })
-    const nav = screen.getByRole('navigation', { name: 'Secciones' })
 
-    expect(within(nav).getAllByRole('img', { name: 'Solo administradores' })).toHaveLength(3)
+    expect(screen.queryByText('ADMINISTRACIÓN')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Revisión|Configuración|Historias propias/ })).not.toBeInTheDocument()
   })
 
   it('marks the current page', () => {
-    renderApp({ user: NARRATOR, route: '/proximamente/ra' })
+    renderApp({ user: ADMIN, route: '/proximamente/ra' })
     const nav = screen.getByRole('navigation', { name: 'Secciones' })
 
     expect(within(nav).getByRole('link', { name: /Avatares en RA/ })).toHaveAttribute('aria-current', 'page')
@@ -31,16 +31,15 @@ describe('SideMenu', () => {
   })
 
   it('shows how many stories are published and how many wait for review', async () => {
-    renderApp({ user: NARRATOR, api: { '/estadisticas': { ...STATS, publicadas: 7, en_revision: 4 } } })
+    renderApp({ user: ADMIN, api: { '/estadisticas': { ...STATS, publicadas: 7, en_revision: 4 } } })
     const nav = screen.getByRole('navigation', { name: 'Secciones' })
 
     expect(await within(nav).findByText('7')).toBeInTheDocument()
-    // The review count is hidden behind the lock until an administrator signs in.
-    expect(within(nav).queryByText('4')).not.toBeInTheDocument()
+    expect(await within(nav).findByText('4')).toBeInTheDocument() // the team sees what waits for review
   })
 
   it('lists the future phases F14 and F15', () => {
-    renderApp({ user: NARRATOR })
+    renderApp({ user: ADMIN })
     const nav = screen.getByRole('navigation', { name: 'Secciones' })
 
     expect(within(nav).getByRole('link', { name: /Recorridos 360°/ })).toBeInTheDocument()

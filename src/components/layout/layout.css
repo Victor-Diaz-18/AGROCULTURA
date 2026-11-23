@@ -1232,3 +1232,132 @@
     width: 100%;
   }
 }
+
+/* ---------- The narrator: the visitor's look, its own places ---------- */
+.ag-vnav__item {
+  gap: 6px;
+}
+.ag-vnav__count {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: var(--amarillo);
+  color: var(--amarillo-texto);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 20px;
+  text-align: center;
+}
+.ag-vuser {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ag-vuser__avatar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--verde-oscuro);
+  font-size: 13px;
+  font-weight: 800;
+}
+.ag-vuser__name {
+  max-width: 14em;
+  overflow: hidden;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ag-vuser__out {
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--cab-texto-suave);
+  border-radius: 10px;
+  background: transparent;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+}
+.ag-header--over-photo .ag-vuser__name {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
+}
+
+@media (max-width: 720px) {
+  .ag-vuser__name {
+    display: none;
+  }
+  /* The narrator's three places, always at hand at the bottom of the screen */
+  .ag-header--narrator .ag-vnav {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 45;
+    display: flex;
+    justify-content: space-around;
+    gap: 0;
+    padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--cab-chip-borde);
+    background: var(--cab-fondo);
+    box-shadow: 0 -6px 18px rgba(23, 38, 31, 0.18);
+  }
+  .ag-header--narrator .ag-vnav__item {
+    position: relative;
+    flex: 1;
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+    height: 56px;
+    padding: 0 4px;
+    border-radius: 12px;
+    box-shadow: none;
+    color: var(--cab-texto-suave);
+    font-size: 12px;
+    text-align: center;
+    text-shadow: none;
+  }
+  .ag-header--narrator .ag-vnav__item[aria-current='page'] {
+    background: var(--cab-chip);
+    color: #fff;
+  }
+  .ag-header--narrator .ag-vnav__item[aria-current='page'] svg {
+    color: var(--amarillo);
+  }
+  .ag-header--narrator .ag-vnav__count {
+    position: absolute;
+    top: 4px;
+    left: calc(50% + 8px);
+  }
+  .ag-app--narrator {
+    padding-bottom: calc(70px + env(safe-area-inset-bottom));
+  }
+}
+
+/* The notices and the reading bar sit above the narrator's bottom bar, never on top of it */
+@media (max-width: 720px) {
+  body:has(.ag-app--narrator) .ag-toast,
+  body:has(.ag-app--narrator) .ag-reading {
+    bottom: calc(84px + env(safe-area-inset-bottom));
+  }
+}
+
+/* The demo switch, small: on a phone only its dot and its state */
+.ag-hchip--compact {
+  padding: 5px 10px;
+}
+@media (max-width: 720px) {
+  .ag-hchip--compact .ag-hchip__label {
+    display: none;
+  }
+  .ag-hchip--compact .ag-hchip__value {
+    font-size: 12px;
+  }
+}

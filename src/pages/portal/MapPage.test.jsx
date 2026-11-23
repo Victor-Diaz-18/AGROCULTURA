@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { toggleSimulatedOffline } from '../../offline/connectivity.js'
-import { NARRATOR } from '../../test/auth.js'
+import { ADMIN } from '../../test/auth.js'
 import { STATS, mapStory, storyCard, storyWithoutPlace } from '../../test/fixtures.js'
 import { mockMapSize } from '../../test/layout.js'
 import { callsTo, renderApp, reply } from '../../test/renderApp.jsx'
@@ -154,7 +154,7 @@ describe('Mapa de historias (F1)', () => {
   })
 
   it('keeps the live counters of the design for someone signed in, with their codes in the list', async () => {
-    renderApp({ user: NARRATOR, api: { '/estadisticas': stats, '/historias': NEAR } })
+    renderApp({ user: ADMIN, api: { '/estadisticas': stats, '/historias': NEAR } })
 
     expect(await within(await screen.findByRole('list', { name: 'Historias en esta zona del mapa' })).findByRole('button', { name: /El camino de mulas/ })).toHaveTextContent('HIS-2026-001')
 

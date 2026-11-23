@@ -90,13 +90,11 @@ describe('pages that need a role', () => {
     expect(screen.getByRole('heading', { name: 'Avatares en realidad aumentada' })).toBeInTheDocument()
   })
 
-  it('asks a narrator for administrator access from the locked menu entries', async () => {
-    const user = userEvent.setup()
-    renderApp({ user: NARRATOR })
+  it('asks a narrator for administrator access when it opens an administration page', async () => {
+    renderApp({ route: '/revision', user: NARRATOR })
 
-    await user.click(screen.getByRole('link', { name: /Revisión/ }))
-
-    const dialog = screen.getByRole('dialog', { name: 'Ingresar' })
+    const dialog = await screen.findByRole('dialog', { name: 'Ingresar' })
+    expect(dialog).toBeInTheDocument()
     expect(within(dialog).getByText('Esta sección es solo para administradores.')).toBeInTheDocument()
   })
 

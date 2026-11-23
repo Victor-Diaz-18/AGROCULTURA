@@ -5,7 +5,7 @@ import StoryList from '../../components/map/StoryList.jsx'
 import StoryMap from '../../components/map/StoryMap.jsx'
 import CoffeeJourney from '../../components/map/CoffeeJourney.jsx'
 import VisitorHistory from '../../components/map/VisitorHistory.jsx'
-import VisitorIntro, { VisitorHowItWorks } from '../../components/map/VisitorIntro.jsx'
+import VisitorIntro, { NarratorIntro, VisitorHowItWorks } from '../../components/map/VisitorIntro.jsx'
 import PageHeader from '../../components/layout/PageHeader.jsx'
 import { StoryCardLoader } from '../../components/story/StoryCard.jsx'
 import Button from '../../components/ui/Button.jsx'
@@ -23,8 +23,10 @@ import { hasLocation, inBounds, placeLine } from '../../utils/geo.js'
 /** Map of published stories (F1) with the list of the ones in the visible zone, and their cards (F8). */
 export default function MapPage() {
   const { config, stats } = usePortalData()
-  const { user } = useAuth()
+  const { user, role } = useAuth()
   const isVisitor = !user
+  const narrator = role === 'narrador'
+  const light = isVisitor || narrator // the visitor and the narrator share the look of the public page
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const { stories, status, reload } = usePublishedStories()
@@ -114,6 +116,8 @@ export default function MapPage() {
     <>
       {isVisitor ? (
         <VisitorIntro sectors={config.sectores} stats={stats} readAloud={readAloud} />
+      ) : narrator ? (
+        <NarratorIntro sectors={config.sectores} readAloud={readAloud} />
       ) : (
         <>
       <PageHeader
@@ -171,7 +175,7 @@ export default function MapPage() {
         </>
       )}
 
-      {isVisitor && (
+      {light && (
         <div className="ag-vmaphead" id="mapa">
           <span className="ag-vtile">
             <Icon name="mapa" size={22} />
@@ -210,7 +214,7 @@ export default function MapPage() {
                 )}
               </div>
             ) : (
-              <StoryList stories={visible} selectedCode={selected} placeOf={placeOf} onOpen={open} showCodes={!isVisitor} />
+              <StoryList stories={visible} selectedCode={selected} placeOf={placeOf} onOpen={open} showCodes={!light} />
             )}
           </div>
         </div>
@@ -219,7 +223,7 @@ export default function MapPage() {
             Mostrando {visible.length} de {stats.publicadas} historias publicadas
           </span>
           <span>
-            {isVisitor ? '' : `Toca un punto del mapa o una historia de la lista para abrir su ficha${SHOW_CODES ? ' (F8)' : ''}.`}
+            {light ? '' : `Toca un punto del mapa o una historia de la lista para abrir su ficha${SHOW_CODES ? ' (F8)' : ''}.`}
             {withoutPlace > 0 ? ' Las historias sin ubicación en el mapa salen siempre en la lista.' : ''}
           </span>
           <span>
@@ -228,8 +232,8 @@ export default function MapPage() {
         </div>
       </div>
 
-      {isVisitor && <VisitorHistory />}
-      {isVisitor && <CoffeeJourney />}
+      {light && <VisitorHistory />}
+      {light && <CoffeeJourney />}
       {isVisitor && <VisitorHowItWorks />}
 
       {openCode && <StoryCardLoader key={openCode} code={openCode} onClose={() => setOpenCode(null)} />}
