@@ -29,11 +29,12 @@ describe('App', () => {
     expect(screen.getByRole('link', { name: /Ver portal público/ })).toBeInTheDocument()
   })
 
-  it('keeps the notes on the future phases for the team, in the admin panel', async () => {
+  it('shows the team the future phases as the public sees them, with a way back to its home', async () => {
     renderApp({ route: '/admin/proximamente/ra', user: ADMIN })
 
     expect(await screen.findByRole('heading', { name: 'Avatares en realidad aumentada' })).toBeInTheDocument()
-    expect(screen.getByText('FASE FUTURA · F15')).toBeInTheDocument()
-    expect(screen.getByText('No se construye en esta entrega')).toBeInTheDocument()
+    expect(screen.getByText('Estamos trabajando en esto.')).toBeInTheDocument()
+    expect(screen.queryByText(/No se construye|FASE FUTURA/)).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Volver al inicio' })).toHaveAttribute('href', '/admin/inicio')
   })
 })

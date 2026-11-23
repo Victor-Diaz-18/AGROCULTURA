@@ -100,12 +100,10 @@ describe('without VITE_SHOW_CODES the people who use the platform never see the 
     noCodes()
   })
 
-  it('the pages that are coming: no code in the tag, the note or the list of what they depend on', async () => {
+  it('the pages that are coming: no code in the tag', async () => {
     renderApp({ route: '/admin/proximamente/ra', user: ADMIN })
 
-    expect(await screen.findByText('FASE FUTURA')).toBeInTheDocument()
-    expect(screen.getByText(/Necesita contenido grabado con audio o video y se abriría desde la ficha\./)).toBeInTheDocument()
-    expect(screen.getByText('Ficha de historia')).toBeInTheDocument()
+    expect(await screen.findByText('PRÓXIMAMENTE', { selector: '.ag-future-tag' })).toBeInTheDocument()
     noCodes()
   })
 

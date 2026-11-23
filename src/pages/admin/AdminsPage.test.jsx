@@ -157,7 +157,7 @@ describe('Administradores', () => {
   it('does not load the list for a narrator', async () => {
     const { fetchMock } = renderApp({ route: '/admin/administradores', user: NARRATOR, api: adminsApi().api })
 
-    await screen.findByText('ADMINISTRACIÓN') // the panel frame is there, asking to sign in as an administrator
+    await screen.findByText('PANEL DEL EQUIPO') // the panel frame is there, asking to sign in as an administrator
     expect(screen.queryByRole('heading', { name: 'Administradores' })).not.toBeInTheDocument()
     expect(callsTo(fetchMock, '/admin/administradores')).toHaveLength(0)
   })

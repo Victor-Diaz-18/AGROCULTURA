@@ -8,13 +8,14 @@ import { renderApp, reply } from '../test/renderApp.jsx'
 const cards = () => within(screen.getByRole('list')).getAllByRole('link')
 
 describe('«Inicio»: todas las acciones en tarjetas', () => {
-  it('al narrador le ofrece contar, ver el mapa, revisar sus historias y lo que viene', async () => {
+  it('al narrador le ofrece contar, ver el mapa y revisar sus historias', async () => {
     renderApp({ route: '/inicio', user: NARRATOR, api: { '/historias/mias': [] } })
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Hola, Ana' })).toBeInTheDocument()
     const names = cards().map((card) => card.textContent)
     expect(names[0]).toMatch(/Contar una nueva historia/)
-    expect(names.join(' ')).toMatch(/Ver el mapa de historias.*Revisar mis historias.*Lo que viene/)
+    expect(names.join(' ')).toMatch(/Ver el mapa de historias.*Revisar mis historias/)
+    expect(names).toHaveLength(3)
     expect(screen.getByRole('link', { name: /Contar una nueva historia/ })).toHaveAttribute('href', '/contar')
   })
 

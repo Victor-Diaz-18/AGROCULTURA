@@ -108,7 +108,6 @@ export default function SettingsPage({ variant = 'portal' }) {
               {nameError}
             </p>
           )}
-          <span className="ag-card__warn">El nombre definitivo está por confirmar con el profesor.</span>
           <Switch checked={portal.datos_de_ejemplo} onChange={(value) => save({ datos_de_ejemplo: value })}>
             <b>Mostrar «datos de ejemplo» en el encabezado.</b> Apágalo antes de usar la plataforma con familias reales.
           </Switch>
@@ -120,7 +119,7 @@ export default function SettingsPage({ variant = 'portal' }) {
             <b>Toda historia pasa por revisión.</b> Fijo: es un criterio del proyecto.
           </Switch>
           <Switch checked={portal.avisar_rechazo} onChange={(value) => save({ avisar_rechazo: value })}>
-            <b>Avisar al narrador si se rechaza.</b> Por definir con el profesor.
+            <b>Avisar al narrador si se rechaza.</b>
           </Switch>
         </section>
 
@@ -130,7 +129,6 @@ export default function SettingsPage({ variant = 'portal' }) {
             {config.sectores.map((sector) => (
               <li key={sector.id} className="ag-sectorchip">
                 {sector.nombre}
-                {sector.provisional && <small className="ag-sectorchip__note"> · punto por confirmar</small>}
               </li>
             ))}
           </ul>

@@ -80,7 +80,7 @@ export default function ReviewPage({ variant = 'portal' }) {
         </div>
       )}
 
-      <div className="ag-table-card">
+      <div className="ag-table-card ag-table-card--cards">
         <div className="ag-table-card__bar ag-table-card__bar--split">
           <SegmentedTabs items={items} value={tab} onChange={setTab} label="Filtrar por estado" />
           <FCode>{variant === 'portal' ? 'F6 · F7' : 'F6'}</FCode>

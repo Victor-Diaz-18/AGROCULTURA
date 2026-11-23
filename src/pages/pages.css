@@ -676,7 +676,7 @@
   text-decoration: underline;
 }
 
-/* ---------- "Mis historias" on a phone: one card per story instead of a wide table ---------- */
+/* ---------- The lists of stories on a phone: one card per story instead of a wide table ---------- */
 @media (max-width: 720px) {
   .ag-table-card--cards .ag-table {
     min-width: 0;
@@ -697,6 +697,7 @@
     gap: 6px 10px;
     padding: 14px 16px;
   }
+  /* code, then the title, each on its line */
   .ag-table-card--cards .ag-table__row > :nth-child(1) {
     flex-basis: 100%;
     font-size: 12px;
@@ -705,21 +706,21 @@
     flex-basis: 100%;
     font-size: 16px;
   }
-  .ag-table-card--cards .ag-table__row > :nth-child(3),
-  .ag-table-card--cards .ag-table__row > :nth-child(4),
-  .ag-table-card--cards .ag-table__row > :nth-child(5) {
+  /* the rest, one after the other, small */
+  .ag-table-card--cards .ag-table__row > :nth-child(n + 3):not(:last-child) {
     color: var(--texto-3);
     font-size: 13px;
   }
-  .ag-table-card--cards .ag-table__row > :nth-child(3)::after,
-  .ag-table-card--cards .ag-table__row > :nth-child(4)::after {
-    content: ' ·';
-  }
-  .ag-table-card--cards .ag-table__row > :nth-child(6) {
+  /* what to do with it, last and on its own line, with a big button */
+  .ag-table-card--cards .ag-table__row > :last-child {
     flex-basis: 100%;
   }
-  .ag-table-card--cards .ag-table__row > :nth-child(7) {
-    flex-basis: 100%;
+  .ag-table-card--cards .ag-table__row > :last-child button,
+  .ag-table-card--cards .ag-table__row > :last-child .ag-rowbtn {
+    min-height: 44px;
+  }
+  .ag-table-card--cards .ag-table__row > :last-child > button:only-child {
+    width: 100%;
   }
 }
 
@@ -845,4 +846,12 @@
     top: 10px;
     right: 10px;
   }
+}
+
+/* ---------- Team sign-in: the logo, as in the visitor's sign-in ---------- */
+.ag-adminlogin__logo {
+  width: 56px;
+  height: 56px;
+  margin-bottom: 6px;
+  object-fit: contain;
 }

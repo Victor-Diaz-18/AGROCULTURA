@@ -19,11 +19,11 @@ export default function AdminShell() {
     {
       title: 'GESTIÓN',
       items: [
-        { to: '/admin/inicio', label: 'Inicio', icon: 'inicio', code: '' },
+        { to: '/admin/inicio', label: 'Inicio', icon: 'inicio', code: '', bar: true, short: 'Inicio' },
         { to: '/admin', end: true, label: 'Resumen', icon: 'resumen', code: 'F1' },
-        { to: '/admin/revision', label: 'Revisión', icon: 'bandeja', code: 'F6', count: stats.en_revision, alert: true },
-        { to: '/admin/historias', label: 'Historias del proyecto', icon: 'bandera', code: 'F12' },
-        { to: '/admin/configuracion', label: 'Configuración', icon: 'engranaje', code: 'F7' },
+        { to: '/admin/revision', label: 'Revisión', icon: 'bandeja', code: 'F6', count: stats.en_revision, alert: true, bar: true, short: 'Revisión' },
+        { to: '/admin/historias', label: 'Historias del proyecto', icon: 'bandera', code: 'F12', bar: true, short: 'Historias' },
+        { to: '/admin/configuracion', label: 'Configuración', icon: 'engranaje', code: 'F7', bar: true, short: 'Ajustes' },
         // Only the main administrator manages the others: nobody else sees the entry.
         ...(user?.principal ? [{ to: '/admin/administradores', label: 'Administradores', icon: 'usuario' }] : []),
       ],
@@ -51,13 +51,13 @@ export default function AdminShell() {
           </div>
           <div className="ag-brand__line">
             <span className="ag-brand__name">{config.portal.nombre}</span>
-            <span className="ag-admin-tag">ADMINISTRACIÓN</span>
+            <span className="ag-admin-tag">PANEL DEL EQUIPO</span>
           </div>
         </div>
         <div className="ag-header__actions">
-          <Link to="/" className="ag-public-link">
-            <Icon name="enlace-externo" size={15} />
-            Ver portal público
+          <Link to="/" className="ag-public-link" aria-label="Ver portal público">
+            <Icon name="mapa" size={16} />
+            <span>Ver portal público</span>
           </Link>
           {isAdmin && (
             <div className="ag-user">

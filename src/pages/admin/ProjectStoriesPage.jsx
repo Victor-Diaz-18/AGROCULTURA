@@ -50,7 +50,7 @@ export default function ProjectStoriesPage({ variant = 'portal' }) {
         }
       />
 
-      <div className="ag-table-card">
+      <div className="ag-table-card ag-table-card--cards">
         <DataTable
           label="Historias del proyecto"
           columns={[{ label: 'CÓDIGO' }, { label: 'HISTORIA' }, { label: 'SECTOR' }, { label: 'ÉPOCA' }, { label: 'FORMATOS' }, { label: 'FICHA', align: 'right' }]}

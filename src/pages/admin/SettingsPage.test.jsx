@@ -49,7 +49,7 @@ describe('Configuración: portal y moderación (F7)', () => {
     expect(screen.getByRole('switch', { name: /Toda historia pasa por revisión/ })).toBeDisabled()
     expect(screen.getByRole('switch', { name: /Toda historia pasa por revisión/ })).toBeChecked()
     expect(screen.getByRole('switch', { name: /Avisar al narrador si se rechaza/ })).not.toBeChecked()
-    expect(screen.getByText('El nombre definitivo está por confirmar con el profesor.')).toBeInTheDocument()
+    expect(screen.queryByText(/profesor|por confirmar|por definir/i)).not.toBeInTheDocument() // the final version has no pending notes
   })
 
   it('saves the name when the field is left and the whole app shows it', async () => {
@@ -131,19 +131,18 @@ describe('Configuración: portal y moderación (F7)', () => {
 
     const card = await screen.findByRole('region', { name: 'Sectores del mapa' })
     await within(card).findByText('Tijereras')
-    expect(within(card).getAllByRole('listitem').map((item) => item.textContent.replace(' · punto por confirmar', ''))).toEqual(['Minca', 'La Tagua', 'San Lorenzo', 'Tijereras'])
+    expect(within(card).getAllByRole('listitem').map((item) => item.textContent)).toEqual(['Minca', 'La Tagua', 'San Lorenzo', 'Tijereras'])
     expect(within(card).queryByRole('button')).not.toBeInTheDocument()
     expect(within(card).queryByRole('textbox')).not.toBeInTheDocument()
   })
 
-  it('says which sector point has not been confirmed yet', async () => {
+  it('does not show any note about a sector point to confirm', async () => {
     const settings = settingsApi()
     settings.config.sectores[3].provisional = true
     renderApp({ route: '/admin/configuracion', user: ADMIN, api: settings.api })
 
     const card = await screen.findByRole('region', { name: 'Sectores del mapa' })
-    expect((await within(card).findByText('Tijereras')).closest('li')).toHaveTextContent('Tijereras · punto por confirmar')
-    expect(within(card).getByText('Minca').closest('li')).not.toHaveTextContent('por confirmar')
+    expect((await within(card).findByText('Tijereras')).closest('li')).toHaveTextContent(/^Tijereras$/)
   })
 
   it('works the same way inside the portal', async () => {

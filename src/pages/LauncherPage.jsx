@@ -26,7 +26,6 @@ function actionsFor(who, { myStories, waiting, principal }) {
     { to: '/contar', icon: 'mic', tone: 'rojo', title: 'Contar una nueva historia', text: 'Con tu voz, por escrito, con fotos o con video.' },
     { to: '/', icon: 'mapa', tone: 'azul', title: 'Ver el mapa de historias', text: 'Escucha y lee lo que han contado las familias.' },
     { to: '/mis-historias', icon: 'lista', tone: 'amarillo', title: 'Revisar mis historias', text: 'Mira en qué va cada historia que contaste.', count: myStories },
-    { to: '/proximamente/360', icon: 'globo', tone: 'verde', title: 'Lo que viene', text: 'Recorridos en 360° y avatares en realidad aumentada.' },
   ]
 }
 

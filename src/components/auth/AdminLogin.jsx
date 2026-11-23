@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import logo from '../../assets/logo-temporal.png'
 import { useAuth } from '../../context/AuthContext.jsx'
 import FCode from '../ui/FCode.jsx'
 import Field from '../ui/Field.jsx'
@@ -27,6 +28,7 @@ export default function AdminLogin() {
     <main id="contenido" className="ag-adminlogin-wrap">
       <form className="ag-adminlogin" onSubmit={submit} noValidate>
         <div className="ag-adminlogin__head">
+          <img className="ag-adminlogin__logo" src={logo} alt="" />
           <div className="ag-adminlogin__title">
             <h1>Acceso del equipo</h1>
             <FCode>F7</FCode>

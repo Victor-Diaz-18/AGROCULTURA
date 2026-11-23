@@ -4,7 +4,8 @@ import Icon from '../ui/Icon.jsx'
 
 /**
  * Side menu shared by the portal and the admin panel.
- * group: { title, items: [{ to, end?, label, icon, code, count?, alert?, locked?, future?, onNavigate? }] }
+ * group: { title, items: [{ to, end?, label, icon, code, count?, alert?, locked?, future?, onNavigate?, bar?, short? }] }
+ * `bar`: the item stays on the bar at the bottom of a phone's screen, where `short` is its name (the full one stays for screen readers).
  * `onNavigate(event)` runs on click; calling `event.preventDefault()` there cancels the navigation.
  */
 export default function NavMenu({ groups, variant = 'portal', ariaLabel, top, children }) {
@@ -15,9 +16,14 @@ export default function NavMenu({ groups, variant = 'portal', ariaLabel, top, ch
         <div key={group.title} className="ag-nav__group">
           <div className="ag-nav__title">{group.title}</div>
           {group.items.map((item) => (
-            <NavLink key={item.to} to={item.to} end={item.end} className="ag-nav__item" onClick={item.onNavigate}>
+            <NavLink key={item.to} to={item.to} end={item.end} className={`ag-nav__item${item.bar ? ' ag-nav__item--bar' : ''}`} onClick={item.onNavigate}>
               <Icon name={item.icon} size={18} />
               <span className="ag-nav__label">{item.label}</span>
+              {item.short && (
+                <span className="ag-nav__short" aria-hidden="true">
+                  {item.short}
+                </span>
+              )}
               {item.count > 0 && !item.locked && (
                 <span className={`ag-nav__count${item.alert ? ' ag-nav__count--alerta' : ''}`}>{item.count}</span>
               )}

@@ -24,7 +24,6 @@ const FUTURE = {
     coming: 'Pronto podrás conocer a los narradores como avatares en realidad aumentada.',
     code: 'F15',
     what: 'Presentar a un narrador como avatar en realidad aumentada.',
-    origin: 'Ejemplo del profesor',
     note: `Necesita contenido grabado con audio${codeNote('F5')} o video${codeNote('F13')} y se abriría desde la ficha${codeNote('F8')}.`,
     deps: [
       ['F8', 'Ficha de historia'],
@@ -40,52 +39,23 @@ export default function FuturePage({ variant = 'portal' }) {
   if (!feature) return <Navigate to={variant === 'admin' ? '/admin' : '/'} replace />
 
 
-  // What the public reads. The notes for the team (what it depends on, where the idea came from) stay in the admin panel.
-  if (variant === 'portal') {
-    return (
-      <>
-        <PageHeader
-          title={feature.title}
-          badge={<span className="ag-future-tag">PRÓXIMAMENTE</span>}
-          actions={<ListenButton title={feature.title} text={pages[`proximamente-${id}`]} piece={`paginas/proximamente-${id}`} />}
-        />
-        <div className="ag-future__soon">
-          <span className="ag-vtile">
-            <Icon name="globo" size={26} />
-          </span>
-          <b>Estamos trabajando en esto.</b>
-          <span>{feature.coming}</span>
-          <Link to="/" className="ag-btn ag-btn--dark">
-            Volver al mapa
-          </Link>
-        </div>
-      </>
-    )
-  }
-
+  // The same for everybody: what is coming, in plain words.
   return (
     <>
       <PageHeader
         title={feature.title}
-        badge={<span className="ag-future-tag">FASE FUTURA{SHOW_CODES ? ` · ${feature.code}` : ''}</span>}
-        subtitle={feature.what}
-              />
-      <div className="ag-future">
-        <div className="ag-future__box">
-          <Icon name="globo" size={44} strokeWidth={1.6} />
-          <b>No se construye en esta entrega</b>
-          <span>{feature.note}</span>
-        </div>
-        <div className="ag-future__deps">
-          <span className="ag-future__deps-title">DEPENDE DE</span>
-          {feature.deps.map(([code, name]) => (
-            <div key={code} className="ag-future__dep">
-              {SHOW_CODES && <code>{code}</code>}
-              <span>{name}</span>
-            </div>
-          ))}
-          <span className="ag-future__origin">Origen: {feature.origin}</span>
-        </div>
+        badge={<span className="ag-future-tag">PRÓXIMAMENTE</span>}
+        actions={<ListenButton title={feature.title} text={pages[`proximamente-${id}`]} piece={`paginas/proximamente-${id}`} />}
+      />
+      <div className="ag-future__soon">
+        <span className="ag-vtile">
+          <Icon name="globo" size={26} />
+        </span>
+        <b>Estamos trabajando en esto.</b>
+        <span>{feature.coming}</span>
+        <Link to={variant === 'admin' ? '/admin/inicio' : '/'} className="ag-btn ag-btn--dark">
+          {variant === 'admin' ? 'Volver al inicio' : 'Volver al mapa'}
+        </Link>
       </div>
     </>
   )
