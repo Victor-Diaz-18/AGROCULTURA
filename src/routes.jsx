@@ -2,6 +2,7 @@ import { Route, Routes } from 'react-router-dom'
 import RequireRole from './components/auth/RequireRole.jsx'
 import AdminShell from './components/layout/AdminShell.jsx'
 import PortalShell from './components/layout/PortalShell.jsx'
+import LauncherPage from './pages/LauncherPage.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
 import ProjectStoriesPage from './pages/admin/ProjectStoriesPage.jsx'
 import ReviewPage from './pages/admin/ReviewPage.jsx'
@@ -27,6 +28,7 @@ export default function AppRoutes() {
     <Routes>
       <Route element={<PortalShell />}>
         <Route index element={<MapPage />} />
+        <Route path="inicio" element={<RequireRole role="narrador"><LauncherPage who="narrador" /></RequireRole>} />
         <Route path="contar" element={<RequireRole role="narrador"><TellPage /></RequireRole>} />
         <Route path="mis-historias" element={<RequireRole role="narrador"><MyStoriesPage /></RequireRole>} />
         <Route path="revision" element={<RequireRole role="administrador"><ReviewPage variant="portal" /></RequireRole>} />
@@ -40,6 +42,7 @@ export default function AppRoutes() {
 
       <Route path="admin" element={<AdminShell />}>
         <Route index element={<SummaryPage />} />
+        <Route path="inicio" element={<LauncherPage who="admin" />} />
         <Route path="revision" element={<ReviewPage variant="admin" />} />
         <Route path="historias" element={<ProjectStoriesPage variant="admin" />} />
         <Route path="configuracion" element={<SettingsPage variant="admin" />} />

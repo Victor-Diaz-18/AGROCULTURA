@@ -28,6 +28,8 @@ export default function useSignIn() {
       toast(welcome(session.usuario))
       // Go where the person was heading, unless that page is for the other kind of account (it would send them back).
       if (login.destino && (!login.rol || login.rol === session.usuario.rol)) navigate(login.destino)
+      // With nowhere in particular to go, the person lands on «Inicio»: every action it has, in big cards.
+      else navigate(session.usuario.rol === 'administrador' ? '/admin/inicio' : '/inicio')
     } catch (failure) {
       if (failure instanceof OfflineError) setError('Sin señal: necesitas conexión para ingresar.')
       else if (failure instanceof ApiError) setError(failure.message)

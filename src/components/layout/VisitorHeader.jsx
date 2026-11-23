@@ -49,6 +49,12 @@ export default function VisitorHeader() {
       <div className="ag-header__right">
         {/* On a phone the narrator's menu becomes a bar fixed at the bottom of the screen, with big buttons. */}
         <nav aria-label="Secciones" className="ag-vnav">
+          {narrator && (
+            <NavLink to="/inicio" className="ag-vnav__item">
+              <Icon name="inicio" size={20} />
+              <span>Inicio</span>
+            </NavLink>
+          )}
           <NavLink to="/" end className="ag-vnav__item">
             {narrator && <Icon name="mapa" size={20} />}
             <span>Mapa de historias</span>

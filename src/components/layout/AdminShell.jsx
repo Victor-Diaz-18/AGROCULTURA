@@ -19,6 +19,7 @@ export default function AdminShell() {
     {
       title: 'GESTIÓN',
       items: [
+        { to: '/admin/inicio', label: 'Inicio', icon: 'inicio', code: '' },
         { to: '/admin', end: true, label: 'Resumen', icon: 'resumen', code: 'F1' },
         { to: '/admin/revision', label: 'Revisión', icon: 'bandeja', code: 'F6', count: stats.en_revision, alert: true },
         { to: '/admin/historias', label: 'Historias del proyecto', icon: 'bandera', code: 'F12' },

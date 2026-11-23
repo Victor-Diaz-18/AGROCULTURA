@@ -71,6 +71,10 @@ test('la administración y sus diálogos', async ({ page }) => {
   await page.goto('/admin')
   await check(page, 'acceso del equipo')
   await signInAdmin(page)
+  await expect(page.getByText('¿Qué quieres hacer?')).toBeVisible() // signing in lands on «Inicio»
+  await check(page, 'inicio')
+  await page.getByRole('link', { name: 'Resumen', exact: true }).first().click()
+  await expect(page.getByRole('heading', { name: 'Resumen' })).toBeVisible()
   await check(page, 'resumen')
 
   await page.getByRole('button', { name: 'Revisar', exact: true }).first().click()

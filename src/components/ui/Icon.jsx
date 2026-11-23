@@ -1,6 +1,13 @@
 /** Icon set copied from the approved design (24x24, 2px round strokes). */
 
 const PATHS = {
+  inicio: (
+    <>
+      <path d="M4 11l8-7 8 7" />
+      <path d="M6 9.5V20h12V9.5" />
+      <path d="M10 20v-5h4v5" />
+    </>
+  ),
   montana: (
     <>
       <path d="M2.5 20l6.5-12 4 7 2.5-4 6 9z" />
