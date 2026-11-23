@@ -12,6 +12,7 @@ from lib.config import service as config
 from lib.config.schemas import PortalPublico
 from lib.core.db import get_db
 from lib.core.settings import Settings, get_settings
+from lib.media.storage import Storage, get_storage
 from lib.stories import review
 from lib.stories.schemas import AprobarIn, HistoriaAdmin, HistoriaProyectoIn, RechazarIn
 
@@ -42,6 +43,13 @@ def approve(codigo: str, body: AprobarIn, admin: dict = Depends(require_admin), 
 def reject(codigo: str, body: RechazarIn, admin: dict = Depends(require_admin), db: Database = Depends(get_db)):
     """Rejects a story waiting for review. The reason is required: the narrator reads it in "Mis historias"."""
     return review.reject(db, codigo, admin=admin, reason_id=body.motivo)
+
+
+@router.delete("/historias/{codigo}", status_code=204)
+def delete_story(codigo: str, db: Database = Depends(get_db), storage: Storage = Depends(get_storage)):
+    """Deletes a published story for good, with its files. Only published stories: the queue is decided by approving or rejecting."""
+    review.delete_published(db, codigo, delete_files=storage.delete)
+    return Response(status_code=204)
 
 
 # ---- the team's own stories (F12) ----------------------------------------------

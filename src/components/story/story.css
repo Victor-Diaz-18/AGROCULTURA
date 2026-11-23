@@ -378,3 +378,37 @@
     height: 180px;
   }
 }
+
+/* Deleting a published story (only the team sees it): apart, at the bottom of the card */
+.ag-card-story__danger {
+  display: flex;
+  justify-content: flex-end;
+  padding: 14px 24px 20px;
+  border-top: 1px solid var(--linea);
+}
+.ag-btn--danger-solid {
+  background: var(--rojo);
+  color: #fff;
+}
+.ag-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px;
+}
+.ag-confirm h2 {
+  font-family: var(--font-title);
+  font-size: 20px;
+  color: var(--texto);
+}
+.ag-confirm p {
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--texto-2);
+}
+.ag-confirm__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}

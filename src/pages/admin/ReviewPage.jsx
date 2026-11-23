@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import ReviewModal from '../../components/admin/ReviewModal.jsx'
 import PageHeader from '../../components/layout/PageHeader.jsx'
 import StoryCard from '../../components/story/StoryCard.jsx'
+import { useToast } from '../../context/ToastContext.jsx'
+import { deleteStory } from '../../services/admin.js'
 import DataTable, { Cell, TableRow } from '../../components/ui/DataTable.jsx'
 import FCode from '../../components/ui/FCode.jsx'
 import pages from '../../../lib/voice/paginas.json'
@@ -32,6 +34,7 @@ const EMPTY = {
 /** Review queue (F6). Shared by the portal ("portal") and the admin panel ("admin"). */
 export default function ReviewPage({ variant = 'portal' }) {
   const { config, stats, reload: reloadPortal } = usePortalData()
+  const toast = useToast()
   const [tab, setTab] = useState('revision')
   const [openCode, setOpenCode] = useState(null)
   const [cardCode, setCardCode] = useState(null)
@@ -53,6 +56,14 @@ export default function ReviewPage({ variant = 'portal' }) {
   const decided = (nextCode) => {
     setOpenCode(nextCode)
     reload()
+  }
+
+  const removeStory = async (story) => {
+    await deleteStory(story.codigo)
+    setCardCode(null)
+    toast(`Se borró «${story.titulo}».`)
+    reload()
+    reloadPortal() // the counters change
   }
 
   return (
@@ -127,7 +138,7 @@ export default function ReviewPage({ variant = 'portal' }) {
         </DataTable>
       </div>
 
-      {card && <StoryCard key={card.codigo} story={card} onClose={() => setCardCode(null)} />}
+      {card && <StoryCard key={card.codigo} story={card} onClose={() => setCardCode(null)} onDelete={removeStory} />}
 
       {reviewing && (
         <ReviewModal

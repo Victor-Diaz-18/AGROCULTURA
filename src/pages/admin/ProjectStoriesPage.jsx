@@ -3,6 +3,8 @@ import { useSearchParams } from 'react-router-dom'
 import ProjectStoryModal from '../../components/admin/ProjectStoryModal.jsx'
 import PageHeader from '../../components/layout/PageHeader.jsx'
 import StoryCard from '../../components/story/StoryCard.jsx'
+import { useToast } from '../../context/ToastContext.jsx'
+import { deleteStory } from '../../services/admin.js'
 import Button from '../../components/ui/Button.jsx'
 import DataTable, { Cell, TableRow } from '../../components/ui/DataTable.jsx'
 import pages from '../../../lib/voice/paginas.json'
@@ -20,7 +22,8 @@ const FILTERS = { origen: 'proyecto', limite: 100 }
 
 /** Stories uploaded by the team (F12). Shared by the portal and the admin panel. The "Crear historia" link opens `?nueva=1`. */
 export default function ProjectStoriesPage({ variant = 'portal' }) {
-  const { config } = usePortalData()
+  const { config, reload: reloadPortal } = usePortalData()
+  const toast = useToast()
   const [params, setParams] = useSearchParams()
   const { stories, status, reload } = useAdminStories(FILTERS)
   const creating = params.get('nueva') === '1'
@@ -34,6 +37,14 @@ export default function ProjectStoriesPage({ variant = 'portal' }) {
     error: 'No pudimos cargar las historias. Intenta de nuevo.',
     ready: stories.length === 0 ? 'Todavía no hay historias del proyecto. Crea la primera con «Nueva historia del proyecto».' : null,
   }[status]
+
+  const removeStory = async (story) => {
+    await deleteStory(story.codigo)
+    setCardCode(null)
+    toast(`Se borró «${story.titulo}».`)
+    reload()
+    reloadPortal() // the counters change
+  }
 
   return (
     <>
@@ -75,7 +86,7 @@ export default function ProjectStoriesPage({ variant = 'portal' }) {
         </DataTable>
       </div>
 
-      {card && <StoryCard key={card.codigo} story={card} onClose={() => setCardCode(null)} />}
+      {card && <StoryCard key={card.codigo} story={card} onClose={() => setCardCode(null)} onDelete={removeStory} />}
 
       {creating && (
         <ProjectStoryModal

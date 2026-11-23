@@ -25,7 +25,7 @@ import PhotoGallery from './PhotoGallery.jsx'
  * not on it. A story published without a place says so, and shows no place at all; the administrators' list also carries the
  * reference its narrator wrote (the public never gets it) and the real name of a story published without it.
  */
-export default function StoryCard({ story, onClose }) {
+export default function StoryCard({ story, onClose, onDelete }) {
   const { config } = usePortalData()
   const { user } = useAuth()
   const isVisitor = !user
@@ -47,6 +47,20 @@ export default function StoryCard({ story, onClose }) {
   const referenceImage = story.estado === undefined && realPhotos.length === 0 ? referenceImageFor(story) : null
   const audios = story.medios.filter((medio) => medio.tipo === 'audio')
   const videos = story.medios.filter((medio) => medio.tipo === 'video')
+
+  const [asking, setAsking] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [problem, setProblem] = useState('')
+  const confirmDelete = async () => {
+    setBusy(true)
+    setProblem('')
+    try {
+      await onDelete(story)
+    } catch (error) {
+      setProblem(error instanceof OfflineError ? 'Sin señal: inténtalo cuando vuelva la conexión.' : 'No pudimos borrarla. Intenta de nuevo.')
+      setBusy(false)
+    }
+  }
 
   const readAloud = () =>
     [
@@ -194,6 +208,35 @@ export default function StoryCard({ story, onClose }) {
           )}
         </div>
       </div>
+      {onDelete && published && (
+        <div className="ag-card-story__danger">
+          <button type="button" className="ag-btn ag-btn--danger" onClick={() => setAsking(true)}>
+            <Icon name="cerrar" size={16} />
+            Borrar historia
+          </button>
+        </div>
+      )}
+      {asking && (
+        <Modal open onClose={busy ? undefined : () => setAsking(false)} label="Borrar la historia" maxWidth={460} level={60} top={80}>
+          <div className="ag-confirm">
+            <h2>¿Borrar «{story.titulo}»?</h2>
+            <p>Sale del mapa y de la lista, y se borran sus fotos, audios y video. No se puede deshacer.</p>
+            {problem && (
+              <p role="alert" className="ag-error">
+                {problem}
+              </p>
+            )}
+            <div className="ag-confirm__buttons">
+              <button type="button" className="ag-btn ag-btn--ghost" onClick={() => setAsking(false)} disabled={busy}>
+                Cancelar
+              </button>
+              <button type="button" className="ag-btn ag-btn--danger-solid" onClick={confirmDelete} disabled={busy}>
+                {busy ? 'Borrando…' : 'Sí, borrar'}
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </Modal>
   )
 }

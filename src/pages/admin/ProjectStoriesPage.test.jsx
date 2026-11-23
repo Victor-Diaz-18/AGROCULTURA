@@ -440,3 +440,34 @@ describe('Nueva historia del proyecto: lugar, nombre y autorización', () => {
     expect(body.finca_nombre).toBe('Café La Loma')
   })
 })
+
+describe('borrar una historia publicada', () => {
+  it('pide confirmar, la borra, avisa y la quita de la lista', async () => {
+    const user = userEvent.setup()
+    let stories = [adminStory({ codigo: 'HIS-2026-004', titulo: 'El patio', origen: 'proyecto', estado: 'publicada' })]
+    const deleted = []
+    renderApp({
+      route: '/admin/historias',
+      user: ADMIN,
+      api: {
+        '/admin/historias': () => stories,
+        '/admin/historias/HIS-2026-004': (init) => {
+          deleted.push(init?.method)
+          stories = []
+          return new Response(null, { status: 204 })
+        },
+      },
+    })
+    await user.click(await screen.findByRole('button', { name: /Ver ficha/ }))
+    const card = await screen.findByRole('dialog', { name: 'Ficha de la historia' })
+
+    await user.click(within(card).getByRole('button', { name: /Borrar historia/ }))
+    const confirm = await screen.findByRole('dialog', { name: 'Borrar la historia' })
+    expect(confirm).toHaveTextContent('No se puede deshacer')
+    await user.click(within(confirm).getByRole('button', { name: 'Sí, borrar' }))
+
+    expect(await screen.findByText('Se borró «El patio».')).toBeInTheDocument()
+    expect(deleted).toEqual(['DELETE'])
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+  })
+})

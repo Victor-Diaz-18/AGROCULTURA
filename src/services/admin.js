@@ -20,6 +20,9 @@ export const approveStory = (codigo, confirmaciones) =>
 export const rejectStory = (codigo, motivo) =>
   request(`/admin/historias/${encodeURIComponent(codigo)}/rechazar`, { method: 'POST', body: { motivo } })
 
+/** Deletes a published story for good, with its photos, audio and video. */
+export const deleteStory = (codigo) => request(`/admin/historias/${encodeURIComponent(codigo)}`, { method: 'DELETE' })
+
 export const updatePortal = (changes) => request('/admin/portal', { method: 'PATCH', body: changes })
 
 export const addTag = (nombre) => request('/admin/etiquetas', { method: 'POST', body: { nombre } })

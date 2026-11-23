@@ -132,6 +132,11 @@ def media_urls(db: Database) -> list[str]:
     return urls
 
 
+def delete_published(db: Database, code: str) -> dict | None:
+    """Deletes one published story and returns it (with its files, to delete them too), or None if there is no such story."""
+    return collection(db).find_one_and_delete({"codigo": code, "estado": "publicada"})
+
+
 def delete_all(db: Database) -> int:
     """Deletes EVERY story and the code counters. Only the demo reset calls this."""
     deleted = collection(db).delete_many({}).deleted_count

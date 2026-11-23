@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 from datetime import datetime
 
 from pymongo.database import Database
@@ -11,6 +13,8 @@ from lib.core.errors import ConflictError, InvalidDataError, NotFoundError
 from lib.stories import consent, repository, service
 from lib.stories.constants import COMPROBACION_CONSENTIMIENTO, COMPROBACIONES, ESTADOS, MOTIVOS_RECHAZO, ORIGENES
 from lib.stories.schemas import HistoriaProyectoIn
+
+logger = logging.getLogger(__name__)
 
 MAX_LIST = 200
 
@@ -142,3 +146,19 @@ def create_project_story(
         now=now,
     )
     return story_for_admin(story), created
+
+
+def delete_published(db: Database, code: str, *, delete_files) -> dict:
+    """Deletes a published story for good: it leaves the map, the list and its card, and its photos, audio and video are
+    deleted too. `delete_files(urls)` deletes the files; a file that cannot be deleted does not bring the story back."""
+    story = repository.delete_published(db, code)
+    if story is None:
+        raise NotFoundError("Esa historia no está publicada o ya se borró.")
+    urls = [medio["url"] for medio in story.get("medios", []) if isinstance(medio.get("url"), str)]
+    files = 0
+    if urls:
+        try:
+            files = delete_files(urls)
+        except Exception as exc:  # noqa: BLE001
+            logger.error("Could not delete the %d files of %s (%s)", len(urls), code, type(exc).__name__)
+    return {"codigo": code, "archivos_borrados": files}
