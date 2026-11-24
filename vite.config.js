@@ -21,8 +21,8 @@ const tileUrls = new RegExp(`^https://${tileHost.replace(/\./g, '\\.')}/`)
  * are not left in a cache a different person on the same phone could read.
  */
 const pwa = VitePWA({
-  // A new version waits until the person agrees ("Hay una versión nueva", src/offline/updates.js): updating reloads the
-  // page, which must not happen by surprise while somebody is recording.
+  // A new version waits, and the app switches to it at a moment when reloading loses nothing (src/offline/updates.js):
+  // never by surprise while somebody is recording. Nobody is asked.
   registerType: 'prompt',
   injectRegister: false, // the app registers it itself, to hear about new versions
   manifest: {

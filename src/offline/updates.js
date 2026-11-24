@@ -1,7 +1,11 @@
 /**
- * New versions of the app (PWA). The service worker downloads a new version in the background and keeps it waiting;
- * here the page hears about it so it can say "Hay una versión nueva" and let the person choose when to update, since
- * updating reloads the page. Without a choice nothing changes until the app is closed and opened again.
+ * New versions of the app (PWA). Every deploy is a new version: the service worker downloads it in the background and
+ * keeps it waiting, and switching to it reloads the page. Nobody is asked: the page switches by itself at the next
+ * moment when a reload loses nothing (see `switchIfSafe`):
+ *  - right after the page opens or comes back to the front (`FRESH_FOR_MS`): a page opened after a deploy still starts
+ *    with the old version the browser kept, and finds the new one while it loads;
+ *  - when the person moves to another screen of the app (`screenChanged`, called by UpdateOnScreenChange).
+ * Never on a page where somebody may be in the middle of a story (`BUSY_PATHS`): there it waits until they leave it.
  */
 
 import { registerSW } from 'virtual:pwa-register'
@@ -11,9 +15,9 @@ import { isOnline } from './connectivity.js'
 export const CHECK_EVERY_MS = 60 * 60 * 1000
 
 /**
- * After "Actualizar" the browser usually hands over to the new version at once, but while the app is open in another
- * tab or window that tab can hold the old one for minutes. Nobody should have to find and close anything:
- *  - the tab that updates tells the others (`CHANNEL`), and they step aside by reloading themselves, which is what
+ * When the page switches, the browser usually hands over to the new version at once, but while the app is open in
+ * another tab or window that tab can hold the old one for minutes. Nobody should have to find and close anything:
+ *  - the tab that switches tells the others (`CHANNEL`), and they step aside by reloading themselves, which is what
  *    lets the new version in;
  *  - if after the wait it still has not taken over (a tab that is busy, or that runs a version from before this),
  *    this page leaves the old copy behind (see `leaveOldVersion`).
@@ -22,22 +26,17 @@ export const CHECK_EVERY_MS = 60 * 60 * 1000
 export const LOOK_EVERY_MS = 500
 export const TAKEOVER_WAIT_MS = 3000
 
-/**
- * Every deploy is a new version, and a page opened later still starts with the old one the browser kept: the browser
- * finds the new one while the page loads. Nothing has been done on the page yet, so instead of asking it switches by
- * itself (except on a page where somebody may start a story right away). The notice is for a page that was already
- * open when the new version came out.
- */
+/** For this long after the page opens or comes back to the front, nothing has been done on it yet: it can switch. */
 export const FRESH_FOR_MS = 10 * 1000
 const CHANNEL = 'agrocultura-actualizar'
 const UPDATING = 'actualizar'
 
 /**
- * Pages where a reload nobody asked for would lose work in progress (a recording, a story being typed): a tab on one
- * of these neither steps aside nor reloads when the new version takes over. It keeps the notice, and gets the new
- * version when the person presses "Actualizar" there or opens the app again.
+ * Pages where a reload nobody asked for would lose work in progress (a recording, a story being typed, a review being
+ * decided): a tab on one of these does not switch, step aside nor reload when the new version takes over. It switches
+ * when the person leaves the page, or the next time the app opens.
  */
-const BUSY_PATHS = ['/contar', '/admin/historias']
+const BUSY_PATHS = ['/contar', '/admin/historias', '/admin/revision']
 
 function onBusyPage() {
   const path = typeof window !== 'undefined' ? window.location.pathname : ''
@@ -47,9 +46,9 @@ function onBusyPage() {
 /**
  * What a page leaves for the one that opens next in the same tab, when it reloads in the middle of an update. Read
  * once, at start-up, and only believed for a short while: a version that arrives later is a different one and is
- * announced as usual.
- *  - NEW_PAGE: that page came from the network, so it already is the new version. It must not ask again: it only
- *    tells the worker that is still waiting to take over, quietly.
+ * handled as usual.
+ *  - NEW_PAGE: that page came from the network, so it already is the new version. It only tells the worker that is
+ *    still waiting to take over, quietly, with no reload.
  *  - RELOAD_AGAIN: that page stepped aside for another tab and may still be the old version. It reloads once more as
  *    soon as the new version is in.
  */
@@ -63,7 +62,7 @@ function leaveMark(value) {
     if (value) sessionStorage.setItem(MARK_KEY, value)
     else sessionStorage.removeItem(MARK_KEY)
   } catch {
-    /* without storage the next page simply shows the notice again */
+    /* without storage the next page simply switches as usual */
   }
 }
 
@@ -77,32 +76,29 @@ function takeMark() {
   }
 }
 
-const listeners = new Set()
-let snapshot = { available: false, applying: false, failed: false }
+let pending = false // a new version is waiting for the next safe moment
+let applying = false // the switch is under way
 let updateServiceWorker = null
 let registration = null
 let channel = null
-let timers = [] // of the update under way
+let timers = [] // of the switch under way
 let reloadPage = () => window.location.reload()
 let freshFor = FRESH_FOR_MS
-let openedAt = 0
-
-function publish(next) {
-  snapshot = next
-  listeners.forEach((listener) => listener())
-}
-
-/** For useSyncExternalStore. */
-export function subscribe(listener) {
-  listeners.add(listener)
-  return () => listeners.delete(listener)
-}
-
-export function getSnapshot() {
-  return snapshot
-}
+let shownAt = 0 // when the page opened or last came back to the front
 
 const workers = () => (typeof navigator !== 'undefined' ? navigator.serviceWorker : undefined)
+const justShown = () => Date.now() - shownAt < freshFor
+
+/** Switches to the waiting version, unless there is none, it is already switching, or somebody may be busy here. */
+function switchIfSafe() {
+  if (!pending || applying || onBusyPage()) return
+  applyUpdate()
+}
+
+/** The person moved to another screen of the app: a reload now loses nothing, so a waiting version comes in. */
+export function screenChanged() {
+  switchIfSafe()
+}
 
 function keepLooking(registration) {
   const check = () => {
@@ -117,7 +113,7 @@ function keepLooking(registration) {
 /** Registers the service worker and starts listening. Only where there is one (the built app, not `npm run dev`). */
 export function watchForUpdates({ enabled = import.meta.env.PROD && 'serviceWorker' in navigator } = {}) {
   if (!enabled) return
-  openedAt = Date.now()
+  shownAt = Date.now()
   let mark = takeMark()
   if (mark) setTimeout(() => (mark = null), FINISHING_FOR_MS)
 
@@ -130,18 +126,15 @@ export function watchForUpdates({ enabled = import.meta.env.PROD && 'serviceWork
         Promise.resolve(updateServiceWorker?.(true)).catch(() => {})
         return
       }
-      if (mark === RELOAD_AGAIN) return // the reload below is coming: no notice for a moment
-      if (Date.now() - openedAt < freshFor && !onBusyPage()) {
-        // Just opened: switch without asking. On the next turn, once the registration is known (the browser may say
-        // this first), so the checks of applyUpdate can still leave the old copy behind or show the notice if it fails.
-        setTimeout(() => applyUpdate(), 0)
-        return
-      }
-      publish({ ...snapshot, available: true })
+      pending = true
+      if (mark === RELOAD_AGAIN) return // the reload below is coming; if it never does, the next safe moment switches
+      // Just opened or just back: switch now. On the next turn, once the registration is known (the browser may say
+      // this first), so the checks of applyUpdate can still leave the old copy behind.
+      if (justShown()) setTimeout(switchIfSafe, 0)
     },
     // The new version took over. Without this the plugin reloads every tab that saw it arrive, busy or not.
     onNeedReload() {
-      if (snapshot.applying) return // this tab pressed "Actualizar": applyUpdate reloads it
+      if (applying) return // this tab is switching: applyUpdate reloads it
       if (onBusyPage()) return // somebody may be in the middle of a story here
       reloadPage()
     },
@@ -153,6 +146,12 @@ export function watchForUpdates({ enabled = import.meta.env.PROD && 'serviceWork
     },
   })
 
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible') return
+    shownAt = Date.now() // back to the front: a version waiting since before, or found now, comes in
+    switchIfSafe()
+  })
+
   try {
     channel = new BroadcastChannel(CHANNEL)
     channel.addEventListener('message', (event) => event.data === UPDATING && stepAside())
@@ -161,9 +160,9 @@ export function watchForUpdates({ enabled = import.meta.env.PROD && 'serviceWork
   }
 }
 
-/** Another tab of the app is updating and this one holds the old version just by being open: reload to let it go. */
+/** Another tab of the app is switching and this one holds the old version just by being open: reload to let it go. */
 function stepAside() {
-  if (snapshot.applying) return // this tab is updating too
+  if (applying) return // this tab is switching too
   if (onBusyPage()) return // somebody may be in the middle of a story here
   leaveMark(RELOAD_AGAIN)
   reloadPage()
@@ -179,7 +178,7 @@ function reloadOnceTheNewVersionIsIn(stillWanted, done) {
   }
   workers()?.addEventListener?.('controllerchange', reload, { once: true })
   const looking = setInterval(() => {
-    if (!stillWanted()) return clearInterval(looking) // too long: this page stays, and says so if a version is waiting
+    if (!stillWanted()) return clearInterval(looking) // too long: this page stays, and switches at the next safe moment
     if (!registration.waiting) reload()
   }, LOOK_EVERY_MS)
   timers.push(looking)
@@ -187,16 +186,16 @@ function reloadOnceTheNewVersionIsIn(stillWanted, done) {
 }
 
 /**
- * "Actualizar": the waiting version takes over and the page reloads.
+ * The switch: the waiting version takes over and the page reloads.
  *
  * The reload is done here and not left to the service worker library, which only reloads a page that was already
- * controlled by a worker when it opened (a page opened with Ctrl+Shift+R is not, and there the button did nothing one
- * could see). It happens when the new version takes over (the browser says so, or the waiting version is simply gone:
- * another tab may have switched already). Meanwhile the notice says "Actualizando…" (`applying`).
+ * controlled by a worker when it opened (a page opened with Ctrl+Shift+R is not). It happens when the new version takes
+ * over (the browser says so, or the waiting version is simply gone: another tab may have switched already). Without
+ * signal, when that cannot happen, the page stays as it is and tries again at the next safe moment.
  */
 export async function applyUpdate() {
-  if (snapshot.applying) return
-  publish({ ...snapshot, applying: true, failed: false })
+  if (applying) return
+  applying = true
 
   let done = false
   const reload = () => {
@@ -223,8 +222,7 @@ export async function applyUpdate() {
       if (await leaveOldVersion()) return reload()
       stopTimers()
       workers()?.removeEventListener?.('controllerchange', reload)
-      // No signal: the notice says so (also after switching without asking) and the button can be pressed again.
-      publish({ ...snapshot, available: true, applying: false, failed: true })
+      applying = false // no signal: still waiting, for the next safe moment
     }, TAKEOVER_WAIT_MS),
   ]
 }
@@ -256,17 +254,17 @@ function stopTimers() {
   timers = []
 }
 
-/** `freshForMs` is 0 unless a test is about a page that has just been opened: the others call onNeedRefresh at once. */
+/** `freshForMs` is 0 unless a test is about a page that has just been opened or come back to the front. */
 export function resetUpdatesForTests({ reload = () => window.location.reload(), freshForMs = 0 } = {}) {
   stopTimers()
-  freshFor = freshForMs
-  openedAt = 0
   leaveMark(null)
   channel?.close?.()
   channel = null
-  snapshot = { available: false, applying: false, failed: false }
+  pending = false
+  applying = false
   updateServiceWorker = null
   registration = null
   reloadPage = reload
-  listeners.clear()
+  freshFor = freshForMs
+  shownAt = 0
 }

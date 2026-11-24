@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { pwa } from '../test/pwaRegister.js'
 import { setSimulatedOffline } from './connectivity.js'
-import { CHECK_EVERY_MS, FINISHING_FOR_MS, FRESH_FOR_MS, LOOK_EVERY_MS, TAKEOVER_WAIT_MS, applyUpdate, getSnapshot, resetUpdatesForTests, subscribe, watchForUpdates } from './updates.js'
+import { CHECK_EVERY_MS, FINISHING_FOR_MS, FRESH_FOR_MS, LOOK_EVERY_MS, TAKEOVER_WAIT_MS, applyUpdate, resetUpdatesForTests, screenChanged, watchForUpdates } from './updates.js'
 
 beforeEach(() => {
   pwa.options = null
@@ -23,19 +23,19 @@ describe('new versions of the app', () => {
     expect(pwa.options).toBeNull()
   })
 
-  it('knows nothing is waiting until the browser says so, then tells everyone who listens', () => {
+  it('nobody is asked: a version found while the page is in use comes in when the person moves to another screen', () => {
     watchForUpdates({ enabled: true })
-    const heard = vi.fn()
-    subscribe(heard)
-    expect(getSnapshot().available).toBe(false)
+    screenChanged()
+    expect(pwa.updated).toBe(0) // nothing is waiting yet
 
     pwa.options.onNeedRefresh()
+    expect(pwa.updated).toBe(0) // not in the middle of what the person is looking at
 
-    expect(getSnapshot().available).toBe(true)
-    expect(heard).toHaveBeenCalledTimes(1)
+    screenChanged()
+    expect(pwa.updated).toBe(1)
   })
 
-  it('"Actualizar" hands over to the waiting version', async () => {
+  it('switching hands over to the waiting version', async () => {
     watchForUpdates({ enabled: true })
 
     await applyUpdate()
@@ -47,7 +47,7 @@ describe('new versions of the app', () => {
     await expect(applyUpdate()).resolves.toBeUndefined()
   })
 
-  describe('"Actualizar" reloads the page by itself, whatever the browser does', () => {
+  describe('switching reloads the page by itself, whatever the browser does', () => {
     let reload
     let workers
     const waiting = () => ({ waiting: {}, update: vi.fn().mockResolvedValue(), unregister: vi.fn().mockResolvedValue(true) })
@@ -129,7 +129,7 @@ describe('new versions of the app', () => {
         expect(reload).toHaveBeenCalledTimes(1)
       })
 
-      it('the page that opens after that does not ask again: it lets the waiting version take over quietly', async () => {
+      it('the page that opens after that does not reload again: it lets the waiting version take over quietly', async () => {
         sessionStorage.setItem('agrocultura.actualizando', 'nueva')
         resetUpdatesForTestsKeepingMark()
         watchForUpdates({ enabled: true })
@@ -138,13 +138,13 @@ describe('new versions of the app', () => {
         pwa.options.onNeedRefresh()
         await vi.advanceTimersByTimeAsync(0)
 
-        expect(getSnapshot().available).toBe(false) // no notice: this page is already the new version
         expect(pwa.updated).toBe(1) // the waiting version was told to take over
-        expect(reload).not.toHaveBeenCalled()
+        expect(reload).not.toHaveBeenCalled() // this page is already the new version
 
-        pwa.options.onNeedRefresh() // a version that arrives later is another one: announced as usual
-        expect(getSnapshot().available).toBe(true)
+        pwa.options.onNeedRefresh() // a version that arrives later is another one: handled as usual
         expect(pwa.updated).toBe(1)
+        screenChanged()
+        expect(pwa.updated).toBe(2)
       })
 
       it('the mark is only believed for a short while', async () => {
@@ -155,14 +155,13 @@ describe('new versions of the app', () => {
         await vi.advanceTimersByTimeAsync(FINISHING_FOR_MS)
         pwa.options.onNeedRefresh()
 
-        expect(getSnapshot().available).toBe(true)
-        expect(pwa.updated).toBe(0)
+        expect(pwa.updated).toBe(0) // not taken as this page's own version: it waits for the next safe moment
       })
 
       it.each([
         ['there is no signal', async () => Promise.reject(new TypeError('Failed to fetch'))],
         ['the server does not answer well', async () => new Response('', { status: 503 })],
-      ])('keeps the old copy when %s (without it the app would not open offline), and says it failed', async (_why, answer) => {
+      ])('keeps the old copy when %s (without it the app would not open offline), and tries again later', async (_why, answer) => {
         const worker = waiting()
         vi.stubGlobal('fetch', vi.fn(answer))
         pwa.options.onRegisteredSW('/sw.js', worker)
@@ -172,36 +171,34 @@ describe('new versions of the app', () => {
         await vi.advanceTimersByTimeAsync(TAKEOVER_WAIT_MS)
 
         expect(worker.unregister).not.toHaveBeenCalled()
-        expect(reload).not.toHaveBeenCalled()
-        expect(getSnapshot()).toMatchObject({ available: true, applying: false, failed: true })
+        expect(reload).not.toHaveBeenCalled() // the page stays as it is, nothing to say to the person
         expect(sessionStorage.getItem('agrocultura.actualizando')).toBeNull()
 
-        // The button works again: a second try with signal goes through.
+        // At the next safe moment, with signal, it goes through.
         vi.stubGlobal('fetch', vi.fn(async () => new Response('', { status: 200 })))
-        await applyUpdate()
-        expect(getSnapshot()).toMatchObject({ applying: true, failed: false })
+        screenChanged()
         await vi.advanceTimersByTimeAsync(TAKEOVER_WAIT_MS)
         expect(worker.unregister).toHaveBeenCalledTimes(1)
         expect(reload).toHaveBeenCalledTimes(1)
       })
     })
 
-    describe('a page that has just been opened', () => {
-      // Each deploy is a new version, and a page opened later still starts with the old one the browser kept. Asking
-      // then makes no sense: nothing has been done on the page yet, so it switches by itself.
+    describe('a page that has just been opened, or has just come back to the front', () => {
+      // Each deploy is a new version, and a page opened later still starts with the old one the browser kept. Nothing
+      // has been done on the page yet, so it switches by itself at once.
       beforeEach(() => {
         resetUpdatesForTests({ reload, freshForMs: FRESH_FOR_MS })
         watchForUpdates({ enabled: true })
       })
       afterEach(() => window.history.replaceState(null, '', '/'))
+      const comesBackToTheFront = () => document.dispatchEvent(new Event('visibilitychange')) // jsdom: the page is "visible"
 
-      it('switches to the new version by itself, with no notice', async () => {
+      it('switches to the new version by itself', async () => {
         pwa.options.onRegisteredSW('/sw.js', waiting())
 
         pwa.options.onNeedRefresh()
         await vi.advanceTimersByTimeAsync(0)
 
-        expect(getSnapshot().available).toBe(false)
         expect(pwa.updated).toBe(1)
         workers.dispatchEvent(new Event('controllerchange'))
         expect(reload).toHaveBeenCalledTimes(1)
@@ -212,42 +209,69 @@ describe('new versions of the app', () => {
         pwa.options.onRegisteredSW('/sw.js', waiting())
         await vi.advanceTimersByTimeAsync(0)
 
-        expect(getSnapshot().available).toBe(false)
         expect(pwa.updated).toBe(1)
       })
 
-      it('asks as usual once the page has been open for a while', async () => {
+      it('once the page has been open for a while, it waits for the next screen', async () => {
         await vi.advanceTimersByTimeAsync(FRESH_FOR_MS)
         pwa.options.onRegisteredSW('/sw.js', waiting())
 
         pwa.options.onNeedRefresh()
         await vi.advanceTimersByTimeAsync(0)
-
-        expect(getSnapshot().available).toBe(true)
         expect(pwa.updated).toBe(0)
         expect(reload).not.toHaveBeenCalled()
+
+        screenChanged()
+        expect(pwa.updated).toBe(1)
       })
 
-      it.each(['/contar', '/admin/historias'])('asks on %s: somebody may start a story right away', async (path) => {
+      it('a version that was waiting comes in when the app comes back to the front', async () => {
+        await vi.advanceTimersByTimeAsync(FRESH_FOR_MS)
+        pwa.options.onRegisteredSW('/sw.js', waiting())
+        pwa.options.onNeedRefresh()
+        expect(pwa.updated).toBe(0)
+
+        comesBackToTheFront()
+
+        expect(pwa.updated).toBe(1)
+      })
+
+      it('so does one found right after coming back (the check runs then)', async () => {
+        await vi.advanceTimersByTimeAsync(FRESH_FOR_MS)
+        pwa.options.onRegisteredSW('/sw.js', waiting())
+        comesBackToTheFront()
+        expect(pwa.updated).toBe(0) // nothing was waiting
+
+        pwa.options.onNeedRefresh()
+        await vi.advanceTimersByTimeAsync(0)
+
+        expect(pwa.updated).toBe(1)
+      })
+
+      it.each(['/contar', '/admin/historias', '/admin/revision'])('on %s it waits until the person leaves the page', async (path) => {
         window.history.replaceState(null, '', path)
         pwa.options.onRegisteredSW('/sw.js', waiting())
 
         pwa.options.onNeedRefresh()
         await vi.advanceTimersByTimeAsync(0)
-
-        expect(getSnapshot().available).toBe(true)
+        comesBackToTheFront()
+        screenChanged() // another screen of the same page (a step of the story, say)
         expect(pwa.updated).toBe(0)
+
+        window.history.replaceState(null, '', '/')
+        screenChanged()
+        expect(pwa.updated).toBe(1)
       })
 
-      it('when it cannot switch (no signal) it shows the notice, saying so', async () => {
+      it('without signal the page stays as it is, nothing to say to the person', async () => {
         vi.stubGlobal('fetch', vi.fn(async () => Promise.reject(new TypeError('Failed to fetch'))))
         pwa.options.onRegisteredSW('/sw.js', waiting())
 
         pwa.options.onNeedRefresh()
         await vi.advanceTimersByTimeAsync(TAKEOVER_WAIT_MS)
 
+        expect(pwa.updated).toBe(1)
         expect(reload).not.toHaveBeenCalled()
-        expect(getSnapshot()).toMatchObject({ available: true, applying: false, failed: true })
       })
     })
 
@@ -295,7 +319,7 @@ describe('new versions of the app', () => {
         expect(sessionStorage.getItem('agrocultura.actualizando')).toBe('otra-vez')
       })
 
-      it.each(['/contar', '/admin/historias'])('a tab on %s does not: somebody may be in the middle of a story', (path) => {
+      it.each(['/contar', '/admin/historias', '/admin/revision'])('a tab on %s does not: somebody may be in the middle of a story', (path) => {
         window.history.replaceState(null, '', path)
         pwa.options.onRegisteredSW('/sw.js', waiting())
 
@@ -316,18 +340,21 @@ describe('new versions of the app', () => {
         expect(reload).toHaveBeenCalledTimes(1)
       })
 
-      it.each(['/contar', '/admin/historias'])('but a tab on %s stays as it is, with the notice still there', (path) => {
+      it.each(['/contar', '/admin/historias', '/admin/revision'])('but a tab on %s stays as it is, and switches once the person leaves it', async (path) => {
         window.history.replaceState(null, '', path)
-        pwa.options.onRegisteredSW('/sw.js', waiting())
+        pwa.options.onRegisteredSW('/sw.js', { waiting: null, update: vi.fn().mockResolvedValue() }) // another tab switched already
         pwa.options.onNeedRefresh()
 
         pwa.options.onNeedReload()
-
         expect(reload).not.toHaveBeenCalled()
-        expect(getSnapshot().available).toBe(true) // "Actualizar" there, when the person is ready, brings the new version
+
+        window.history.replaceState(null, '', '/')
+        screenChanged()
+        await vi.advanceTimersByTimeAsync(0)
+        expect(reload).toHaveBeenCalledTimes(1)
       })
 
-      it('the tab that pressed "Actualizar" reloads only once, even on one of those pages', async () => {
+      it('the tab that switches reloads only once, even on one of those pages', async () => {
         window.history.replaceState(null, '', '/contar')
         pwa.options.onRegisteredSW('/sw.js', waiting())
         pwa.options.onNeedRefresh()
@@ -345,7 +372,7 @@ describe('new versions of the app', () => {
         expect(reload).not.toHaveBeenCalled()
       })
 
-      it('after stepping aside, the page shows no notice and reloads once more when the new version is in', async () => {
+      it('after stepping aside, the page does not switch on its own and reloads once more when the new version is in', async () => {
         sessionStorage.setItem('agrocultura.actualizando', 'otra-vez')
         resetUpdatesForTestsKeepingMark()
         watchForUpdates({ enabled: true })
@@ -353,7 +380,7 @@ describe('new versions of the app', () => {
         pwa.options.onRegisteredSW('/sw.js', worker)
         pwa.options.onNeedRefresh()
 
-        expect(getSnapshot().available).toBe(false)
+        expect(pwa.updated).toBe(0)
         vi.advanceTimersByTime(LOOK_EVERY_MS)
         expect(reload).not.toHaveBeenCalled() // the new version is not in yet
 
@@ -375,7 +402,7 @@ describe('new versions of the app', () => {
         expect(reload).toHaveBeenCalledTimes(1)
       })
 
-      it('after stepping aside, if the new version never comes in, the page stays and announces it as usual', () => {
+      it('after stepping aside, if the new version never comes in, the page stays and switches at the next safe moment', () => {
         sessionStorage.setItem('agrocultura.actualizando', 'otra-vez')
         resetUpdatesForTestsKeepingMark()
         watchForUpdates({ enabled: true })
@@ -383,9 +410,10 @@ describe('new versions of the app', () => {
 
         vi.advanceTimersByTime(FINISHING_FOR_MS + LOOK_EVERY_MS)
         pwa.options.onNeedRefresh()
-
         expect(reload).not.toHaveBeenCalled()
-        expect(getSnapshot().available).toBe(true)
+
+        screenChanged()
+        expect(pwa.updated).toBe(1)
       })
     })
 
@@ -398,15 +426,14 @@ describe('new versions of the app', () => {
       expect(reload).toHaveBeenCalledTimes(1)
     })
 
-    it('says it is updating, and a second click does not start it again', async () => {
+    it('a switch under way is not started again', async () => {
       pwa.options.onRegisteredSW('/sw.js', waiting())
       pwa.options.onNeedRefresh()
-      expect(getSnapshot().applying).toBe(false)
 
       await applyUpdate()
       await applyUpdate()
+      screenChanged()
 
-      expect(getSnapshot().applying).toBe(true)
       expect(pwa.updated).toBe(1)
     })
   })

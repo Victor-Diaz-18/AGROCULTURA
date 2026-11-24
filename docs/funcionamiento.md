@@ -212,11 +212,12 @@ mientras la página esté abierta y la pantalla lo **dice** («solo mientras no 
 - **Teléfono compartido.** La lista de «Mis historias» guardada se borra al salir. Los borradores y la historia
   a medias **no**: son el único ejemplar de la historia. Solo los ve y los envía quien los escribió.
 
-**Versiones nuevas.** Cuando se publica una versión nueva, el teléfono la descarga en segundo plano y la deja
-esperando; la aplicación avisa **«Hay una versión nueva»** con los botones **«Actualizar»** (recarga la página) y
-**«Después»** (vuelve a avisar la próxima vez que se abra). Nunca se recarga sola, para no cortar a quien está
-grabando; lo que lleva de su historia se guarda en el dispositivo antes. Busca versiones nuevas al abrir, cada hora
-y cada vez que la aplicación vuelve al frente (`src/offline/updates.js`).
+**Versiones nuevas.** Cada despliegue es una versión nueva. El teléfono la descarga en segundo plano y la página
+cambia sola a ella, **sin preguntar**, en el siguiente momento en que recargar no hace perder nada: al abrir la
+página o volver a ella (en los primeros 10 segundos), o al pasar a otra pantalla. En **«Contar una historia»**,
+**«Historias del proyecto»** y **«Revisión»** no se recarga: espera a que la persona salga de ahí, para no cortar a
+quien está grabando o escribiendo. Sin señal se queda como está y lo intenta en el siguiente momento. Busca
+versiones nuevas al abrir, cada hora y cada vez que la aplicación vuelve al frente (`src/offline/updates.js`).
 
 **Instalar en el teléfono:** en Android (Chrome), menú ⋮ → «Instalar aplicación»; en iPhone (Safari), Compartir →
 «Agregar a pantalla de inicio».

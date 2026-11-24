@@ -177,9 +177,11 @@ Al cerrar cada bloque se compara el resultado con el diseño de referencia (qué
   - Los pedazos de mapa se piden con CORS (`crossOrigin` en `src/config/map.js`) para poder guardarlos sin que el
     navegador los cuente como varios MB cada uno. El servicio de OpenStreetMap lo permite; un proveedor nuevo debe
     permitirlo también.
-  - **Actualizaciones de la aplicación** (decidido con el equipo): aviso «Hay una versión nueva» con «Actualizar» y
-    «Después». La versión nueva espera hasta que la persona acepta (actualizar recarga la página, y no debe pasar
-    sin avisar mientras alguien graba). Se busca al abrir, cada hora y al volver la aplicación al frente.
+  - **Actualizaciones de la aplicación** (decidido con el equipo; cambiado el 24 nov 2026): no se pregunta a nadie.
+    La versión nueva entra sola al abrir la página, al volver la aplicación al frente o al cambiar de pantalla. En
+    «Contar una historia», «Historias del proyecto» y «Revisión» espera a que la persona salga, para no cortar a quien
+    graba o escribe. Antes había un aviso «Hay una versión nueva» con «Actualizar» y «Después». Se busca al abrir,
+    cada hora y al volver la aplicación al frente.
   - El indicador «Simular conexión» del encabezado se pone amarillo también cuando la señal se pierde de verdad (antes
     solo lo hacía con el interruptor).
   - Diferencia menor con el diseño: el aviso del último paso usa el ícono de «sin señal» cuando no hay señal (el
