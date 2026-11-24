@@ -121,6 +121,15 @@ describe('every page passes axe', () => {
     }
   })
 
+  it('the trash, with a story waiting to be restored or deleted for good', async () => {
+    const user = userEvent.setup()
+    const trashed = { ...adminStory({ estado: 'papelera' }), borrada_en: '2026-11-20T15:00:00Z', se_borra_el: '2026-12-20T15:00:00Z' }
+    renderApp({ route: '/admin/papelera', user: ADMIN, api: { '/admin/papelera': [trashed] } })
+    await user.click(await screen.findByRole('button', { name: /^Borrar para siempre/ }))
+    await screen.findByRole('button', { name: 'Sí, borrar para siempre' })
+    await expectAccessible()
+  })
+
   it('the review dialog', async () => {
     const user = userEvent.setup()
     renderApp({ route: '/admin/revision', user: ADMIN, api: { '/admin/historias': [adminStory({ estado: 'revision', origen: 'comunidad' })] } })

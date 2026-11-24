@@ -163,6 +163,7 @@ const PATHS = {
       <path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4" />
     </>
   ),
+  papelera: <path d="M4 7h16M10 11v6M14 11v6M5 7l1 13h12l1-13M9 7V4h6v3" />,
   // Filled glyphs (player controls)
   play: <path d="M8 5v14l11-7z" />,
   pausa: <path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" />,

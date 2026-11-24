@@ -286,6 +286,18 @@ visitante recibe 401 y un narrador 403.
   Tiene las mismas opciones que la de una familia (lugar aproximado o sin ubicación, publicar sin el nombre de quien la cuenta, finca) y una
   casilla «Tengo la autorización de quien cuenta la historia…» con el texto del equipo. Sin punto en el mapa (por la API), queda en el
   centro de su sector.
+- **Borrar una historia y la Papelera (24-nov-2026).** Solo el **administrador principal** ve «Borrar historia», en la ficha de una
+  historia **publicada** (las que esperan revisión se aprueban o se rechazan). Borrar **no la elimina**: la manda a la **Papelera**
+  (`estado: "papelera"`, con `borrada_en` y `borrada_por`). Desde ese momento no sale en el mapa, ni en su ficha o su enlace `/h/`, ni en los
+  contadores, ni en ninguna lista del panel, ni en «Mis historias» de quien la contó; sus fotos, audios y video **se guardan**.
+  - En **Panel → Papelera** (`/admin/papelera`, también solo el principal) está cada una con el día en que se borró y el día en que se
+    borrará para siempre. **«Recuperar»** la publica otra vez tal como estaba, con su fecha de publicación de antes. **«Borrar para
+    siempre»** pide confirmar y la elimina con sus archivos.
+  - **A los 30 días se borra sola, con sus archivos.** No hay un reloj que lo haga: el servidor borra las vencidas cada vez que se abre la
+    Papelera o se borra otra historia, así que una puede quedar un poco más de 30 días, nunca menos.
+  - Rutas: `DELETE /api/admin/historias/{código}` (a la papelera), `GET /api/admin/papelera`,
+    `POST /api/admin/papelera/{código}/recuperar` y `DELETE /api/admin/papelera/{código}` (para siempre). Los otros administradores reciben 403.
+  - «Reiniciar datos de ejemplo» sigue borrando todo de una vez, también lo que está en la Papelera.
 - **Configuración (F7).** Nombre del portal, «avisar al narrador si se rechaza» (se guarda, pero todavía no envía
   ningún aviso: está por definir con el profesor), la etiqueta «datos de ejemplo» del encabezado y las etiquetas
   (se normalizan como `#café-viejo`; máximo 40; quitar una no cambia las historias que ya la tienen). **Los

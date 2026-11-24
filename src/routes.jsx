@@ -10,6 +10,7 @@ import AdminsPage from './pages/admin/AdminsPage.jsx'
 import NarratorsPage from './pages/admin/NarratorsPage.jsx'
 import SettingsPage from './pages/admin/SettingsPage.jsx'
 import SummaryPage from './pages/admin/SummaryPage.jsx'
+import TrashPage from './pages/admin/TrashPage.jsx'
 import CreditsPage from './pages/portal/CreditsPage.jsx'
 import FuturePage from './pages/portal/FuturePage.jsx'
 import MapPage from './pages/portal/MapPage.jsx'
@@ -49,6 +50,7 @@ export default function AppRoutes() {
         <Route path="configuracion" element={<SettingsPage variant="admin" />} />
         <Route path="narradores" element={<NarratorsPage />} />
         <Route path="administradores" element={<AdminsPage />} />
+        <Route path="papelera" element={<TrashPage />} />
         <Route path="proximamente/:id" element={<FuturePage />} />
       </Route>
     </Routes>

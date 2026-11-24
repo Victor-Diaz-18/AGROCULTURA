@@ -20,7 +20,12 @@ function actionsFor(who, { myStories, waiting, principal }) {
       { to: '/', icon: 'mapa', tone: 'azul', title: 'Ver el mapa público', text: 'Así ven el portal las familias y los visitantes.' },
       { to: '/admin/configuracion', icon: 'engranaje', tone: 'cafe', title: 'Configuración', text: 'Nombre del portal, sectores y etiquetas.' },
       { to: '/admin/narradores', icon: 'personas', tone: 'verde', title: 'Narradores', text: 'Dale una contraseña nueva a una familia que olvidó la suya.' },
-      ...(principal ? [{ to: '/admin/administradores', icon: 'usuario', tone: 'cafe', title: 'Administradores', text: 'Quién puede entrar al panel del equipo.' }] : []),
+      ...(principal
+        ? [
+            { to: '/admin/administradores', icon: 'usuario', tone: 'cafe', title: 'Administradores', text: 'Quién puede entrar al panel del equipo.' },
+            { to: '/admin/papelera', icon: 'papelera', tone: 'rojo', title: 'Papelera', text: 'Recupera una historia borrada en los últimos 30 días.' },
+          ]
+        : []),
     ]
   }
   return [

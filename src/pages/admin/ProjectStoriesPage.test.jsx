@@ -442,7 +442,7 @@ describe('Nueva historia del proyecto: lugar, nombre y autorización', () => {
 })
 
 describe('borrar una historia publicada', () => {
-  it('pide confirmar, la borra, avisa y la quita de la lista', async () => {
+  it('pide confirmar, la manda a la papelera, avisa y la quita de la lista', async () => {
     const user = userEvent.setup()
     let stories = [adminStory({ codigo: 'HIS-2026-004', titulo: 'El patio', origen: 'proyecto', estado: 'publicada' })]
     const deleted = []
@@ -463,10 +463,10 @@ describe('borrar una historia publicada', () => {
 
     await user.click(within(card).getByRole('button', { name: /Borrar historia/ }))
     const confirm = await screen.findByRole('dialog', { name: 'Borrar la historia' })
-    expect(confirm).toHaveTextContent('No se puede deshacer')
+    expect(confirm).toHaveTextContent('Queda 30 días en la Papelera, por si quieres recuperarla')
     await user.click(within(confirm).getByRole('button', { name: 'Sí, borrar' }))
 
-    expect(await screen.findByText('Se borró «El patio».')).toBeInTheDocument()
+    expect(await screen.findByText('«El patio» se fue a la Papelera. Puedes recuperarla durante 30 días.')).toBeInTheDocument()
     expect(deleted).toEqual(['DELETE'])
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
   })

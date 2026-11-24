@@ -296,6 +296,13 @@ class HistoriaAdmin(BaseModel):
     publicada_en: str = ""
 
 
+class HistoriaPapelera(HistoriaAdmin):
+    """A story in the trash: off the map and every list until it is restored or its days pass."""
+
+    borrada_en: str
+    se_borra_el: str  # from then on it is deleted for good, with its files
+
+
 class AprobarIn(BaseModel):
     """The checks the administrator marked ("tema", "territorio", "datos")."""
 

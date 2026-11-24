@@ -61,7 +61,7 @@ export default function ReviewPage({ variant = 'portal' }) {
   const removeStory = async (story) => {
     await deleteStory(story.codigo)
     setCardCode(null)
-    toast(`Se borró «${story.titulo}».`)
+    toast(`«${story.titulo}» se fue a la Papelera. Puedes recuperarla durante 30 días.`)
     reload()
     reloadPortal() // the counters change
   }

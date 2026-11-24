@@ -5,7 +5,7 @@ from pymongo.database import Database
 
 from lib.admin.schemas import EtiquetaIn, PortalCambios
 from lib.auth import admins, narrators
-from lib.auth.deps import require_admin, require_main_admin, require_main_admin_to_delete
+from lib.auth.deps import require_admin, require_main_admin, require_main_admin_for_trash, require_main_admin_to_delete
 from lib.auth.schemas import AdminNuevoIn, AdminOut, ClaveNuevaIn, NarradorOut
 from lib.catalog import service as catalog
 from lib.config import service as config
@@ -14,7 +14,7 @@ from lib.core.db import get_db
 from lib.core.settings import Settings, get_settings
 from lib.media.storage import Storage, get_storage
 from lib.stories import review
-from lib.stories.schemas import AprobarIn, HistoriaAdmin, HistoriaProyectoIn, RechazarIn
+from lib.stories.schemas import AprobarIn, HistoriaAdmin, HistoriaPapelera, HistoriaProyectoIn, RechazarIn
 
 router = APIRouter(prefix="/admin", tags=["administración"], dependencies=[Depends(require_admin)])
 
@@ -45,11 +45,42 @@ def reject(codigo: str, body: RechazarIn, admin: dict = Depends(require_admin), 
     return review.reject(db, codigo, admin=admin, reason_id=body.motivo)
 
 
-@router.delete("/historias/{codigo}", status_code=204, dependencies=[Depends(require_main_admin_to_delete)])
-def delete_story(codigo: str, db: Database = Depends(get_db), storage: Storage = Depends(get_storage)):
-    """Deletes a published story for good, with its files. Only the main administrator, since it cannot be undone.
-    Only published stories: the queue is decided by approving or rejecting."""
-    review.delete_published(db, codigo, delete_files=storage.delete)
+@router.delete("/historias/{codigo}", status_code=204)
+def delete_story(
+    codigo: str,
+    admin: dict = Depends(require_main_admin_to_delete),
+    db: Database = Depends(get_db),
+    storage: Storage = Depends(get_storage),
+):
+    """Sends a published story to the trash: it leaves the map at once, and it can be restored for 30 days. Only the main
+    administrator, and only published stories: the queue is decided by approving or rejecting."""
+    review.move_to_trash(db, codigo, admin=admin, delete_files=storage.delete)
+    return Response(status_code=204)
+
+
+# ---- the trash (only the main administrator) -----------------------------------
+
+
+@router.get("/papelera", response_model=list[HistoriaPapelera], dependencies=[Depends(require_main_admin_for_trash)])
+def list_trash(db: Database = Depends(get_db), storage: Storage = Depends(get_storage)):
+    """The deleted stories that can still be restored, the last one first. The ones whose 30 days passed go for good."""
+    return review.list_trash(db, delete_files=storage.delete)
+
+
+@router.post(
+    "/papelera/{codigo}/recuperar",
+    response_model=HistoriaAdmin,
+    dependencies=[Depends(require_main_admin_for_trash)],
+)
+def restore_story(codigo: str, db: Database = Depends(get_db)):
+    """Publishes the story again as it was: back on the map and in its narrator's «Mis historias»."""
+    return review.restore(db, codigo)
+
+
+@router.delete("/papelera/{codigo}", status_code=204, dependencies=[Depends(require_main_admin_to_delete)])
+def delete_story_forever(codigo: str, db: Database = Depends(get_db), storage: Storage = Depends(get_storage)):
+    """Deletes a story of the trash for good, with its photos, audio and video. It cannot be undone."""
+    review.delete_forever(db, codigo, delete_files=storage.delete)
     return Response(status_code=204)
 
 

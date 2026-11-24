@@ -4,14 +4,21 @@ from __future__ import annotations
 
 import logging
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from pymongo.database import Database
 
 from lib.core.clock import utcnow
 from lib.core.errors import ConflictError, InvalidDataError, NotFoundError
 from lib.stories import consent, repository, service
-from lib.stories.constants import COMPROBACION_CONSENTIMIENTO, COMPROBACIONES, ESTADOS, MOTIVOS_RECHAZO, ORIGENES
+from lib.stories.constants import (
+    COMPROBACION_CONSENTIMIENTO,
+    COMPROBACIONES,
+    DIAS_EN_PAPELERA,
+    ESTADOS,
+    MOTIVOS_RECHAZO,
+    ORIGENES,
+)
 from lib.stories.schemas import HistoriaProyectoIn
 
 logger = logging.getLogger(__name__)
@@ -148,17 +155,75 @@ def create_project_story(
     return story_for_admin(story), created
 
 
-def delete_published(db: Database, code: str, *, delete_files) -> dict:
-    """Deletes a published story for good: it leaves the map, the list and its card, and its photos, audio and video are
-    deleted too. `delete_files(urls)` deletes the files; a file that cannot be deleted does not bring the story back."""
-    story = repository.delete_published(db, code)
+# ---- the trash: a deleted story can be brought back for DIAS_EN_PAPELERA days -------
+
+
+def _deleted_for_good_on(story: dict) -> datetime:
+    return story["borrada_en"] + timedelta(days=DIAS_EN_PAPELERA)
+
+
+def trashed_story(story: dict) -> dict:
+    """A story of the trash: what the administrators see of any story, and when it went there and when it goes for good."""
+    return {
+        **story_for_admin(story),
+        "borrada_en": service._iso(story["borrada_en"]),
+        "se_borra_el": service._iso(_deleted_for_good_on(story)),
+    }
+
+
+def _delete_files(story: dict, delete_files) -> int:
+    """Deletes a story's photos, audio and video. A file that cannot be deleted is logged; it never stops the rest."""
+    urls = [medio["url"] for medio in story.get("medios", []) if isinstance(medio.get("url"), str)]
+    if not urls:
+        return 0
+    try:
+        return delete_files(urls)
+    except Exception as exc:  # noqa: BLE001
+        logger.error("Could not delete the %d files of %s (%s)", len(urls), story["codigo"], type(exc).__name__)
+        return 0
+
+
+def empty_expired(db: Database, *, delete_files, now: datetime | None = None) -> int:
+    """Deletes for good, with their files, the stories that have been in the trash DIAS_EN_PAPELERA days or more.
+
+    There is no clock that runs it: it runs whenever the trash is opened or a story is sent to it, so a story can stay a
+    little longer than that, never less."""
+    moment = (now or utcnow()) - timedelta(days=DIAS_EN_PAPELERA)
+    expired = repository.delete_trashed_before(db, moment)
+    for story in expired:
+        _delete_files(story, delete_files)
+    return len(expired)
+
+
+def move_to_trash(db: Database, code: str, *, admin: dict, delete_files, now: datetime | None = None) -> dict:
+    """What «Borrar historia» does: the story leaves the map, the lists and its card (also its narrator's «Mis historias»),
+    but it keeps its files and can be restored for DIAS_EN_PAPELERA days. Only published stories: the queue is decided by
+    approving or rejecting."""
+    now = now or utcnow()
+    story = repository.move_to_trash(db, code, {"borrada_en": now, "borrada_por": admin["_id"]})
     if story is None:
         raise NotFoundError("Esa historia no está publicada o ya se borró.")
-    urls = [medio["url"] for medio in story.get("medios", []) if isinstance(medio.get("url"), str)]
-    files = 0
-    if urls:
-        try:
-            files = delete_files(urls)
-        except Exception as exc:  # noqa: BLE001
-            logger.error("Could not delete the %d files of %s (%s)", len(urls), code, type(exc).__name__)
-    return {"codigo": code, "archivos_borrados": files}
+    empty_expired(db, delete_files=delete_files, now=now)
+    return trashed_story(story)
+
+
+def list_trash(db: Database, *, delete_files, now: datetime | None = None) -> list[dict]:
+    """The stories in the trash, the last one deleted first. The ones whose time is over are deleted for good first."""
+    empty_expired(db, delete_files=delete_files, now=now)
+    return [trashed_story(story) for story in repository.list_trash(db)]
+
+
+def restore(db: Database, code: str) -> dict:
+    """Brings a story back from the trash: it is published again as it was, on the map and in its narrator's list."""
+    story = repository.restore_from_trash(db, code)
+    if story is None:
+        raise NotFoundError("Esa historia ya no está en la papelera.")
+    return story_for_admin(story)
+
+
+def delete_forever(db: Database, code: str, *, delete_files) -> dict:
+    """Deletes a story of the trash for good, with its photos, audio and video, without waiting for its days to pass."""
+    story = repository.delete_from_trash(db, code)
+    if story is None:
+        raise NotFoundError("Esa historia ya no está en la papelera.")
+    return {"codigo": code, "archivos_borrados": _delete_files(story, delete_files)}

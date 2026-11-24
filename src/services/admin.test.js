@@ -4,15 +4,18 @@ import {
   approveStory,
   createAdmin,
   deactivateAdmin,
+  deleteStoryForever,
   fetchAdminStories,
   fetchAdmins,
   fetchNarrators,
+  fetchTrash,
   publishProjectStory,
   reactivateAdmin,
   rejectStory,
   removeTag,
   resetDemoData,
   resetNarratorPassword,
+  restoreStory,
 } from './admin.js'
 
 const jsonResponse = (body, status = 200) =>
@@ -156,5 +159,20 @@ describe('narrators', () => {
     expect(lastCall()[0]).toBe('/api/admin/narradores/a%2Fb/clave')
     expect(lastCall()[1].method).toBe('POST')
     expect(JSON.parse(lastCall()[1].body)).toEqual({ clave: 'cafe-4821' })
+  })
+})
+
+describe('the trash', () => {
+  it('lists it, restores a story and deletes one for good', async () => {
+    await fetchTrash()
+    expect(lastCall()[0]).toBe('/api/admin/papelera')
+
+    await restoreStory('HIS-2026-004')
+    expect(lastCall()[0]).toBe('/api/admin/papelera/HIS-2026-004/recuperar')
+    expect(lastCall()[1].method).toBe('POST')
+
+    await deleteStoryForever('HIS-2026-004')
+    expect(lastCall()[0]).toBe('/api/admin/papelera/HIS-2026-004')
+    expect(lastCall()[1].method).toBe('DELETE')
   })
 })

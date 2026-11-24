@@ -20,8 +20,17 @@ export const approveStory = (codigo, confirmaciones) =>
 export const rejectStory = (codigo, motivo) =>
   request(`/admin/historias/${encodeURIComponent(codigo)}/rechazar`, { method: 'POST', body: { motivo } })
 
-/** Deletes a published story for good, with its photos, audio and video. */
+/** Sends a published story to the trash: it leaves the map, and the main administrator can bring it back for 30 days. */
 export const deleteStory = (codigo) => request(`/admin/historias/${encodeURIComponent(codigo)}`, { method: 'DELETE' })
+
+/** The trash (only the main administrator): the deleted stories, with `borrada_en` and `se_borra_el`. */
+export const fetchTrash = () => request('/admin/papelera')
+
+/** Publishes a story of the trash again, as it was. */
+export const restoreStory = (codigo) => request(`/admin/papelera/${encodeURIComponent(codigo)}/recuperar`, { method: 'POST' })
+
+/** Deletes a story of the trash for good, with its photos, audio and video. */
+export const deleteStoryForever = (codigo) => request(`/admin/papelera/${encodeURIComponent(codigo)}`, { method: 'DELETE' })
 
 export const updatePortal = (changes) => request('/admin/portal', { method: 'PATCH', body: changes })
 

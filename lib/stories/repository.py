@@ -2,10 +2,15 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+
 from pymongo import ASCENDING, DESCENDING, GEOSPHERE, ReturnDocument
 from pymongo.database import Database
 
+from lib.stories.constants import ESTADO_PAPELERA
+
 COLLECTION = "historias"
+TRASH_FIELDS = ("borrada_en", "borrada_por")  # when a story was sent to the trash, and by which administrator
 
 
 def collection(db: Database):
@@ -31,8 +36,11 @@ def ensure_indexes(db: Database) -> None:
 
 
 def count_by_author(db: Database, author_ids: list | None = None) -> dict:
-    """{author id: how many stories they sent}, in any state. Only the given authors when `author_ids` is passed."""
-    match = {"autor_id": {"$in": author_ids}} if author_ids is not None else {}
+    """{author id: how many stories they sent}, in any state but the trash. Only the given authors when `author_ids` is
+    passed."""
+    match: dict = {"estado": {"$ne": ESTADO_PAPELERA}}
+    if author_ids is not None:
+        match["autor_id"] = {"$in": author_ids}
     pipeline = [{"$match": match}, {"$group": {"_id": "$autor_id", "n": {"$sum": 1}}}]
     return {row["_id"]: row["n"] for row in collection(db).aggregate(pipeline)}
 
@@ -88,7 +96,9 @@ def find_by_client_id(db: Database, author_id, client_id: str) -> dict | None:
 
 
 def list_by_author(db: Database, author_id) -> list[dict]:
-    return list(collection(db).find({"autor_id": author_id}).sort("creada_en", DESCENDING))
+    """A narrator's stories. One in the trash is not among them, as it was not when deleting meant deleting for good."""
+    query = {"autor_id": author_id, "estado": {"$ne": ESTADO_PAPELERA}}
+    return list(collection(db).find(query).sort("creada_en", DESCENDING))
 
 
 def find_by_code(db: Database, code: str) -> dict | None:
@@ -96,10 +106,8 @@ def find_by_code(db: Database, code: str) -> dict | None:
 
 
 def list_for_admin(db: Database, *, estado: str | None, origen: str | None, limit: int) -> list[dict]:
-    """Stories for the administrators. The review queue is oldest first; the rest, latest first."""
-    query: dict = {}
-    if estado:
-        query["estado"] = estado
+    """Stories for the administrators. The review queue is oldest first; the rest, latest first. The trash has its own list."""
+    query: dict = {"estado": estado or {"$ne": ESTADO_PAPELERA}}
     if origen:
         query["origen"] = origen
     order = [("enviada_en", ASCENDING)] if estado == "revision" else [("creada_en", DESCENDING)]
@@ -139,9 +147,40 @@ def media_urls(db: Database) -> list[str]:
     return urls
 
 
-def delete_published(db: Database, code: str) -> dict | None:
-    """Deletes one published story and returns it (with its files, to delete them too), or None if there is no such story."""
-    return collection(db).find_one_and_delete({"codigo": code, "estado": "publicada"})
+def move_to_trash(db: Database, code: str, fields: dict) -> dict | None:
+    """Sends one published story to the trash and returns it, or None if there is no such published story."""
+    return collection(db).find_one_and_update(
+        {"codigo": code, "estado": "publicada"},
+        {"$set": {"estado": ESTADO_PAPELERA, **fields}},
+        return_document=ReturnDocument.AFTER,
+    )
+
+
+def list_trash(db: Database) -> list[dict]:
+    """The stories in the trash, the last one deleted first."""
+    return list(collection(db).find({"estado": ESTADO_PAPELERA}).sort("borrada_en", DESCENDING))
+
+
+def restore_from_trash(db: Database, code: str) -> dict | None:
+    """Brings a story back from the trash, published again as it was. None if it is not in the trash."""
+    return collection(db).find_one_and_update(
+        {"codigo": code, "estado": ESTADO_PAPELERA},
+        {"$set": {"estado": "publicada"}, "$unset": {name: "" for name in TRASH_FIELDS}},
+        return_document=ReturnDocument.AFTER,
+    )
+
+
+def delete_from_trash(db: Database, code: str) -> dict | None:
+    """Deletes one story of the trash for good and returns it (with its files, to delete them too)."""
+    return collection(db).find_one_and_delete({"codigo": code, "estado": ESTADO_PAPELERA})
+
+
+def delete_trashed_before(db: Database, moment: datetime) -> list[dict]:
+    """Deletes for good the stories that went to the trash before `moment`, and returns them (to delete their files)."""
+    expired = list(collection(db).find({"estado": ESTADO_PAPELERA, "borrada_en": {"$lt": moment}}))
+    if expired:
+        collection(db).delete_many({"_id": {"$in": [story["_id"] for story in expired]}, "estado": ESTADO_PAPELERA})
+    return expired
 
 
 def delete_all(db: Database) -> int:

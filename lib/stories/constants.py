@@ -9,6 +9,12 @@ EPOCAS = (
 
 ESTADOS = ("borrador", "revision", "publicada", "rechazada")
 
+# A published story the main administrator deletes goes first to the trash: it leaves the map and every list (also its
+# narrator's), but it can be restored. After DIAS_EN_PAPELERA days it is deleted for good, with its files. It is not one of
+# ESTADOS: the lists of the panel never show it, only the trash does.
+ESTADO_PAPELERA = "papelera"
+DIAS_EN_PAPELERA = 30
+
 # Where a story is shown (the narrator chooses, in "¿Dónde ocurrió?"):
 #  - "aproximada": a point on the map, always rounded to about 500 m for the public (see privacy.py);
 #  - "ninguna": no point and no icon on the map. The story is still published (list, search, card), and the name of the

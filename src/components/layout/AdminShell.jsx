@@ -25,8 +25,13 @@ export default function AdminShell() {
         { to: '/admin/historias', label: 'Historias del proyecto', icon: 'bandera', code: 'F12', bar: true, short: 'Historias' },
         { to: '/admin/configuracion', label: 'Configuración', icon: 'engranaje', code: 'F7', bar: true, short: 'Ajustes' },
         { to: '/admin/narradores', label: 'Narradores', icon: 'personas' },
-        // Only the main administrator manages the others: nobody else sees the entry.
-        ...(user?.principal ? [{ to: '/admin/administradores', label: 'Administradores', icon: 'usuario' }] : []),
+        // Only the main administrator manages the others and deletes stories: nobody else sees these entries.
+        ...(user?.principal
+          ? [
+              { to: '/admin/administradores', label: 'Administradores', icon: 'usuario' },
+              { to: '/admin/papelera', label: 'Papelera', icon: 'papelera' },
+            ]
+          : []),
       ],
     },
     {

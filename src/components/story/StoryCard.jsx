@@ -213,7 +213,7 @@ export default function StoryCard({ story, onClose, onDelete }) {
           )}
         </div>
       </div>
-      {/* Deleting cannot be undone: only the main administrator gets the button (the server refuses the others too). */}
+      {/* Only the main administrator gets the button (the server refuses the others too). It goes to the trash for 30 days. */}
       {onDelete && published && user?.principal && (
         <div className="ag-card-story__danger">
           <button type="button" className="ag-btn ag-btn--danger" onClick={() => setAsking(true)}>
@@ -226,7 +226,10 @@ export default function StoryCard({ story, onClose, onDelete }) {
         <Modal open onClose={busy ? undefined : () => setAsking(false)} label="Borrar la historia" maxWidth={460} level={60} top={80}>
           <div className="ag-confirm">
             <h2>¿Borrar «{story.titulo}»?</h2>
-            <p>Sale del mapa y de la lista, y se borran sus fotos, audios y video. No se puede deshacer.</p>
+            <p>
+              Sale del mapa y de la lista. Queda 30 días en la <b>Papelera</b>, por si quieres recuperarla; después se borra para siempre, con sus
+              fotos, audios y video.
+            </p>
             {problem && (
               <p role="alert" className="ag-error">
                 {problem}
