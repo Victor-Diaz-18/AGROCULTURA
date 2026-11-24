@@ -21,6 +21,14 @@ export const CHECK_EVERY_MS = 60 * 60 * 1000
  */
 export const LOOK_EVERY_MS = 500
 export const TAKEOVER_WAIT_MS = 3000
+
+/**
+ * Every deploy is a new version, and a page opened later still starts with the old one the browser kept: the browser
+ * finds the new one while the page loads. Nothing has been done on the page yet, so instead of asking it switches by
+ * itself (except on a page where somebody may start a story right away). The notice is for a page that was already
+ * open when the new version came out.
+ */
+export const FRESH_FOR_MS = 10 * 1000
 const CHANNEL = 'agrocultura-actualizar'
 const UPDATING = 'actualizar'
 
@@ -76,6 +84,8 @@ let registration = null
 let channel = null
 let timers = [] // of the update under way
 let reloadPage = () => window.location.reload()
+let freshFor = FRESH_FOR_MS
+let openedAt = 0
 
 function publish(next) {
   snapshot = next
@@ -107,6 +117,7 @@ function keepLooking(registration) {
 /** Registers the service worker and starts listening. Only where there is one (the built app, not `npm run dev`). */
 export function watchForUpdates({ enabled = import.meta.env.PROD && 'serviceWorker' in navigator } = {}) {
   if (!enabled) return
+  openedAt = Date.now()
   let mark = takeMark()
   if (mark) setTimeout(() => (mark = null), FINISHING_FOR_MS)
 
@@ -120,6 +131,12 @@ export function watchForUpdates({ enabled = import.meta.env.PROD && 'serviceWork
         return
       }
       if (mark === RELOAD_AGAIN) return // the reload below is coming: no notice for a moment
+      if (Date.now() - openedAt < freshFor && !onBusyPage()) {
+        // Just opened: switch without asking. On the next turn, once the registration is known (the browser may say
+        // this first), so the checks of applyUpdate can still leave the old copy behind or show the notice if it fails.
+        setTimeout(() => applyUpdate(), 0)
+        return
+      }
       publish({ ...snapshot, available: true })
     },
     // The new version took over. Without this the plugin reloads every tab that saw it arrive, busy or not.
@@ -206,7 +223,8 @@ export async function applyUpdate() {
       if (await leaveOldVersion()) return reload()
       stopTimers()
       workers()?.removeEventListener?.('controllerchange', reload)
-      publish({ ...snapshot, applying: false, failed: true }) // no signal: the button can be pressed again
+      // No signal: the notice says so (also after switching without asking) and the button can be pressed again.
+      publish({ ...snapshot, available: true, applying: false, failed: true })
     }, TAKEOVER_WAIT_MS),
   ]
 }
@@ -238,8 +256,11 @@ function stopTimers() {
   timers = []
 }
 
-export function resetUpdatesForTests({ reload = () => window.location.reload() } = {}) {
+/** `freshForMs` is 0 unless a test is about a page that has just been opened: the others call onNeedRefresh at once. */
+export function resetUpdatesForTests({ reload = () => window.location.reload(), freshForMs = 0 } = {}) {
   stopTimers()
+  freshFor = freshForMs
+  openedAt = 0
   leaveMark(null)
   channel?.close?.()
   channel = null

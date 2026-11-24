@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { pwa } from '../test/pwaRegister.js'
 import { setSimulatedOffline } from './connectivity.js'
-import { CHECK_EVERY_MS, FINISHING_FOR_MS, LOOK_EVERY_MS, TAKEOVER_WAIT_MS, applyUpdate, getSnapshot, resetUpdatesForTests, subscribe, watchForUpdates } from './updates.js'
+import { CHECK_EVERY_MS, FINISHING_FOR_MS, FRESH_FOR_MS, LOOK_EVERY_MS, TAKEOVER_WAIT_MS, applyUpdate, getSnapshot, resetUpdatesForTests, subscribe, watchForUpdates } from './updates.js'
 
 beforeEach(() => {
   pwa.options = null
@@ -183,6 +183,71 @@ describe('new versions of the app', () => {
         await vi.advanceTimersByTimeAsync(TAKEOVER_WAIT_MS)
         expect(worker.unregister).toHaveBeenCalledTimes(1)
         expect(reload).toHaveBeenCalledTimes(1)
+      })
+    })
+
+    describe('a page that has just been opened', () => {
+      // Each deploy is a new version, and a page opened later still starts with the old one the browser kept. Asking
+      // then makes no sense: nothing has been done on the page yet, so it switches by itself.
+      beforeEach(() => {
+        resetUpdatesForTests({ reload, freshForMs: FRESH_FOR_MS })
+        watchForUpdates({ enabled: true })
+      })
+      afterEach(() => window.history.replaceState(null, '', '/'))
+
+      it('switches to the new version by itself, with no notice', async () => {
+        pwa.options.onRegisteredSW('/sw.js', waiting())
+
+        pwa.options.onNeedRefresh()
+        await vi.advanceTimersByTimeAsync(0)
+
+        expect(getSnapshot().available).toBe(false)
+        expect(pwa.updated).toBe(1)
+        workers.dispatchEvent(new Event('controllerchange'))
+        expect(reload).toHaveBeenCalledTimes(1)
+      })
+
+      it('also when the browser says so before the registration is known', async () => {
+        pwa.options.onNeedRefresh()
+        pwa.options.onRegisteredSW('/sw.js', waiting())
+        await vi.advanceTimersByTimeAsync(0)
+
+        expect(getSnapshot().available).toBe(false)
+        expect(pwa.updated).toBe(1)
+      })
+
+      it('asks as usual once the page has been open for a while', async () => {
+        await vi.advanceTimersByTimeAsync(FRESH_FOR_MS)
+        pwa.options.onRegisteredSW('/sw.js', waiting())
+
+        pwa.options.onNeedRefresh()
+        await vi.advanceTimersByTimeAsync(0)
+
+        expect(getSnapshot().available).toBe(true)
+        expect(pwa.updated).toBe(0)
+        expect(reload).not.toHaveBeenCalled()
+      })
+
+      it.each(['/contar', '/admin/historias'])('asks on %s: somebody may start a story right away', async (path) => {
+        window.history.replaceState(null, '', path)
+        pwa.options.onRegisteredSW('/sw.js', waiting())
+
+        pwa.options.onNeedRefresh()
+        await vi.advanceTimersByTimeAsync(0)
+
+        expect(getSnapshot().available).toBe(true)
+        expect(pwa.updated).toBe(0)
+      })
+
+      it('when it cannot switch (no signal) it shows the notice, saying so', async () => {
+        vi.stubGlobal('fetch', vi.fn(async () => Promise.reject(new TypeError('Failed to fetch'))))
+        pwa.options.onRegisteredSW('/sw.js', waiting())
+
+        pwa.options.onNeedRefresh()
+        await vi.advanceTimersByTimeAsync(TAKEOVER_WAIT_MS)
+
+        expect(reload).not.toHaveBeenCalled()
+        expect(getSnapshot()).toMatchObject({ available: true, applying: false, failed: true })
       })
     })
 

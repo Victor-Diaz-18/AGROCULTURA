@@ -3,8 +3,9 @@ import { useOutbox } from '../../context/OutboxContext.jsx'
 import useAppUpdate from '../../hooks/useAppUpdate.js'
 
 /**
- * "Hay una versión nueva". Appears when the app has a newer version waiting; the person chooses when to switch
- * (it reloads the page) or leaves it for later (it comes back the next time the app opens).
+ * "Hay una versión nueva". Appears when a newer version comes out while the app is open; the person chooses when to
+ * switch (it reloads the page) or leaves it for later. A page that has just been opened switches by itself instead
+ * (see FRESH_FOR_MS in offline/updates.js).
  */
 export default function UpdateNotice() {
   const { available, applying, failed, apply } = useAppUpdate()
