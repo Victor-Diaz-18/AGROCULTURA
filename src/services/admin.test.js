@@ -6,11 +6,13 @@ import {
   deactivateAdmin,
   fetchAdminStories,
   fetchAdmins,
+  fetchNarrators,
   publishProjectStory,
   reactivateAdmin,
   rejectStory,
   removeTag,
   resetDemoData,
+  resetNarratorPassword,
 } from './admin.js'
 
 const jsonResponse = (body, status = 200) =>
@@ -142,5 +144,17 @@ describe('administrators', () => {
 
     await reactivateAdmin('abc')
     expect(lastCall()[0]).toBe('/api/admin/administradores/abc/reactivar')
+  })
+})
+
+describe('narrators', () => {
+  it('lists them and gives one a new password, sending only the password', async () => {
+    await fetchNarrators()
+    expect(lastCall()[0]).toBe('/api/admin/narradores')
+
+    await resetNarratorPassword('a/b', 'cafe-4821')
+    expect(lastCall()[0]).toBe('/api/admin/narradores/a%2Fb/clave')
+    expect(lastCall()[1].method).toBe('POST')
+    expect(JSON.parse(lastCall()[1].body)).toEqual({ clave: 'cafe-4821' })
   })
 })

@@ -12,6 +12,15 @@ from lib.auth.username import MAX_USERNAME_LENGTH, MIN_PASSWORD_LENGTH, MIN_USER
 from lib.core.security import MAX_SECRET_BYTES
 
 
+def check_narrator_password(value: str) -> str:
+    """A narrator's password: anything with at least 6 characters. Not trimmed: whatever the person types is the password."""
+    if len(value) < MIN_PASSWORD_LENGTH:
+        raise ValueError(f"La contraseña debe tener al menos {MIN_PASSWORD_LENGTH} caracteres.")
+    if len(value.encode("utf-8")) > MAX_SECRET_BYTES:
+        raise ValueError("La contraseña es demasiado larga. Acórtala un poco.")
+    return value
+
+
 class RegistroIn(BaseModel):
     """A narrator signs up with a user name and a password. The password can be anything with at least 6 characters."""
 
@@ -34,12 +43,7 @@ class RegistroIn(BaseModel):
     @field_validator("clave")
     @classmethod
     def check_password(cls, value: str) -> str:
-        # Not trimmed and no other rule: whatever the person types is the password, as long as it is long enough.
-        if len(value) < MIN_PASSWORD_LENGTH:
-            raise ValueError(f"La contraseña debe tener al menos {MIN_PASSWORD_LENGTH} caracteres.")
-        if len(value.encode("utf-8")) > MAX_SECRET_BYTES:
-            raise ValueError("La contraseña es demasiado larga. Acórtala un poco.")
-        return value
+        return check_narrator_password(value)
 
 
 class IngresoIn(BaseModel):
@@ -109,3 +113,27 @@ class AdminOut(BaseModel):
     creado_en: datetime
     desactivado_por: str | None = None
     desactivado_en: datetime | None = None
+
+
+class NarradorOut(BaseModel):
+    """A narrator account as the team sees it, to find a family's account. Never the password, not even its hash."""
+
+    id: str
+    nombre: str
+    usuario: str  # what they sign in with: the user name, or the mobile number of the accounts made with a PIN
+    historias: int  # how many stories they sent: helps tell apart two accounts with similar names
+    creado_en: datetime | None = None
+    ultimo_ingreso: datetime | None = None
+    clave_restablecida_por: str | None = None  # user name of the administrator who last gave them a new password
+    clave_restablecida_en: datetime | None = None
+
+
+class ClaveNuevaIn(BaseModel):
+    """The new password an administrator gives a narrator who forgot theirs: the same rule as when the account is made."""
+
+    clave: str = Field(max_length=200)
+
+    @field_validator("clave")
+    @classmethod
+    def check_password(cls, value: str) -> str:
+        return check_narrator_password(value)

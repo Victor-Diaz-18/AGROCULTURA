@@ -33,6 +33,17 @@ describe('Sign-in dialog', () => {
     expect(within(dialog).getByRole('button', { name: 'Crea una' })).toBeInTheDocument()
   })
 
+  it('tells whoever forgot the password to ask the team for a new one (there is no e-mail or SMS to recover it)', async () => {
+    const user = userEvent.setup()
+    renderApp()
+
+    const dialog = await openDialog(user)
+    expect(within(dialog).getByText('¿Olvidaste tu contraseña? Pídele al equipo del proyecto que te dé una nueva.')).toBeInTheDocument()
+
+    await user.click(within(dialog).getByRole('button', { name: 'Crea una' }))
+    expect(screen.queryByText(/¿Olvidaste tu contraseña\?/)).not.toBeInTheDocument() // creating an account, there is none to forget
+  })
+
   it('does not ask who the person is: no tabs and no choice between narrator and administrator', async () => {
     const user = userEvent.setup()
     renderApp()

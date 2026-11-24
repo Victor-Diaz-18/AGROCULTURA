@@ -25,7 +25,7 @@ describe('«Inicio»: todas las acciones en tarjetas', () => {
     const review = await screen.findByRole('link', { name: /Revisar historias/ })
     expect(review).toHaveAttribute('href', '/admin/revision')
     expect(await within(review).findByText('4')).toBeInTheDocument()
-    for (const name of [/Crear una historia del proyecto/, /Historias del proyecto/, /Ver el resumen/, /Ver el mapa público/, /Configuración/]) {
+    for (const name of [/Crear una historia del proyecto/, /Historias del proyecto/, /Ver el resumen/, /Ver el mapa público/, /Configuración/, /Narradores/]) {
       expect(within(screen.getByRole('main')).getByRole('link', { name })).toBeInTheDocument()
     }
   })

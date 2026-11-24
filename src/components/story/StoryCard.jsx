@@ -16,6 +16,7 @@ import Modal from '../ui/Modal.jsx'
 import OriginBadge from '../ui/OriginBadge.jsx'
 import AudioPlayer from './AudioPlayer.jsx'
 import PhotoGallery from './PhotoGallery.jsx'
+import ShareButton from './ShareButton.jsx'
 
 /**
  * The card (ficha) of a story (F8): its photos, video and audio, who tells it, where and when, and its text.
@@ -134,8 +135,12 @@ export default function StoryCard({ story, onClose, onDelete }) {
 
         <div className="ag-card-story__info">
           <h2 className="ag-card-story__title">{story.titulo}</h2>
-          {/* Only what is already public may go to the voice service: an answer of the public API has no `estado`. */}
-          <ListenButton title={story.titulo} text={readAloud} piece={story.estado === undefined ? `historias/${story.codigo}` : undefined} />
+          <div className="ag-card-story__actions">
+            {/* Only what is already public may go to the voice service: an answer of the public API has no `estado`. */}
+            <ListenButton title={story.titulo} text={readAloud} piece={story.estado === undefined ? `historias/${story.codigo}` : undefined} />
+            {/* Only a published story has a link anybody can open. */}
+            {published && <ShareButton story={story} />}
+          </div>
           <dl className="ag-card-story__facts">
             <div>
               <dt>Ocurrió</dt>

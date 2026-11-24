@@ -10,7 +10,7 @@ from pymongo import ReturnDocument
 from pymongo.database import Database
 from pymongo.errors import DuplicateKeyError
 
-from lib.auth.constants import ROL_ADMIN
+from lib.auth.constants import ROL_ADMIN, ROL_NARRADOR
 
 USUARIOS = "usuarios"
 INTENTOS = "intentos_ingreso"
@@ -48,6 +48,15 @@ def update_secret_hash(db: Database, user_id: ObjectId, secret_hash: str) -> Non
 
 def list_admins(db: Database) -> list[dict]:
     return list(db[USUARIOS].find({"rol": ROL_ADMIN}).sort("creado_en", 1))
+
+
+def list_narrators(db: Database) -> list[dict]:
+    return list(db[USUARIOS].find({"rol": ROL_NARRADOR}, {"clave_hash": 0}))
+
+
+def update_user(db: Database, user_id: ObjectId, fields: dict) -> dict:
+    """Sets `fields` on a user and returns the updated user."""
+    return db[USUARIOS].find_one_and_update({"_id": user_id}, {"$set": fields}, return_document=ReturnDocument.AFTER)
 
 
 def set_active(db: Database, user_id: ObjectId, fields: dict, unset: tuple[str, ...] = ()) -> dict:

@@ -41,6 +41,13 @@ export const deactivateAdmin = (id) => request(`/admin/administradores/${encodeU
 
 export const reactivateAdmin = (id) => request(`/admin/administradores/${encodeURIComponent(id)}/reactivar`, { method: 'POST' })
 
+/** Narrator accounts (with how many stories each one sent), to help a family that forgot its password. */
+export const fetchNarrators = () => request('/admin/narradores')
+
+/** Gives a narrator the password the administrator wrote. It becomes theirs; the sessions they had open close. */
+export const resetNarratorPassword = (id, clave) =>
+  request(`/admin/narradores/${encodeURIComponent(id)}/clave`, { method: 'POST', body: { clave } })
+
 export const createProjectStory = (payload) => request('/admin/historias-proyecto', { method: 'POST', body: payload })
 
 /**

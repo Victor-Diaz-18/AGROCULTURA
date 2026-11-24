@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useParams } from 'react-router-dom'
 import RequireRole from './components/auth/RequireRole.jsx'
 import AdminShell from './components/layout/AdminShell.jsx'
 import PortalShell from './components/layout/PortalShell.jsx'
@@ -7,6 +7,7 @@ import NotFoundPage from './pages/NotFoundPage.jsx'
 import ProjectStoriesPage from './pages/admin/ProjectStoriesPage.jsx'
 import ReviewPage from './pages/admin/ReviewPage.jsx'
 import AdminsPage from './pages/admin/AdminsPage.jsx'
+import NarratorsPage from './pages/admin/NarratorsPage.jsx'
 import SettingsPage from './pages/admin/SettingsPage.jsx'
 import SummaryPage from './pages/admin/SummaryPage.jsx'
 import CreditsPage from './pages/portal/CreditsPage.jsx'
@@ -26,6 +27,7 @@ import TellPage from './pages/portal/TellPage.jsx'
 export default function AppRoutes() {
   return (
     <Routes>
+      <Route path="h/:codigo" element={<SharedStory />} />
       <Route element={<PortalShell />}>
         <Route index element={<MapPage />} />
         <Route path="inicio" element={<RequireRole role="narrador"><LauncherPage who="narrador" /></RequireRole>} />
@@ -45,9 +47,19 @@ export default function AppRoutes() {
         <Route path="revision" element={<ReviewPage variant="admin" />} />
         <Route path="historias" element={<ProjectStoriesPage variant="admin" />} />
         <Route path="configuracion" element={<SettingsPage variant="admin" />} />
+        <Route path="narradores" element={<NarratorsPage />} />
         <Route path="administradores" element={<AdminsPage />} />
         <Route path="proximamente/:id" element={<FuturePage />} />
       </Route>
     </Routes>
   )
+}
+
+/**
+ * /h/<código> is the link of a story people share. The server answers it with the preview WhatsApp shows (lib/stories/share.py);
+ * opened where the app is already installed, the app answers it itself. Both go on to the story on the map, with its card open.
+ */
+function SharedStory() {
+  const { codigo } = useParams()
+  return <Navigate to={`/?historia=${encodeURIComponent(codigo)}&ficha=1`} replace />
 }

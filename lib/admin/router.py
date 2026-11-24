@@ -4,9 +4,9 @@ from fastapi import APIRouter, Depends, Query, Response
 from pymongo.database import Database
 
 from lib.admin.schemas import EtiquetaIn, PortalCambios
-from lib.auth import admins
+from lib.auth import admins, narrators
 from lib.auth.deps import require_admin, require_main_admin, require_main_admin_to_delete
-from lib.auth.schemas import AdminNuevoIn, AdminOut
+from lib.auth.schemas import AdminNuevoIn, AdminOut, ClaveNuevaIn, NarradorOut
 from lib.catalog import service as catalog
 from lib.config import service as config
 from lib.config.schemas import PortalPublico
@@ -105,6 +105,27 @@ def deactivate_admin(
 def reactivate_admin(user_id: str, db: Database = Depends(get_db), settings: Settings = Depends(get_settings)):
     """Lets a deactivated administrator sign in again."""
     return admins.reactivate_admin(db, settings, user_id=user_id)
+
+
+# ---- narrators (any administrator helps a family that forgot its password) -------
+
+
+@router.get("/narradores", response_model=list[NarradorOut])
+def list_narrators(db: Database = Depends(get_db)):
+    """Every narrator account, by name, with how many stories each one sent. Never their password."""
+    return narrators.list_narrators(db)
+
+
+@router.post("/narradores/{user_id}/clave", response_model=NarradorOut)
+def reset_narrator_password(
+    user_id: str,
+    body: ClaveNuevaIn,
+    admin: dict = Depends(require_admin),
+    db: Database = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+):
+    """Gives a narrator the password the administrator wrote. Their open sessions close; it records who did it."""
+    return narrators.reset_password(db, settings, actor=admin, user_id=user_id, clave=body.clave)
 
 
 # ---- portal options (F7) -------------------------------------------------------

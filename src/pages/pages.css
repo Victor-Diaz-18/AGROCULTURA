@@ -649,6 +649,13 @@
   align-items: center;
   gap: 10px;
 }
+/* Narrators: the new password opens under the account, across the whole row */
+.ag-narrators__reset {
+  display: flex;
+  flex-basis: 100%;
+  flex-direction: column;
+  gap: 10px;
+}
 .ag-card__form {
   display: flex;
   flex-direction: column;

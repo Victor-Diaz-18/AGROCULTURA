@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import timezone
+
 from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pymongo.database import Database
@@ -29,7 +31,22 @@ def get_current_user(
     user = repository.find_by_id(db, claims["sub"])
     if user is None or not user.get("activo", True):
         raise UnauthorizedError("Tu sesión no es válida o venció. Ingresa de nuevo.")
+    if _opened_before_password_change(claims, user):
+        raise UnauthorizedError("Tu contraseña cambió. Ingresa de nuevo con la contraseña nueva.")
     return user
+
+
+def _opened_before_password_change(claims: dict, user: dict) -> bool:
+    """A session opened before an administrator gave the account a new password (on a lost phone, say) stops counting.
+
+    The token keeps whole seconds, so a session opened in the same second as the change still counts: that is the new one.
+    """
+    changed = user.get("clave_cambiada_en")
+    if changed is None:
+        return False
+    if changed.tzinfo is None:  # MongoDB gives back naive UTC
+        changed = changed.replace(tzinfo=timezone.utc)
+    return int(claims.get("iat", 0)) < int(changed.timestamp())
 
 
 def require_roles(*roles: str):

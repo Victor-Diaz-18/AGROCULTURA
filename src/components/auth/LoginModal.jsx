@@ -29,7 +29,7 @@ function LoginForm({ rol, destino, onClose }) {
   const [clave, setClave] = useState('')
   const [nuevoUsuario, setNuevoUsuario] = useState('')
   const [nuevaClave, setNuevaClave] = useState('')
-  const [verClave, setVerClave] = useState(true) // shown while it is chosen, so it is not mistyped (there is no "forgot it" yet)
+  const [verClave, setVerClave] = useState(true) // shown while it is chosen, so it is not mistyped (a forgotten one needs the team)
   const [verClaveIngreso, setVerClaveIngreso] = useState(false) // signing in, it starts hidden: someone may be looking
   const { busy, error, clearError, registerNarrator, signIn } = useSignIn()
   const formRef = useRef(null)
@@ -141,6 +141,8 @@ function LoginForm({ rol, destino, onClose }) {
               <input type="checkbox" checked={verClaveIngreso} onChange={(event) => setVerClaveIngreso(event.target.checked)} />
               Mostrar la contraseña
             </label>
+            {/* There is no recovery by e-mail or SMS: any administrator gives a new one (Panel → Narradores). */}
+            <span className="ag-hint">¿Olvidaste tu contraseña? Pídele al equipo del proyecto que te dé una nueva.</span>
           </>
         )}
 

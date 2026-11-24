@@ -30,6 +30,13 @@ def ensure_indexes(db: Database) -> None:
     )
 
 
+def count_by_author(db: Database, author_ids: list | None = None) -> dict:
+    """{author id: how many stories they sent}, in any state. Only the given authors when `author_ids` is passed."""
+    match = {"autor_id": {"$in": author_ids}} if author_ids is not None else {}
+    pipeline = [{"$match": match}, {"$group": {"_id": "$autor_id", "n": {"$sum": 1}}}]
+    return {row["_id"]: row["n"] for row in collection(db).aggregate(pipeline)}
+
+
 def count(db: Database, *, estado: str | None = None, origen: str | None = None, medio: str | None = None) -> int:
     """Count stories by state, origin and/or having at least one media of a type."""
     query: dict = {}

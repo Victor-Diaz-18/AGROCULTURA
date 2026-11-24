@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { screen, within } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { STATS, adminStory, mapStory, storyCard, storyWithoutPlace } from '../../test/fixtures.js'
 import { mockMapSize } from '../../test/layout.js'
@@ -314,5 +314,86 @@ describe('Ficha de una historia sin ubicación o sin nombre, en la lista del equ
 
     expect(dialog.querySelector('dl')).not.toHaveTextContent('Referencia para el equipo')
     expect(dialog.querySelector('dl')).not.toHaveTextContent('Se publica como')
+  })
+})
+
+describe('«Compartir» una historia', () => {
+  const LINK = () => `${window.location.origin}/h/HIS-2026-001`
+
+  it('where there is no list of apps, it copies the link of the story and says so', async () => {
+    const { user, dialog, restore } = await openCard(storyCard())
+
+    await user.click(within(dialog).getByRole('button', { name: 'Compartir' }))
+
+    expect(await screen.findByText('Enlace copiado. Pégalo en WhatsApp o donde quieras compartirlo.')).toBeInTheDocument()
+    expect(await navigator.clipboard.readText()).toBe(LINK())
+    restore()
+  })
+
+  it('on a phone it opens the list of apps (WhatsApp…) with the title and the link', async () => {
+    const share = vi.fn().mockResolvedValue(undefined)
+    navigator.share = share
+    try {
+      const { user, dialog, restore } = await openCard(storyCard())
+
+      await user.click(within(dialog).getByRole('button', { name: 'Compartir' }))
+
+      expect(share).toHaveBeenCalledWith({ title: 'El camino de mulas hasta Santa Marta', text: 'Mira esta historia de la cultura cafetera de Minca:', url: LINK() })
+      expect(screen.queryByText(/Enlace copiado/)).not.toBeInTheDocument()
+      restore()
+    } finally {
+      delete navigator.share
+    }
+  })
+
+  it('closing the list of apps does nothing else', async () => {
+    navigator.share = vi.fn().mockRejectedValue(Object.assign(new Error('cerrado'), { name: 'AbortError' }))
+    try {
+      const { user, dialog, restore } = await openCard(storyCard())
+      await navigator.clipboard.writeText('lo que había')
+
+      await user.click(within(dialog).getByRole('button', { name: 'Compartir' }))
+
+      expect(navigator.share).toHaveBeenCalled()
+      expect(await navigator.clipboard.readText()).toBe('lo que había')
+      expect(screen.queryByText(/Enlace copiado/)).not.toBeInTheDocument()
+      restore()
+    } finally {
+      delete navigator.share
+    }
+  })
+
+  it('the shared link opens the card of the story, even of one that has a place on the map', async () => {
+    const restore = mockMapSize()
+    renderApp({ route: '/h/HIS-2026-001', api: { '/historias': [mapStory()], '/historias/HIS-2026-001': storyCard() } })
+
+    // «Abriendo la ficha…» first, then the card itself in its place
+    const heading = await screen.findByRole('heading', { name: 'El camino de mulas hasta Santa Marta' }, { timeout: 3000 })
+    expect(screen.getByRole('dialog', { name: 'Ficha de la historia' })).toContainElement(heading)
+    restore()
+  })
+
+  it('«Ver en el mapa» still only marks the story on the map, without opening its card again', async () => {
+    const { user, dialog, restore } = await openCard(storyCard())
+
+    await user.click(within(dialog).getByRole('button', { name: 'Ver en el mapa' }))
+
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Ficha de la historia' })).not.toBeInTheDocument())
+    restore()
+  })
+
+  it('a story that is not published has no «Compartir»: nobody could open its link', async () => {
+    const user = userEvent.setup()
+    renderApp({
+      route: '/admin/revision',
+      user: ADMIN,
+      api: { '/estadisticas': STATS, '/admin/historias': (_i, url) => (url.includes('estado=rechazada') ? [adminStory({ estado: 'rechazada' })] : []) },
+    })
+    await user.click(await screen.findByRole('button', { name: /Rechazadas/ }))
+    await user.click(await screen.findByRole('button', { name: 'Ver ficha' }))
+
+    const dialog = await screen.findByRole('dialog', { name: 'Ficha de la historia' })
+    expect(within(dialog).getByRole('button', { name: /Escuchar/ })).toBeInTheDocument()
+    expect(within(dialog).queryByRole('button', { name: 'Compartir' })).not.toBeInTheDocument()
   })
 })

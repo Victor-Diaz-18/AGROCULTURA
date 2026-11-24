@@ -189,6 +189,12 @@ Al cerrar cada bloque se compara el resultado con el diseño de referencia (qué
   - **«Próximamente» ya no se le muestra al público** (24 nov 2026): el pie de página anunciaba «Recorridos 360°» y
     «Avatares en RA», que no existen. Siguen en el menú del panel del equipo; un enlace viejo a `/proximamente/…`
     lleva a «No encontramos esta página».
+  - **«Compartir» en la ficha** (24 nov 2026): el enlace `/h/CÓDIGO` lo responde el servidor con el título, el texto y la
+    foto de la historia, que es lo que muestra WhatsApp al pegarlo, y lleva a la historia con su ficha abierta. Solo
+    historias publicadas, con lo mismo que la ficha pública. Detalle en `docs/funcionamiento.md`.
+  - **El equipo le da una contraseña nueva a quien olvidó la suya** (24 nov 2026): sección «Narradores» del panel, para
+    cualquier administrador. La contraseña la escribe el administrador y queda como la de la familia; cierra las sesiones
+    abiertas de esa cuenta y registra quién la cambió. Reemplaza «borrar la cuenta en Atlas para que se registre de nuevo».
   - Diferencia menor con el diseño: el aviso del último paso usa el ícono de «sin señal» cuando no hay señal (el
     prototipo dejaba el de wifi).
 - Comprobado en producción tras el despliegue: Vercel sirve `sw.js` (`application/javascript`, sin caché larga, así

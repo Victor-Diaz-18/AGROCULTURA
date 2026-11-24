@@ -6,7 +6,9 @@ import { TILE_PROVIDER } from './src/config/map.js'
 
 // In development the API runs separately (uvicorn on :8000, or API_URL) and Vite proxies
 // /api to it, so the browser only ever talks to one origin, as in production.
-const api = { '/api': { target: process.env.API_URL ?? 'http://127.0.0.1:8000', changeOrigin: true } }
+// /h/<código> too: the page of a story to share is written by the server (lib/stories/share.py), with the address it was opened at.
+const target = process.env.API_URL ?? 'http://127.0.0.1:8000'
+const api = { '/api': { target, changeOrigin: true }, '^/h/[^/]+$': { target, xfwd: true } }
 
 // The map tiles the person has already looked at are kept for when there is no signal (F10).
 // Only those: nothing is downloaded ahead of time (OpenStreetMap's tile policy forbids that).

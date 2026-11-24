@@ -19,6 +19,7 @@ function actionsFor(who, { myStories, waiting, principal }) {
       { to: '/admin', icon: 'resumen', tone: 'verde', title: 'Ver el resumen', text: 'Cuántas historias hay y qué necesita atención.' },
       { to: '/', icon: 'mapa', tone: 'azul', title: 'Ver el mapa público', text: 'Así ven el portal las familias y los visitantes.' },
       { to: '/admin/configuracion', icon: 'engranaje', tone: 'cafe', title: 'Configuración', text: 'Nombre del portal, sectores y etiquetas.' },
+      { to: '/admin/narradores', icon: 'personas', tone: 'verde', title: 'Narradores', text: 'Dale una contraseña nueva a una familia que olvidó la suya.' },
       ...(principal ? [{ to: '/admin/administradores', icon: 'usuario', tone: 'cafe', title: 'Administradores', text: 'Quién puede entrar al panel del equipo.' }] : []),
     ]
   }

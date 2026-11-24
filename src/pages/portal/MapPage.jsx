@@ -39,20 +39,23 @@ export default function MapPage() {
   const proyecto = stats.por_origen.proyecto
   const percent = Math.round((stats.sectores_con_historias / Math.max(stats.total_sectores, 1)) * 100)
   const target = params.get('historia')
+  const wantsCard = params.has('ficha') // a link shared with «Compartir» (/h/<código>): whoever got it wants to see the story
 
   // "Ver en el mapa" (from a card) and shared links: mark that story and bring it into view. A story published without a
-  // place is not on the map: its link opens its card (once), which is the only place it can be shown.
+  // place is not on the map: its link opens its card (once), which is the only place it can be shown. A link shared with
+  // «Compartir» opens the card (once) too, over the story marked on the map.
   const openedFor = useRef(null)
   useEffect(() => {
     const found = target ? stories.find((story) => story.codigo === target) : null
     if (!found) return
     setSelected(target)
-    if (hasLocation(found)) setFocus({ code: target, nonce: Date.now() })
-    else if (openedFor.current !== target) {
+    const located = hasLocation(found)
+    if (located) setFocus({ code: target, nonce: Date.now() })
+    if ((!located || wantsCard) && openedFor.current !== target) {
       openedFor.current = target
       setOpenCode(target)
     }
-  }, [target, stories])
+  }, [target, stories, wantsCard])
 
   const filtered = useMemo(() => applyFilters(stories, filters, config.sectores), [stories, filters, config.sectores])
   // The list: what is in the zone the map shows, and ALWAYS the stories that are not on the map (they are never "in a zone").

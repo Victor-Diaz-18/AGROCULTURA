@@ -20,7 +20,7 @@ Las decisiones y los cambios respecto al diseño aprobado están en [`plan-v1.md
   - *Contraseña:* **puede ser cualquier cosa** (letras, números, espacios, símbolos, tildes), siempre que no esté vacía y
     tenga **6 caracteres o más** (el máximo técnico es 72 bytes, por la forma como se protege). No se recorta ni se
     cambia: se compara tal como se escribió, y aquí sí importan las mayúsculas. En el formulario de crear cuenta se ve
-    mientras se escribe, para no equivocarse (no hay recuperación), con la casilla «Mostrar la contraseña» para ocultarla.
+    mientras se escribe, para no equivocarse (si se olvida, hay que pedirle una nueva al equipo), con la casilla «Mostrar la contraseña» para ocultarla.
   - Se guarda solo con hash (bcrypt), nunca en texto plano. La sesión dura **30 días**, para que pueda usar la
     aplicación sin señal.
 - **Cuentas anteriores (celular y PIN):** las familias que se registraron antes de que existieran los nombres de usuario
@@ -39,8 +39,21 @@ Las decisiones y los cambios respecto al diseño aprobado están en [`plan-v1.md
 - **Narradora de ejemplo (opcional):** si defines `SEED_DEMO_NARRATOR_PHONE` y `SEED_DEMO_NARRATOR_PIN`
   (y opcionalmente `SEED_DEMO_NARRATOR_NAME`), se crea una cuenta de ejemplo (una «cuenta anterior»: entra con ese
   celular como usuario y ese PIN como contraseña). Nunca se modifica después.
-- **Clave olvidada:** en la versión 1 no hay recuperación. Un administrador puede borrar la cuenta en Atlas
-  (colección `usuarios`) para que la persona se registre de nuevo.
+- **Contraseña olvidada (24-nov-2026):** no hay recuperación por correo ni por mensaje (las familias no dan ninguno de los
+  dos). La ventana de ingreso dice *«¿Olvidaste tu contraseña? Pídele al equipo del proyecto que te dé una nueva.»* En el
+  panel, **Narradores** (menú de administración e «Inicio») lista todas las cuentas de narradores por nombre, con el
+  usuario con el que entran (el nombre, o el celular en las cuentas anteriores), cuántas historias mandaron y cuándo
+  entraron por última vez, con un buscador que no distingue tildes ni mayúsculas. **Cualquier administrador** (no solo el
+  principal) toca «Cambiar contraseña», escribe una nueva (**6 caracteres o más**, la misma regla que al crear la cuenta)
+  y se la dicta a la familia: **desde ese momento es su contraseña**, no se le pide cambiarla. Al guardarla:
+  - las **sesiones que la cuenta tenía abiertas** (otro celular, uno perdido) dejan de servir: el servidor guarda
+    `clave_cambiada_en` y rechaza las sesiones abiertas antes, con *«Tu contraseña cambió. Ingresa de nuevo con la contraseña
+    nueva.»* Los borradores guardados en ese teléfono no se pierden: se envían al volver a ingresar;
+  - se **borran los intentos fallidos** de esa cuenta, así que una familia bloqueada por equivocarse puede entrar enseguida;
+  - queda registrado **quién la cambió y cuándo** (`clave_restablecida_por`, `clave_restablecida_por_usuario`,
+    `clave_restablecida_en`), y la lista lo muestra. La contraseña nunca se muestra después ni viaja en las respuestas.
+  - Rutas: `GET /api/admin/narradores` y `POST /api/admin/narradores/{id}/clave` (`{"clave": "…"}`). Solo cuentas de
+    narradores: la de un administrador responde 404 (la del principal se cambia con `ADMIN_PASSWORD`).
 - Si el ingreso responde *«Falta configurar JWT_SECRET en el servidor»*, falta esa variable (o es muy corta):
   agrégala en Vercel y haz un Redeploy.
 
@@ -160,6 +173,23 @@ Las decisiones y los cambios respecto al diseño aprobado están en [`plan-v1.md
   ubicación pasa a ser el *nombre de referencia*, solo para el equipo. El administrador lo ve al revisar.
 - **Nombre de la finca o marca (opcional).** Hasta 80 letras. Se muestra en la ficha pública y entra en la búsqueda, también en las
   historias sin ubicación (si dice dónde queda, es decisión de quien la escribe: el formulario lo avisa).
+- **Compartir (24-nov-2026).** La ficha de una historia **publicada** tiene «Compartir», junto a «Escuchar». En el teléfono abre la lista de
+  aplicaciones (WhatsApp, Facebook…); donde no la hay (casi todos los computadores) copia el enlace y dice «Enlace copiado», y si ni eso se
+  puede, abre WhatsApp con el enlace escrito. Una historia en revisión o rechazada no lo tiene: nadie podría abrir su enlace.
+  - **El enlace es `/h/CÓDIGO`** (por ejemplo `https://agrocultura.vercel.app/h/HIS-2026-001`). WhatsApp y las demás aplicaciones leen la vista
+    previa de la página sin ejecutar JavaScript, y el portal es una sola página que solo dice «AGROCULTURA» hasta que su JavaScript corre. Por
+    eso `vercel.json` manda `/h/…` al servidor, que escribe una página corta con las etiquetas `og:` de esa historia (`lib/stories/share.py`):
+    el **título**, «Contada por … · lugar · época» y el comienzo del texto, y la **primera foto** (sin foto propia, la foto de portada,
+    `public/compartir.jpg`, 1200 × 630). Quien abre el enlace pasa enseguida a `/?historia=CÓDIGO&ficha=1`: el mapa con la historia marcada
+    **y su ficha abierta** («Ver en el mapa» sigue solo marcándola). Con la aplicación instalada, la propia aplicación responde `/h/…` y hace
+    lo mismo, también sin señal.
+  - **Muestra lo mismo que la ficha pública, nada más:** solo historias publicadas (una en revisión, rechazada, borrada o inexistente da 404
+    con la vista previa general del portal), «Narrador anónimo» si se publicó sin nombre, y ningún lugar si se publicó sin ubicación. Todo
+    lo que viene de la historia se escapa, así que un título no puede romper la página. Las aplicaciones guardan la vista previa: si una
+    historia se borra, su enlace deja de mostrarla a los pocos minutos (la página se guarda 5 minutos), pero lo que WhatsApp ya mostró en un
+    chat queda en ese chat.
+  - **El enlace del portal** (`/`) también tiene vista previa: `index.html` lleva las etiquetas generales con la foto de portada. Esa imagen
+    va con la dirección completa (`https://agrocultura.vercel.app/compartir.jpg`): si el portal cambia de dominio, hay que cambiarla allí.
 
 **Qué funciona sin señal** (después de haber abierto la página una vez con señal):
 

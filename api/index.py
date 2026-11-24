@@ -29,6 +29,7 @@ from lib.core.errors import DomainError  # noqa: E402
 from lib.core.settings import get_settings  # noqa: E402
 from lib.media import router as media_router  # noqa: E402
 from lib.stories import router as stories_router  # noqa: E402
+from lib.stories import share_router  # noqa: E402
 from lib.voice import router as voice_router  # noqa: E402
 
 
@@ -91,6 +92,7 @@ def create_app() -> FastAPI:
     app.include_router(voice_router.router, prefix="/api")
     app.include_router(admin_router.router, prefix="/api")
     app.include_router(demo_router.router, prefix="/api")  # removable: see lib/seed/demo.py
+    app.include_router(share_router.router)  # /h/<código>: vercel.json sends it here, outside /api
     return app
 
 

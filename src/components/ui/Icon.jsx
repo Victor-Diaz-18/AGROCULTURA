@@ -155,6 +155,14 @@ const PATHS = {
     </>
   ),
   'enlace-externo': <path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6" />,
+  compartir: (
+    <>
+      <circle cx="18" cy="5" r="3" />
+      <circle cx="6" cy="12" r="3" />
+      <circle cx="18" cy="19" r="3" />
+      <path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4" />
+    </>
+  ),
   // Filled glyphs (player controls)
   play: <path d="M8 5v14l11-7z" />,
   pausa: <path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" />,
