@@ -5,7 +5,7 @@ import pages from '../../../lib/voice/paginas.json'
 import ListenButton from '../../components/ui/ListenButton.jsx'
 import { SHOW_CODES, codeNote } from '../../config/flags.js'
 
-/** Features of future phases. They are announced here but not built (F14, F15). */
+/** Features of future phases, in the team's side menu. They are announced here but not built (F14, F15); the public does not see them. */
 const FUTURE = {
   360: {
     title: 'Recorridos 360°',
@@ -33,13 +33,12 @@ const FUTURE = {
   },
 }
 
-export default function FuturePage({ variant = 'portal' }) {
+export default function FuturePage() {
   const { id } = useParams()
   const feature = FUTURE[id]
-  if (!feature) return <Navigate to={variant === 'admin' ? '/admin' : '/'} replace />
+  if (!feature) return <Navigate to="/admin" replace />
 
-
-  // The same for everybody: what is coming, in plain words.
+  // What is coming, in plain words.
   return (
     <>
       <PageHeader
@@ -53,8 +52,8 @@ export default function FuturePage({ variant = 'portal' }) {
         </span>
         <b>Estamos trabajando en esto.</b>
         <span>{feature.coming}</span>
-        <Link to={variant === 'admin' ? '/admin/inicio' : '/'} className="ag-btn ag-btn--dark">
-          {variant === 'admin' ? 'Volver al inicio' : 'Volver al mapa'}
+        <Link to="/admin/inicio" className="ag-btn ag-btn--dark">
+          Volver al inicio
         </Link>
       </div>
     </>

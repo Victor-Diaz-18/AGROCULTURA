@@ -98,15 +98,6 @@
 .ag-hchip svg {
   color: var(--cab-texto-suave);
 }
-.ag-hchip__text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.ag-hchip__label {
-  font-size: 11px;
-  color: var(--cab-texto-suave);
-}
 .ag-hchip__value {
   font-size: 14px;
   font-weight: 700;
@@ -118,18 +109,12 @@
   height: 9px;
   border-radius: 5px;
 }
-.ag-hchip--toggle .ag-hchip__label {
-  color: #c9dbcd;
-}
-.ag-hchip--toggle .ag-hchip__dot {
-  background: var(--verde-ok);
-}
-/* Yellow whenever there is no signal: the demo switch is on, or the phone really lost it. */
-.ag-hchip--toggle[data-offline='true'] {
+/* «Sin señal», in yellow: it only shows while the phone really has no signal. */
+.ag-hchip--offline {
   border-color: #b8862a;
   background: #6b4e00;
 }
-.ag-hchip--toggle[data-offline='true'] .ag-hchip__dot {
+.ag-hchip--offline .ag-hchip__dot {
   background: var(--amarillo);
 }
 .ag-header__divider {
@@ -1066,15 +1051,6 @@
   order: 3;
   font-size: 12.5px;
 }
-.ag-vfooter__next {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 12px;
-}
-.ag-vfooter__next a {
-  color: #fff;
-  font-weight: 700;
-}
 .ag-vfooter :focus-visible {
   outline-color: var(--amarillo);
 }
@@ -1097,9 +1073,6 @@
   }
   .ag-header--visitor .ag-hchip {
     padding: 6px 10px;
-  }
-  .ag-header--visitor .ag-hchip__label {
-    display: none;
   }
   .ag-vhero__inner {
     padding-block: 84px 26px;
@@ -1293,19 +1266,6 @@
   body:has(.ag-app--narrator) .ag-toast,
   body:has(.ag-app--narrator) .ag-reading {
     bottom: calc(84px + env(safe-area-inset-bottom));
-  }
-}
-
-/* The demo switch, small: on a phone only its dot and its state */
-.ag-hchip--compact {
-  padding: 5px 10px;
-}
-@media (max-width: 720px) {
-  .ag-hchip--compact .ag-hchip__label {
-    display: none;
-  }
-  .ag-hchip--compact .ag-hchip__value {
-    font-size: 12px;
   }
 }
 

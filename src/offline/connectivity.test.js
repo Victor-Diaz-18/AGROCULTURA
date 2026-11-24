@@ -12,18 +12,18 @@ import {
 beforeEach(() => resetConnectivityForTests())
 
 describe('connectivity', () => {
-  it('is online when the browser is online and the demo switch is off', () => {
+  it('is online when the browser is online and nobody cut the connection', () => {
     expect(isOnline()).toBe(true)
   })
 
-  it('goes offline when the demo switch simulates no signal', () => {
+  it('goes offline when the connection is cut by hand (as the tests do)', () => {
     setSimulatedOffline(true)
 
     expect(isOnline()).toBe(false)
     expect(getSnapshot()).toMatchObject({ realOnline: true, simulatedOffline: true, online: false })
   })
 
-  it('is offline when the real connection drops, even if the demo switch is off', () => {
+  it('is offline when the real connection drops, even if nobody cut it', () => {
     window.dispatchEvent(new Event('offline'))
 
     expect(isOnline()).toBe(false)
@@ -35,7 +35,7 @@ describe('connectivity', () => {
 
   it('stays offline while either source says offline', () => {
     setSimulatedOffline(true)
-    window.dispatchEvent(new Event('online')) // real connection back, demo still "sin señal"
+    window.dispatchEvent(new Event('online')) // real connection back, still cut by hand
 
     expect(isOnline()).toBe(false)
   })
@@ -51,13 +51,19 @@ describe('connectivity', () => {
     expect(listener).toHaveBeenCalledTimes(1)
   })
 
-  it('keeps the simulated state for the browser tab (survives a reload)', () => {
+  it('keeps nothing for the next page load', () => {
     setSimulatedOffline(true)
 
-    expect(sessionStorage.getItem('agrocultura.simulated-offline')).toBe('1')
-
-    setSimulatedOffline(false)
     expect(sessionStorage.getItem('agrocultura.simulated-offline')).toBeNull()
+  })
+
+  it('a tab where the old switch «Simular conexión» was left on comes back online with this version', async () => {
+    sessionStorage.setItem('agrocultura.simulated-offline', '1') // what that switch kept for the tab
+    vi.resetModules()
+
+    const fresh = await import('./connectivity.js')
+
+    expect(fresh.isOnline()).toBe(true)
   })
 
   it('calls reconnect listeners when the signal comes back, not when it leaves', () => {

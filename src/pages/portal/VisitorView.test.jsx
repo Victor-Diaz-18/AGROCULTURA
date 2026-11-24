@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { act, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { resetConnectivityForTests, setSimulatedOffline } from '../../offline/connectivity.js'
+import { resetConnectivityForTests } from '../../offline/connectivity.js'
 import { NARRATOR } from '../../test/auth.js'
 import { CONFIG, STATS, mapStory } from '../../test/fixtures.js'
 import { mockMapSize } from '../../test/layout.js'
@@ -83,16 +83,6 @@ describe('La vista de un visitante sin cuenta', () => {
     expect(screen.queryByRole('button', { name: /Simular conexión/ })).not.toBeInTheDocument()
   })
 
-  it('can turn off the demo switch if it was left on, and then it goes away', async () => {
-    const user = userEvent.setup()
-    act(() => setSimulatedOffline(true))
-    visit()
-
-    await user.click(screen.getByRole('button', { name: /Simular conexión/ }))
-
-    expect(screen.queryByRole('button', { name: /Simular conexión/ })).not.toBeInTheDocument()
-  })
-
   it('shows the sample-data notice and who makes this', async () => {
     visit({ '/config': { ...CONFIG, portal: { ...CONFIG.portal, datos_de_ejemplo: true } } })
 
@@ -100,7 +90,15 @@ describe('La vista de un visitante sin cuenta', () => {
     expect(screen.getByRole('contentinfo')).toHaveTextContent('Universidad del Magdalena')
     expect(within(screen.getByRole('contentinfo')).getByRole('link', { name: 'CC BY-SA 3.0' })).toBeInTheDocument() // the license of the photo asks for its credit
     expect(within(screen.getByRole('contentinfo')).getByText(/diego_cue/)).toBeInTheDocument()
-    expect(within(screen.getByRole('navigation', { name: 'Próximamente' })).getByRole('link', { name: 'Recorridos 360°' })).toBeInTheDocument()
+  })
+
+  it('promises nothing that is not built: no «Próximamente» for the public', async () => {
+    visit()
+    await screen.findByRole('list', { name: 'Historias en esta zona del mapa' })
+
+    expect(screen.queryByText(/Próximamente/)).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Recorridos 360°/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Avatares en RA/ })).not.toBeInTheDocument()
   })
 
   it('tells the first farms below the map, with the dates of the academic source and its sources', async () => {
@@ -170,7 +168,7 @@ describe('La vista de un visitante sin cuenta', () => {
     expect(screen.queryByText(/Esperando revisión/)).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Salir' })).toBeInTheDocument()
     expect(screen.getByRole('contentinfo')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Simular conexión/ })).toHaveTextContent('En línea') // for showing the offline mode
+    expect(screen.queryByRole('button', { name: /Simular conexión/ })).not.toBeInTheDocument() // no pretend switch: a family would take it for a real setting
   })
 
   it('a narrator goes to tell a story straight away, with no sign-in dialog', async () => {
@@ -185,15 +183,12 @@ describe('La vista de un visitante sin cuenta', () => {
 })
 
 describe('Las pantallas que un visitante también ve', () => {
-  it('Próximamente habla al público: sin las notas internas del equipo, y con la salida al mapa', async () => {
+  it('un enlace viejo a «Próximamente» ya no promete nada: lleva a la página no encontrada, con la salida al mapa', async () => {
     renderApp({ route: '/proximamente/360' })
 
-    expect(await screen.findByText('Estamos trabajando en esto.')).toBeInTheDocument()
-    expect(screen.getByText('Pronto podrás recorrer estos lugares en 360°.')).toBeInTheDocument()
-    expect(within(screen.getByRole('main')).getByRole('link', { name: 'Volver al mapa' })).toHaveAttribute('href', '/')
-    expect(screen.queryByText(/No se construye/)).not.toBeInTheDocument()
-    expect(screen.queryByText(/DEPENDE DE/)).not.toBeInTheDocument()
-    expect(screen.queryByText(/Origen:/)).not.toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'No encontramos esta página' })).toBeInTheDocument()
+    expect(screen.queryByText('Estamos trabajando en esto.')).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Volver al mapa' })).toBeInTheDocument()
   })
 
   it('la página no encontrada muestra el paisaje y lleva al mapa', async () => {

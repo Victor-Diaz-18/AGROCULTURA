@@ -2,8 +2,8 @@
  * Single door to the API. Every service goes through `request`.
  *
  * - Refuses to touch the network when the app is effectively offline
- *   (real connection down or the "Simular conexión" demo switch), so the
- *   demo behaves like a phone without signal.
+ *   (real connection down, or cut by the tests), so it behaves like a
+ *   phone without signal.
  * - Sends the session token when there is one.
  * - Turns errors into OfflineError (no network) or ApiError (server answered).
  */

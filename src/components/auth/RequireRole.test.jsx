@@ -62,12 +62,12 @@ describe('pages that need a role', () => {
 
   it('asks for sign-in from the side menu without leaving the current page', async () => {
     const user = userEvent.setup()
-    renderApp({ route: '/proximamente/ra' })
+    renderApp({ route: '/creditos' })
 
     await user.click(screen.getByRole('link', { name: /Contar una historia/ }))
 
     expect(screen.getByRole('dialog', { name: 'Ingresar' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Avatares en realidad aumentada' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: 'Créditos de las imágenes' })).toBeInTheDocument()
   })
 
   it('does not reopen the sign-in dialog when someone signs out on a protected page', async () => {

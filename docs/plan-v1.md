@@ -183,7 +183,12 @@ Al cerrar cada bloque se compara el resultado con el diseño de referencia (qué
     graba o escribe. Antes había un aviso «Hay una versión nueva» con «Actualizar» y «Después». Se busca al abrir,
     cada hora y al volver la aplicación al frente.
   - El indicador «Simular conexión» del encabezado se pone amarillo también cuando la señal se pierde de verdad (antes
-    solo lo hacía con el interruptor).
+    solo lo hacía con el interruptor). **Cambiado el 24 nov 2026:** el interruptor se quitó (una familia lo tomaría
+    por un ajuste real). Ahora el encabezado solo dice «Sin señal», en amarillo, cuando de verdad no hay señal, para
+    todos; para mostrarlo en una presentación se apaga el wifi o se pone el modo avión.
+  - **«Próximamente» ya no se le muestra al público** (24 nov 2026): el pie de página anunciaba «Recorridos 360°» y
+    «Avatares en RA», que no existen. Siguen en el menú del panel del equipo; un enlace viejo a `/proximamente/…`
+    lleva a «No encontramos esta página».
   - Diferencia menor con el diseño: el aviso del último paso usa el ícono de «sin señal» cuando no hay señal (el
     prototipo dejaba el de wifi).
 - Comprobado en producción tras el despliegue: Vercel sirve `sw.js` (`application/javascript`, sin caché larga, así

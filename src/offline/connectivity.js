@@ -1,30 +1,14 @@
 /**
- * Effective connectivity = the browser's real connection AND the demo switch
- * "Simular conexión" (F10) being on. Everything that talks to the network asks
- * `isOnline()`, so switching the demo to "Sin señal" truly behaves as offline.
+ * Effective connectivity = the browser's real connection AND nobody having cut it by hand. Everything that talks to the
+ * network asks `isOnline()`, so a cut connection truly behaves as offline.
+ *
+ * The page has no way to cut it any more: that was the demo switch «Simular conexión», removed on 24 Nov 2026 because a
+ * family would take it for a real setting. The tests still cut it with `setSimulatedOffline`. Nothing is kept between page
+ * loads, and the flag that switch left in sessionStorage is not read, so a tab where it was on comes back online.
  */
 
-const STORAGE_KEY = 'agrocultura.simulated-offline'
-
-function readStoredFlag() {
-  try {
-    return sessionStorage.getItem(STORAGE_KEY) === '1'
-  } catch {
-    return false // storage can be blocked (private mode)
-  }
-}
-
-function writeStoredFlag(value) {
-  try {
-    if (value) sessionStorage.setItem(STORAGE_KEY, '1')
-    else sessionStorage.removeItem(STORAGE_KEY)
-  } catch {
-    /* the switch still works for this page load */
-  }
-}
-
 let realOnline = typeof navigator === 'undefined' ? true : navigator.onLine !== false
-let simulatedOffline = readStoredFlag()
+let simulatedOffline = false
 const listeners = new Set()
 
 function compute() {
@@ -60,7 +44,6 @@ export function isOnline() {
 export function setSimulatedOffline(value) {
   if (value === simulatedOffline) return
   simulatedOffline = value
-  writeStoredFlag(value)
   emit()
 }
 
@@ -89,7 +72,6 @@ if (typeof window !== 'undefined') {
 export function resetConnectivityForTests({ real = true, simulated = false } = {}) {
   realOnline = real
   simulatedOffline = simulated
-  writeStoredFlag(simulated)
   snapshot = compute()
   listeners.clear()
   reconnectListeners.clear()

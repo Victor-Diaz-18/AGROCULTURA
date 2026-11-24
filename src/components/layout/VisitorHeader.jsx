@@ -7,9 +7,9 @@ import useConnectivity from '../../hooks/useConnectivity.js'
 import Icon from '../ui/Icon.jsx'
 
 /**
- * What someone without an account sees on top: who this is, where to go and how to sign in. The counters of the team and
- * the demo switch belong to the signed-in header. The switch only comes back here while it is on (someone turned it on and
- * signed out), or there would be no way to turn it off; a real loss of signal is just said.
+ * The header of the public pages (visitors, narrators and the team): who this is, where to go and how to sign in. A real
+ * loss of signal is said to everybody. There is no switch to pretend the signal is gone: a family would take it for a
+ * real setting (it was «Simular conexión», removed on 24 Nov 2026).
  */
 function initials(name = '') {
   return name
@@ -22,7 +22,7 @@ function initials(name = '') {
 
 export default function VisitorHeader() {
   const { config } = usePortalData()
-  const { online, simulatedOffline, toggleSimulated } = useConnectivity()
+  const { online } = useConnectivity()
   const { user, role, openLogin, logout } = useAuth()
   const narrator = role === 'narrador'
   const team = role === 'administrador'
@@ -82,22 +82,11 @@ export default function VisitorHeader() {
           )}
         </nav>
 
-        {/* The narrator keeps the demo switch: the team shows with it how a story is kept with no signal. A visitor only sees it while it is on. */}
-        {signedIn || simulatedOffline ? (
-          <button type="button" className="ag-hchip ag-hchip--toggle ag-hchip--compact" aria-pressed={simulatedOffline} data-offline={!online} onClick={toggleSimulated}>
+        {!online && (
+          <span className="ag-hchip ag-hchip--offline">
             <span className="ag-hchip__dot" />
-            <span className="ag-hchip__text">
-              <span className="ag-hchip__label">Simular conexión</span>
-              <span className="ag-hchip__value">{online ? 'En línea' : 'Sin señal'}</span>
-            </span>
-          </button>
-        ) : (
-          !online && (
-            <span className="ag-hchip ag-hchip--toggle" data-offline="true">
-              <span className="ag-hchip__dot" />
-              <span className="ag-hchip__value">Sin señal</span>
-            </span>
-          )
+            <span className="ag-hchip__value">Sin señal</span>
+          </span>
         )}
 
         {signedIn ? (

@@ -230,8 +230,10 @@ npm run preview        # http://localhost:4173, con la API de la forma 2 corrien
 ```
 
 En el navegador, abre la página, espera unos segundos y en las herramientas de desarrollo (Network → «Offline»)
-corta la conexión y recarga. El interruptor «Simular conexión» del encabezado simula la falta de señal sin cortar
-nada (sirve para la demostración y para las pruebas).
+corta la conexión y recarga. Para mostrarlo en una presentación basta con apagar el wifi o poner el teléfono en
+modo avión: el encabezado dice «Sin señal» (en amarillo) y lo que se cuente se guarda en el dispositivo. Antes había
+un interruptor «Simular conexión» en el encabezado; se quitó el 24 nov 2026 porque una familia lo tomaría por un
+ajuste real.
 
 ## Administración (revisión, historias del proyecto y ajustes)
 

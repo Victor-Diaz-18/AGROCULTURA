@@ -35,7 +35,6 @@ export default function AppRoutes() {
         <Route path="historias-propias" element={<Navigate to="/admin/historias" replace />} />
         <Route path="configuracion" element={<Navigate to="/admin/configuracion" replace />} />
         <Route path="administradores" element={<Navigate to="/admin/administradores" replace />} />
-        <Route path="proximamente/:id" element={<FuturePage variant="portal" />} />
         <Route path="creditos" element={<CreditsPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
@@ -47,7 +46,7 @@ export default function AppRoutes() {
         <Route path="historias" element={<ProjectStoriesPage variant="admin" />} />
         <Route path="configuracion" element={<SettingsPage variant="admin" />} />
         <Route path="administradores" element={<AdminsPage />} />
-        <Route path="proximamente/:id" element={<FuturePage variant="admin" />} />
+        <Route path="proximamente/:id" element={<FuturePage />} />
       </Route>
     </Routes>
   )

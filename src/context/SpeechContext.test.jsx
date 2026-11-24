@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { ADMIN } from '../test/auth.js'
 import { CONFIG } from '../test/fixtures.js'
 import { renderApp, callsTo, reply } from '../test/renderApp.jsx'
 import { setSimulatedOffline } from '../offline/connectivity.js'
@@ -37,7 +38,7 @@ describe('voice guide (F9)', () => {
     renderApp()
     await user.click(screen.getByRole('button', { name: 'Escuchar' }))
 
-    await user.click(screen.getByRole('link', { name: /Recorridos 360°/ }))
+    await user.click(screen.getByRole('link', { name: 'Créditos de las demás imágenes' }))
 
     expect(screen.queryByText(/Leyendo en voz alta/)).not.toBeInTheDocument()
   })
@@ -157,7 +158,8 @@ describe('voice guide (F9)', () => {
     it('reads the fixed words of another page with the same voice', async () => {
       const user = userEvent.setup()
       const { fetchMock } = renderApp({
-        route: '/proximamente/360',
+        route: '/admin/proximamente/360',
+        user: ADMIN,
         api: { '/config': { ...CONFIG, voz_disponible: true }, '/voz/paginas/proximamente-360': { url: 'https://audio.test/360.mp3' } },
       })
       await waitFor(() => expect(callsTo(fetchMock, '/config').length).toBeGreaterThan(0))

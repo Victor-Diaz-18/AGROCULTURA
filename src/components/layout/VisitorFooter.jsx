@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom'
 
-/** Who makes this, for someone who just arrived, and what is coming (the entries a signed-in person has in the side menu). */
+/**
+ * Who makes this, for someone who just arrived, and the credit of the images. What is coming (360° tours, avatars in AR)
+ * is not announced here: the public is not promised what is not built. The team still sees it in its side menu.
+ */
 export default function VisitorFooter() {
   return (
     <footer className="ag-vfooter">
@@ -18,11 +21,6 @@ export default function VisitorFooter() {
         </a>
         . <Link to="/creditos">Créditos de las demás imágenes</Link>.
       </p>
-      <nav aria-label="Próximamente" className="ag-vfooter__next">
-        <span>Próximamente:</span>
-        <Link to="/proximamente/360">Recorridos 360°</Link>
-        <Link to="/proximamente/ra">Avatares en RA</Link>
-      </nav>
     </footer>
   )
 }

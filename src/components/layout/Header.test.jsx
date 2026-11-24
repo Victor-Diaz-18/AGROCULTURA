@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { act, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { ADMIN } from '../../test/auth.js'
+import { act, screen, waitFor, within } from '@testing-library/react'
+import { ADMIN, NARRATOR } from '../../test/auth.js'
 import { STATS } from '../../test/fixtures.js'
 import { renderApp } from '../../test/renderApp.jsx'
 
@@ -12,62 +11,50 @@ describe('Header', () => {
     expect(await screen.findByText(/datos de ejemplo/i)).toBeInTheDocument()
   })
 
-  it('"Simular conexión" switches between "En línea" and "Sin señal"', async () => {
-    const user = userEvent.setup()
-    renderApp({ user: ADMIN })
-    const toggle = screen.getByRole('button', { name: /Simular conexión/ })
-    expect(toggle).toHaveTextContent('En línea')
+  it.each([
+    ['a narrator', NARRATOR],
+    ['an administrator', ADMIN],
+  ])('has no switch to pretend the signal is gone, not even for %s: a family would take it for a real setting', async (_, who) => {
+    renderApp({ user: who })
+    await screen.findByRole('heading', { level: 1 })
 
-    await user.click(toggle)
-    expect(toggle).toHaveTextContent('Sin señal')
-    expect(toggle).toHaveAttribute('aria-pressed', 'true')
-
-    await user.click(toggle)
-    expect(toggle).toHaveTextContent('En línea')
-    expect(toggle).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.queryByRole('button', { name: /Simular conexión/ })).not.toBeInTheDocument()
+    expect(screen.queryByText('En línea')).not.toBeInTheDocument()
   })
 
-  it('also shows "Sin señal" (in yellow) when the phone really loses the connection, without the demo switch', async () => {
-    renderApp({ user: ADMIN })
-    const toggle = screen.getByRole('button', { name: /Simular conexión/ })
-    expect(toggle).toHaveAttribute('data-offline', 'false')
+  it('says "Sin señal" (in yellow) only while the phone really has no signal', async () => {
+    renderApp({ user: NARRATOR })
+    const banner = screen.getByRole('banner')
+    expect(within(banner).queryByText('Sin señal')).not.toBeInTheDocument()
 
     act(() => window.dispatchEvent(new Event('offline')))
-
-    expect(toggle).toHaveTextContent('Sin señal')
-    expect(toggle).toHaveAttribute('data-offline', 'true')
-    expect(toggle).toHaveAttribute('aria-pressed', 'false') // the switch itself is off
+    expect(within(banner).getByText('Sin señal').closest('.ag-hchip')).toHaveClass('ag-hchip--offline')
 
     act(() => window.dispatchEvent(new Event('online')))
-
-    expect(toggle).toHaveTextContent('En línea')
-    expect(toggle).toHaveAttribute('data-offline', 'false')
+    expect(within(banner).queryByText('Sin señal')).not.toBeInTheDocument()
   })
 
   it('tells the person when the signal goes and when it comes back', async () => {
-    const user = userEvent.setup()
     renderApp({ user: ADMIN })
-    const toggle = screen.getByRole('button', { name: /Simular conexión/ })
 
-    await user.click(toggle)
+    act(() => window.dispatchEvent(new Event('offline')))
     expect(await screen.findByText('Sin señal: lo que cuentes se guarda en el dispositivo.')).toBeInTheDocument()
 
-    await user.click(toggle)
+    act(() => window.dispatchEvent(new Event('online')))
     expect(await screen.findByText('Volvió la señal.')).toBeInTheDocument()
   })
 
-  it('does not call the API while the demo switch simulates no signal, and reloads when it ends', async () => {
-    const user = userEvent.setup()
+  it('does not call the API while there is no signal, and reloads when it comes back', async () => {
     const { fetchMock } = renderApp({ user: ADMIN })
     await screen.findByRole('heading', { level: 1 })
     fetchMock.mockClear()
 
-    await user.click(screen.getByRole('button', { name: /Simular conexión/ }))
+    act(() => window.dispatchEvent(new Event('offline')))
     expect(fetchMock).not.toHaveBeenCalled()
 
-    await user.click(screen.getByRole('button', { name: /Simular conexión/ }))
+    act(() => window.dispatchEvent(new Event('online')))
     await screen.findByRole('heading', { level: 1 })
-    expect(fetchMock).toHaveBeenCalled()
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled())
   })
 
   it('shows each administrator their own name and initials, not one name for all of them', async () => {
