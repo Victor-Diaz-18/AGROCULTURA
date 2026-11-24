@@ -240,6 +240,40 @@ describe('new versions of the app', () => {
         expect(sessionStorage.getItem('agrocultura.actualizando')).toBeNull()
       })
 
+      // When the new version takes over, the plugin reloads every tab that saw it arrive unless it is given
+      // onNeedReload: that is how a tab in the middle of a story was being reloaded anyway.
+      it('when the new version takes over, a tab that saw it arrive reloads to show it', () => {
+        pwa.options.onRegisteredSW('/sw.js', waiting())
+        pwa.options.onNeedRefresh()
+
+        pwa.options.onNeedReload()
+
+        expect(reload).toHaveBeenCalledTimes(1)
+      })
+
+      it.each(['/contar', '/admin/historias'])('but a tab on %s stays as it is, with the notice still there', (path) => {
+        window.history.replaceState(null, '', path)
+        pwa.options.onRegisteredSW('/sw.js', waiting())
+        pwa.options.onNeedRefresh()
+
+        pwa.options.onNeedReload()
+
+        expect(reload).not.toHaveBeenCalled()
+        expect(getSnapshot().available).toBe(true) // "Actualizar" there, when the person is ready, brings the new version
+      })
+
+      it('the tab that pressed "Actualizar" reloads only once, even on one of those pages', async () => {
+        window.history.replaceState(null, '', '/contar')
+        pwa.options.onRegisteredSW('/sw.js', waiting())
+        pwa.options.onNeedRefresh()
+
+        await applyUpdate()
+        workers.dispatchEvent(new Event('controllerchange'))
+        pwa.options.onNeedReload()
+
+        expect(reload).toHaveBeenCalledTimes(1)
+      })
+
       it('ignores anything else said on the channel', () => {
         deliver('otra cosa')
 

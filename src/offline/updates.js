@@ -24,8 +24,17 @@ export const TAKEOVER_WAIT_MS = 3000
 const CHANNEL = 'agrocultura-actualizar'
 const UPDATING = 'actualizar'
 
-/** Pages where a reload nobody asked for would lose work in progress: a tab on one of these does not step aside. */
+/**
+ * Pages where a reload nobody asked for would lose work in progress (a recording, a story being typed): a tab on one
+ * of these neither steps aside nor reloads when the new version takes over. It keeps the notice, and gets the new
+ * version when the person presses "Actualizar" there or opens the app again.
+ */
 const BUSY_PATHS = ['/contar', '/admin/historias']
+
+function onBusyPage() {
+  const path = typeof window !== 'undefined' ? window.location.pathname : ''
+  return BUSY_PATHS.some((busy) => path.startsWith(busy))
+}
 
 /**
  * What a page leaves for the one that opens next in the same tab, when it reloads in the middle of an update. Read
@@ -113,6 +122,12 @@ export function watchForUpdates({ enabled = import.meta.env.PROD && 'serviceWork
       if (mark === RELOAD_AGAIN) return // the reload below is coming: no notice for a moment
       publish({ ...snapshot, available: true })
     },
+    // The new version took over. Without this the plugin reloads every tab that saw it arrive, busy or not.
+    onNeedReload() {
+      if (snapshot.applying) return // this tab pressed "Actualizar": applyUpdate reloads it
+      if (onBusyPage()) return // somebody may be in the middle of a story here
+      reloadPage()
+    },
     onRegisteredSW(_url, found) {
       registration = found ?? null
       if (!found) return
@@ -132,8 +147,7 @@ export function watchForUpdates({ enabled = import.meta.env.PROD && 'serviceWork
 /** Another tab of the app is updating and this one holds the old version just by being open: reload to let it go. */
 function stepAside() {
   if (snapshot.applying) return // this tab is updating too
-  const path = typeof window !== 'undefined' ? window.location.pathname : ''
-  if (BUSY_PATHS.some((busy) => path.startsWith(busy))) return // somebody may be in the middle of a story here
+  if (onBusyPage()) return // somebody may be in the middle of a story here
   leaveMark(RELOAD_AGAIN)
   reloadPage()
 }
