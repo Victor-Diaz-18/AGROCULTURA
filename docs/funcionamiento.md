@@ -299,6 +299,24 @@ visitante recibe 401 y un narrador 403.
   `api/index.py`, `src/components/admin/DemoResetDialog.jsx` y la tarjeta «Datos de ejemplo» de
   `SettingsPage.jsx`; o simplemente no definas `ALLOW_DEMO_RESET`.
 
+## Encabezados de seguridad (24-nov-2026)
+
+Están en `vercel.json` (`headers`), además del HSTS que Vercel pone solo:
+
+- **En todas las direcciones:** `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY` (nadie puede meter el portal
+  dentro de otra página), `Referrer-Policy: strict-origin-when-cross-origin` y `Permissions-Policy`, que solo deja usar
+  micrófono, cámara y ubicación al propio portal y apaga los pagos y el USB.
+- **`Content-Security-Policy` en el portal** (todo menos `/api/` y `/h/`): el navegador solo ejecuta los scripts del propio
+  portal (ninguno escrito dentro de la página ni de otro sitio) y solo carga de afuera lo que el portal usa:
+  - los pedazos del mapa de `tile.openstreetmap.org` (como imagen, y para guardarlos sin señal);
+  - las fotos, audios y videos de las historias, en `*.public.blob.vercel-storage.com`;
+  - la subida de videos directo a Blob, que habla con `vercel.com/api/blob`.
+- **`/h/CÓDIGO` trae su propia política**, más estricta, desde el servidor: no carga nada y solo ejecuta su línea de
+  redirección, reconocida por su huella (`sha256`).
+- **Si se agrega un servicio de afuera** (otro proveedor de mapa, un video de YouTube, fuentes de Google…), hay que agregar
+  su dirección a la política en `vercel.json`, o el navegador no lo mostrará. `src/securityHeaders.test.js` revisa que el
+  proveedor del mapa de `src/config/map.js` esté permitido, y que `index.html` no tenga scripts escritos dentro.
+
 ## Accesibilidad
 
 Pensada para quien no está acostumbrado a las pantallas (ver también la voz de «Escuchar», F9). Se revisó contra **WCAG 2.2

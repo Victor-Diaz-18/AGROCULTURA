@@ -11,6 +11,8 @@ anonymous one, and no place for a story published without one.
 
 from __future__ import annotations
 
+import base64
+import hashlib
 import json
 import re
 from html import escape
@@ -65,32 +67,49 @@ def story_preview(db: Database, code: str) -> dict | None:
 
 
 def render(db: Database, code: str, base: str) -> tuple[int, str]:
-    """(status, page) for /h/<code>: the story's preview, or the portal's when the story is not published."""
+    """(status, page, security policy) for /h/<code>: the story's preview, or the portal's when the story is not published."""
     portal = config.get_portal(db)["nombre_portal"]
     preview = story_preview(db, code)
     if preview is None:
-        return 404, _page(
+        status, go_to = 404, "/"
+        page = _page(
             title=portal,
             description="Memoria histórica y patrimonio cultural de la cultura cafetera de Minca y sectores aledaños.",
             image=base + COVER,
             url=base + "/",
-            go_to="/",
+            go_to=go_to,
             site=portal,
         )
-    code_in_url = quote(preview["codigo"], safe="")
-    return 200, _page(
-        title=preview["titulo"],
-        description=preview["descripcion"],
-        image=preview["imagen"] or base + COVER,
-        url=f"{base}/h/{code_in_url}",
-        go_to=f"/?historia={code_in_url}&ficha=1",  # the story on the map, with its card open
-        site=portal,
-    )
+    else:
+        code_in_url = quote(preview["codigo"], safe="")
+        status, go_to = 200, f"/?historia={code_in_url}&ficha=1"  # the story on the map, with its card open
+        page = _page(
+            title=preview["titulo"],
+            description=preview["descripcion"],
+            image=preview["imagen"] or base + COVER,
+            url=f"{base}/h/{code_in_url}",
+            go_to=go_to,
+            site=portal,
+        )
+    return status, page, content_policy(go_to)
+
+
+def _redirect_script(go_to: str) -> str:
+    target = json.dumps(go_to).replace("<", "\\u003c")  # a JavaScript string that cannot close the <script>
+    return f"location.replace({target})"
+
+
+def content_policy(go_to: str) -> str:
+    """The page loads nothing and runs only its own line of script (by its hash): the strictest policy there is.
+
+    vercel.json leaves /h/ out of the portal's policy, which allows no inline script at all.
+    """
+    digest = base64.b64encode(hashlib.sha256(_redirect_script(go_to).encode("utf-8")).digest()).decode("ascii")
+    return f"default-src 'none'; script-src 'sha256-{digest}'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
 
 
 def _page(*, title: str, description: str, image: str, url: str, go_to: str, site: str) -> str:
     e = lambda value: escape(value, quote=True)  # noqa: E731 - everything that goes in the page, in every place
-    target = json.dumps(go_to).replace("<", "\\u003c")  # a JavaScript string that cannot close the <script>
     return f"""<!doctype html>
 <html lang="es">
 <head>
@@ -107,7 +126,7 @@ def _page(*, title: str, description: str, image: str, url: str, go_to: str, sit
 <meta property="og:url" content="{e(url)}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#1F3A2E">
-<script>location.replace({target})</script>
+<script>{_redirect_script(go_to)}</script>
 </head>
 <body>
 <p><a href="{e(go_to)}">Abrir «{e(title)}» en {e(site)}</a></p>

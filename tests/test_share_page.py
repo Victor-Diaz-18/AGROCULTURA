@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import base64
+import hashlib
 import re
 
 import pytest
@@ -132,6 +134,20 @@ def test_a_code_that_does_not_exist_shows_the_portal(client, db):
 
     assert response.status_code == 404
     assert meta(response.text, "og:image") == "http://testserver/compartir.jpg"
+
+
+def test_the_page_runs_nothing_but_its_own_line_of_script(client, db):
+    publish(db)
+
+    response = client.get("/h/HIS-2026-050")
+
+    policy = response.headers["content-security-policy"]
+    script = re.search(r"<script>(.*)</script>", response.text).group(1)
+    digest = base64.b64encode(hashlib.sha256(script.encode("utf-8")).digest()).decode("ascii")
+    assert policy.startswith("default-src 'none'; ")
+    assert f"script-src 'sha256-{digest}'" in policy
+    assert "frame-ancestors 'none'" in policy
+    assert "unsafe-inline" not in policy
 
 
 def test_the_preview_is_kept_only_a_few_minutes_and_answers_a_head_too(client, db):
