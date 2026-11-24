@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { ADMIN } from '../../test/auth.js'
+import { ADMIN, OTHER_ADMIN } from '../../test/auth.js'
 import { adminStory } from '../../test/fixtures.js'
 import { mockMapSize } from '../../test/layout.js'
 import { callsTo, renderApp, reply } from '../../test/renderApp.jsx'
@@ -469,5 +469,16 @@ describe('borrar una historia publicada', () => {
     expect(await screen.findByText('Se borró «El patio».')).toBeInTheDocument()
     expect(deleted).toEqual(['DELETE'])
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+  })
+
+  it('un administrador que no es el principal no ve el botón de borrar', async () => {
+    const user = userEvent.setup()
+    renderApp({ route: '/admin/historias', user: OTHER_ADMIN, api: api() })
+
+    await user.click(await screen.findByRole('button', { name: /Ver ficha/ }))
+    const card = await screen.findByRole('dialog', { name: 'Ficha de la historia' })
+
+    expect(within(card).getByRole('heading', { name: 'El patio donde se secaba el café' })).toBeInTheDocument()
+    expect(within(card).queryByRole('button', { name: /Borrar historia/ })).not.toBeInTheDocument()
   })
 })

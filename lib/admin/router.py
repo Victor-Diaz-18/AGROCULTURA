@@ -5,7 +5,7 @@ from pymongo.database import Database
 
 from lib.admin.schemas import EtiquetaIn, PortalCambios
 from lib.auth import admins
-from lib.auth.deps import require_admin, require_main_admin
+from lib.auth.deps import require_admin, require_main_admin, require_main_admin_to_delete
 from lib.auth.schemas import AdminNuevoIn, AdminOut
 from lib.catalog import service as catalog
 from lib.config import service as config
@@ -45,9 +45,10 @@ def reject(codigo: str, body: RechazarIn, admin: dict = Depends(require_admin), 
     return review.reject(db, codigo, admin=admin, reason_id=body.motivo)
 
 
-@router.delete("/historias/{codigo}", status_code=204)
+@router.delete("/historias/{codigo}", status_code=204, dependencies=[Depends(require_main_admin_to_delete)])
 def delete_story(codigo: str, db: Database = Depends(get_db), storage: Storage = Depends(get_storage)):
-    """Deletes a published story for good, with its files. Only published stories: the queue is decided by approving or rejecting."""
+    """Deletes a published story for good, with its files. Only the main administrator, since it cannot be undone.
+    Only published stories: the queue is decided by approving or rejecting."""
     review.delete_published(db, codigo, delete_files=storage.delete)
     return Response(status_code=204)
 

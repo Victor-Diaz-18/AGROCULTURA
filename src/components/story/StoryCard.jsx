@@ -208,7 +208,8 @@ export default function StoryCard({ story, onClose, onDelete }) {
           )}
         </div>
       </div>
-      {onDelete && published && (
+      {/* Deleting cannot be undone: only the main administrator gets the button (the server refuses the others too). */}
+      {onDelete && published && user?.principal && (
         <div className="ag-card-story__danger">
           <button type="button" className="ag-btn ag-btn--danger" onClick={() => setAsking(true)}>
             <Icon name="cerrar" size={16} />

@@ -1,9 +1,10 @@
-"""An administrator deletes a published story: it leaves the map and its files are deleted too."""
+"""The main administrator deletes a published story: it leaves the map and its files are deleted too. The others cannot."""
 
 from __future__ import annotations
 
 import pytest
 
+from tests.conftest import bearer
 from tests.factories import make_story
 
 PHOTO = "https://store123.public.blob.vercel-storage.com/historias/u/foto.jpg"
@@ -47,6 +48,20 @@ def test_a_narrator_or_a_visitor_cannot_delete(client, narrator, db):
     assert client.delete("/api/admin/historias/HIS-2026-090", headers=narrator["headers"]).status_code == 403
     assert client.delete("/api/admin/historias/HIS-2026-090").status_code == 401
     assert db.historias.find_one({"codigo": "HIS-2026-090"}) is not None
+
+
+def test_an_administrator_created_from_the_panel_cannot_delete(client, admin, db, storage):
+    publish(db)
+    other = {"usuario": "Marta Ríos", "nombre": "Marta Ríos", "clave": "clave-larga-123"}
+    assert client.post("/api/admin/administradores", json=other, headers=admin["headers"]).status_code == 201
+    token = client.post("/api/auth/ingreso", json={"usuario": other["usuario"], "clave": other["clave"]}).json()["token"]
+
+    response = client.delete("/api/admin/historias/HIS-2026-090", headers=bearer(token))
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Solo el administrador principal puede borrar historias."
+    assert db.historias.find_one({"codigo": "HIS-2026-090"}) is not None
+    assert storage.deleted == []
 
 
 def test_a_file_that_cannot_be_deleted_does_not_bring_the_story_back(client, admin, db, storage, monkeypatch):

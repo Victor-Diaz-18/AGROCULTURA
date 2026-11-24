@@ -46,8 +46,17 @@ def require_roles(*roles: str):
 require_admin = require_roles(ROL_ADMIN)
 
 
-def require_main_admin(user: dict = Depends(require_admin), settings: Settings = Depends(get_settings)) -> dict:
-    """Only the administrator named by ADMIN_USER gets through: the ones it creates cannot manage administrators."""
-    if not is_main(user, settings):
-        raise ForbiddenError("Solo el administrador principal puede gestionar a los administradores.")
-    return user
+def main_admin_only(message: str):
+    """Dependency factory: only the administrator named by ADMIN_USER gets through; the others get `message` (403)."""
+
+    def dependency(user: dict = Depends(require_admin), settings: Settings = Depends(get_settings)) -> dict:
+        if not is_main(user, settings):
+            raise ForbiddenError(message)
+        return user
+
+    return dependency
+
+
+# The administrators it creates cannot manage administrators nor delete stories.
+require_main_admin = main_admin_only("Solo el administrador principal puede gestionar a los administradores.")
+require_main_admin_to_delete = main_admin_only("Solo el administrador principal puede borrar historias.")
