@@ -29,13 +29,21 @@ const TABS = [
   { id: 'rechazada', label: ESTADOS.rechazada.label, dot: 'var(--st-rechazada-dot)' },
 ]
 
+const CORRECTED = { titulo: 'el título', texto: 'el texto' }
+
+/** What the team corrected before publishing a story, said to its narrator ("" when nothing). */
+export function correctedText(fields = []) {
+  const parts = fields.map((field) => CORRECTED[field]).filter(Boolean)
+  return parts.length > 0 ? `El equipo del proyecto corrigió ${parts.join(' y ')} antes de publicarla` : ''
+}
+
 /** What happens next with a story: the rejection reason, why a draft or a video is stuck, or the next step of its state (and its video, if one is still on the phone). */
 export function nextStep(story) {
   if (story.estado === 'rechazada') return story.motivo_rechazo ?? ''
   if (story.estado === 'borrador' && story.fallo) return story.fallo
   const video = story.video_pendiente
   if (video?.fallo) return video.fallo
-  const base = story.estado === 'publicada' ? '' : (ESTADOS[story.estado]?.sigue ?? '')
+  const base = story.estado === 'publicada' ? correctedText(story.corregido) : (ESTADOS[story.estado]?.sigue ?? '')
   if (!video) return base
   const about = video.progreso != null ? `Subiendo el video… ${video.progreso} %` : 'Falta subir el video: se sube cuando haya señal.'
   return base ? `${base}. ${about}` : about

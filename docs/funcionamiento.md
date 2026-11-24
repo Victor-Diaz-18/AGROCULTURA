@@ -280,6 +280,17 @@ visitante recibe 401 y un narrador 403.
   la historia). Una historia se decide **una sola vez**: la decisión es una sola operación atómica sobre las que
   siguen «en revisión», así que dos administradores no pueden decidir la misma a la vez (el segundo recibe 409).
   Las historias del proyecto no pasan por revisión.
+- **Corregir el título o el texto antes de publicar (24-nov-2026).** En la ventana de revisión, **cualquier administrador** puede tocar
+  «Corregir título o texto» (o «Corregir el título», si la historia no tiene texto escrito) para arreglar la ortografía o aclarar el título.
+  Solo mientras la historia **espera revisión** y solo de las familias (`PATCH /api/admin/historias/{código}`, con `titulo` y `texto`); nada
+  más cambia: ni los archivos, ni el lugar, ni la autorización.
+  - El título sigue la misma regla que al escribirlo (3 a 120 letras). El texto no puede quedar vacío (si no sirve, se rechaza), y a una
+    historia contada solo con la voz no se le puede agregar texto.
+  - **Lo que escribió el narrador queda guardado** la primera vez (`correccion`, con quién corrigió por última vez y cuándo). El equipo lo
+    lee en la misma ventana, en «Ver lo que escribió el narrador». El público nunca lo ve; la búsqueda usa el título nuevo.
+  - **El narrador se entera:** cuando se publica, su fila en «Mis historias» dice «El equipo del proyecto corrigió el título (o el texto, o
+    los dos) antes de publicarla». Si la corrección la dejó igual que antes, no dice nada.
+  - Mientras el formulario está abierto no se puede aprobar ni rechazar, para no publicar sin la corrección.
 - **Historias del proyecto (F12).** Se publican de una vez y quedan marcadas «del proyecto». Los archivos los sube
   el propio administrador (las fotos y el audio por `POST /api/medios`; el video directo a Blob, ver «Video») y una
   historia solo puede apuntar a archivos que subió quien la crea.

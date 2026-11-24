@@ -43,6 +43,29 @@ def _iso(moment: datetime | None) -> str:
     return moment.isoformat(timespec="seconds") + "Z" if moment else ""
 
 
+def search_text_of(story: dict, sector_name: str) -> str:
+    """What the search box matches for a story: only what the public may read. Not the real name of an anonymous story, and
+    nothing about the place of a story that has none. `sector_name` is the name of its sector ("" without one)."""
+    located = bool(story.get("ubicacion"))
+    return search_text(
+        story["titulo"],
+        NARRADOR_ANONIMO if story.get("anonima") else story.get("narrador_nombre", ""),
+        sector_name if located else "",
+        (story.get("lugar_nombre") or "") if located else "",
+        story.get("finca_nombre") or "",
+        story["epoca"],
+        " ".join(story.get("etiquetas", [])),
+    )
+
+
+def corrected_fields(story: dict) -> list[str]:
+    """What the team changed of what the narrator wrote ("titulo", "texto"); empty when nothing is different."""
+    original = story.get("correccion")
+    if not original:
+        return []
+    return [field for field in ("titulo", "texto") if original.get(field, "") != story.get(field, "")]
+
+
 def search_text(*parts: str) -> str:
     """Lowercase, accent-free text used by the search box (F11)."""
     joined = " ".join(part for part in parts if part)
@@ -145,17 +168,6 @@ def insert_story(
         "motivo_rechazo": None,
         "origen": origen,
         "ejemplo": False,
-        # What the search matches is only what the public may read: not the real name of an anonymous story, and nothing
-        # about the place of a story that has none.
-        "busqueda": search_text(
-            data.titulo,
-            NARRADOR_ANONIMO if data.anonima else narrador_nombre,
-            sector_name if location else "",
-            (data.lugar_nombre or "") if location else "",
-            data.finca_nombre or "",
-            data.epoca,
-            " ".join(data.etiquetas),
-        ),
         "creada_en": now,
         "enviada_en": now,
         "revisada_en": None,
@@ -165,6 +177,7 @@ def insert_story(
 
     if location is not None:  # a story without a place has no point at all (the geospatial index skips it)
         document["ubicacion"] = location
+    document["busqueda"] = search_text_of(document, sector_name)
 
     for _ in range(3):  # a repeated code can only happen if someone edited the counter by hand
         document["codigo"] = f"HIS-{now.year}-{repository.next_code_number(db, now.year):03d}"
@@ -201,6 +214,7 @@ def my_stories(db: Database, user: dict) -> list[dict]:
             "formatos": formats_of(story),
             "estado": story["estado"],
             "motivo_rechazo": story.get("motivo_rechazo"),
+            "corregido": corrected_fields(story) if story["estado"] == "publicada" else [],
             "enviada_en": _iso(story.get("enviada_en") or story.get("creada_en")),
         }
         for story in repository.list_by_author(db, user["_id"])

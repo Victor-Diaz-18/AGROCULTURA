@@ -117,6 +117,7 @@ export default function SummaryPage() {
             reload()
           }}
           onStale={reload}
+          onCorrected={reload}
         />
       )}
     </>

@@ -127,6 +127,15 @@ def decide(db: Database, code: str, changes: dict, *, needs_consent: bool = Fals
     return collection(db).find_one_and_update(query, {"$set": changes}, return_document=ReturnDocument.AFTER)
 
 
+def correct(db: Database, code: str, changes: dict) -> dict | None:
+    """Saves the team's correction of a community story that is still waiting for review. None if it no longer waits."""
+    return collection(db).find_one_and_update(
+        {"codigo": code, "estado": "revision", "origen": "comunidad"},
+        {"$set": changes},
+        return_document=ReturnDocument.AFTER,
+    )
+
+
 def add_video(db: Database, story_id, medio: dict) -> dict | None:
     """Adds the video to a story that is in review and has none. None when it did not apply (it has one, or was reviewed).
 

@@ -137,6 +137,19 @@ describe('every page passes axe', () => {
     await screen.findByRole('dialog')
     await expectAccessible()
   })
+
+  it('the review dialog while correcting the title and the text, and with a correction already made', async () => {
+    const user = userEvent.setup()
+    const corrected = adminStory({ estado: 'revision', origen: 'comunidad', correccion: { titulo: 'Titulo viejo', texto: 'Texto viejo.', por: 'Administración', en: '2026-11-24T15:00:00Z' } })
+    renderApp({ route: '/admin/revision', user: ADMIN, api: { '/admin/historias': [corrected] } })
+    await user.click(await screen.findByRole('button', { name: /^Revisar/ }))
+    await screen.findByText(/Ver lo que escribió el narrador/)
+    await expectAccessible()
+
+    await user.click(screen.getByRole('button', { name: 'Corregir título o texto' }))
+    await screen.findByLabelText('Título')
+    await expectAccessible()
+  })
 })
 
 describe('the map’s groups of stories', () => {

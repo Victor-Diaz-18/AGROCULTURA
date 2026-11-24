@@ -17,6 +17,21 @@ MAX_PLACE_NAME = 80
 MAX_FARM_NAME = 80
 
 
+def clean_title(value: str) -> str:
+    """A story's title, the same for the narrator who writes it and for the team that corrects it."""
+    title = re.sub(r"\s+", " ", value).strip()
+    if not 3 <= len(title) <= 120:
+        raise ValueError("Ponle un título a tu historia (entre 3 y 120 letras).")
+    return title
+
+
+def clean_text(value: str) -> str:
+    text = value.strip()
+    if len(text) > MAX_TEXT:
+        raise ValueError(f"La historia escrita es muy larga (máximo {MAX_TEXT} letras).")
+    return text
+
+
 # ---- statistics --------------------------------------------------------------
 
 
@@ -135,18 +150,12 @@ class HistoriaIn(BaseModel):
     @field_validator("titulo")
     @classmethod
     def clean_title(cls, value: str) -> str:
-        title = re.sub(r"\s+", " ", value).strip()
-        if not 3 <= len(title) <= 120:
-            raise ValueError("Ponle un título a tu historia (entre 3 y 120 letras).")
-        return title
+        return clean_title(value)
 
     @field_validator("texto")
     @classmethod
     def clean_text(cls, value: str) -> str:
-        text = value.strip()
-        if len(text) > MAX_TEXT:
-            raise ValueError(f"La historia escrita es muy larga (máximo {MAX_TEXT} letras).")
-        return text
+        return clean_text(value)
 
     @field_validator("epoca")
     @classmethod
@@ -268,6 +277,15 @@ class ConsentimientoAdmin(BaseModel):
     aceptado_en: str
 
 
+class CorreccionAdmin(BaseModel):
+    """What the narrator had written before the team corrected it, and who corrected it last."""
+
+    titulo: str
+    texto: str
+    por: str
+    en: str
+
+
 class HistoriaAdmin(BaseModel):
     """A story as the administrators see it: all the content, to review or to read."""
 
@@ -291,9 +309,27 @@ class HistoriaAdmin(BaseModel):
     lat: float | None = None
     lon: float | None = None
     consentimiento: ConsentimientoAdmin | None = None  # None: sent before it existed, or demo data
+    correccion: CorreccionAdmin | None = None  # None: nobody corrected it, or the correction left it as it was
     enviada_en: str
     revisada_en: str = ""
     publicada_en: str = ""
+
+
+class CorreccionIn(BaseModel):
+    """What the team corrects of a story waiting for review: its title and its text (typos, a clearer title). Nothing else."""
+
+    titulo: str = Field(max_length=500)
+    texto: str = Field("", max_length=20000)
+
+    @field_validator("titulo")
+    @classmethod
+    def check_title(cls, value: str) -> str:
+        return clean_title(value)
+
+    @field_validator("texto")
+    @classmethod
+    def check_text(cls, value: str) -> str:
+        return clean_text(value)
 
 
 class HistoriaPapelera(HistoriaAdmin):
@@ -324,4 +360,6 @@ class HistoriaMia(BaseModel):
     formatos: list[str]
     estado: str
     motivo_rechazo: str | None = None
+    # What the team corrected before publishing it ("titulo", "texto"), so the narrator knows. Only on a published story.
+    corregido: list[str] = Field(default_factory=list)
     enviada_en: str

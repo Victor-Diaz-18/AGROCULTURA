@@ -149,6 +149,7 @@ export default function ReviewPage({ variant = 'portal' }) {
           onClose={() => setOpenCode(null)}
           onDecided={decided}
           onStale={reload}
+          onCorrected={reload}
         />
       )}
     </>

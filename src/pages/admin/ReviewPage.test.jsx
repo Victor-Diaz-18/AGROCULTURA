@@ -185,6 +185,106 @@ describe('Revisión: leer la historia', () => {
   })
 })
 
+describe('Revisión: corregir el título o el texto antes de publicar', () => {
+  /** The review API, plus a correction that changes the story in the queue the way the server does. */
+  const correctingApi = ({ fails = null, queue = [{ ...FIRST }, SECOND] } = {}) => {
+    const api = reviewApi({ queue })
+    api['/admin/historias/HIS-2026-008'] = (init) => {
+      if (fails) return reply({ detail: fails }, fails.includes('ya se revisó') ? 409 : 422)
+      const body = JSON.parse(init.body)
+      const story = queue[0]
+      const original = story.correccion ?? { titulo: story.titulo, texto: story.texto }
+      Object.assign(story, body, { correccion: { ...original, por: 'Administración', en: '2026-11-24T15:00:00Z' } })
+      return { ...story }
+    }
+    return api
+  }
+  const openFirst = async (user, api = correctingApi()) => {
+    const rendered = open('admin', api)
+    await user.click((await screen.findAllByRole('button', { name: 'Revisar' }))[0])
+    return { ...rendered, dialog: await screen.findByRole('dialog', { name: 'Revisar historia' }) }
+  }
+
+  it('corrects the title and the text, keeps what the narrator wrote and tells the reviewer', async () => {
+    const user = userEvent.setup()
+    const { dialog, fetchMock } = await openFirst(user)
+
+    await user.click(within(dialog).getByRole('button', { name: 'Corregir título o texto' }))
+    const title = within(dialog).getByLabelText('Título')
+    await user.clear(title)
+    await user.type(title, 'El beneficiadero de la vereda')
+    const text = within(dialog).getByLabelText('Texto')
+    await user.clear(text)
+    await user.type(text, 'Entre varias familias, armamos el beneficiadero.')
+    await user.click(within(dialog).getByRole('button', { name: 'Guardar corrección' }))
+
+    expect(await screen.findByText('Corrección guardada. Cuando se publique, el narrador verá que el equipo la corrigió.')).toBeInTheDocument()
+    expect(within(dialog).getByRole('heading', { name: 'El beneficiadero de la vereda' })).toBeInTheDocument()
+    expect(within(dialog).getByText('Entre varias familias, armamos el beneficiadero.')).toBeInTheDocument()
+    const [call] = callsTo(fetchMock, '/admin/historias/HIS-2026-008')
+    expect(call[1].method).toBe('PATCH')
+    expect(JSON.parse(call[1].body)).toEqual({ titulo: 'El beneficiadero de la vereda', texto: 'Entre varias familias, armamos el beneficiadero.' })
+
+    const original = within(dialog).getByText(/Corregida por Administración el .*Ver lo que escribió el narrador/)
+    await user.click(original)
+    expect(within(dialog).getByText('El beneficiadero comunitario', { selector: 'b' })).toBeInTheDocument()
+  })
+
+  it('cannot approve or reject while a correction is open, and «Cancelar» leaves the story as it was', async () => {
+    const user = userEvent.setup()
+    const { dialog, fetchMock } = await openFirst(user)
+    await tickAll(user)
+
+    await user.click(within(dialog).getByRole('button', { name: 'Corregir título o texto' }))
+    expect(within(dialog).getByRole('button', { name: 'Aprobar y publicar' })).toBeDisabled()
+    expect(within(dialog).getByRole('button', { name: 'Rechazar' })).toBeDisabled()
+
+    await user.type(within(dialog).getByLabelText('Título'), ' cambiado')
+    await user.click(within(dialog).getByRole('button', { name: 'Cancelar' }))
+
+    expect(within(dialog).getByRole('heading', { name: 'El beneficiadero comunitario' })).toBeInTheDocument()
+    expect(within(dialog).getByRole('button', { name: 'Aprobar y publicar' })).toBeEnabled()
+    expect(callsTo(fetchMock, '/admin/historias/HIS-2026-008')).toHaveLength(0)
+  })
+
+  it('a story told only with the voice can have only its title corrected', async () => {
+    const user = userEvent.setup()
+    const { dialog } = await openFirst(user, correctingApi({ queue: [{ ...FIRST, texto: '' }] }))
+
+    await user.click(within(dialog).getByRole('button', { name: 'Corregir el título' }))
+
+    expect(within(dialog).getByLabelText('Título')).toBeInTheDocument()
+    expect(within(dialog).queryByLabelText('Texto')).not.toBeInTheDocument()
+  })
+
+  it('will not leave the title too short or the text empty', async () => {
+    const user = userEvent.setup()
+    const { dialog, fetchMock } = await openFirst(user)
+    await user.click(within(dialog).getByRole('button', { name: 'Corregir título o texto' }))
+
+    await user.clear(within(dialog).getByLabelText('Título'))
+    await user.type(within(dialog).getByLabelText('Título'), 'El')
+    await user.click(within(dialog).getByRole('button', { name: 'Guardar corrección' }))
+    expect(within(dialog).getByRole('alert')).toHaveTextContent('El título debe tener al menos 3 letras.')
+
+    await user.type(within(dialog).getByLabelText('Título'), ' patio')
+    await user.clear(within(dialog).getByLabelText('Texto'))
+    await user.click(within(dialog).getByRole('button', { name: 'Guardar corrección' }))
+    expect(within(dialog).getByRole('alert')).toHaveTextContent('El texto no puede quedar vacío. Si la historia no sirve, recházala.')
+    expect(callsTo(fetchMock, '/admin/historias/HIS-2026-008')).toHaveLength(0)
+  })
+
+  it('says so when somebody else already decided the story', async () => {
+    const user = userEvent.setup()
+    const { dialog } = await openFirst(user, correctingApi({ fails: 'Esta historia ya se revisó: solo se corrige mientras espera revisión.' }))
+    await user.click(within(dialog).getByRole('button', { name: 'Corregir título o texto' }))
+
+    await user.click(within(dialog).getByRole('button', { name: 'Guardar corrección' }))
+
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('Esta historia ya se revisó: solo se corrige mientras espera revisión.')
+  })
+})
+
 describe('Revisión: aprobar', () => {
   it('cannot approve until the four checks are marked', async () => {
     const user = userEvent.setup()

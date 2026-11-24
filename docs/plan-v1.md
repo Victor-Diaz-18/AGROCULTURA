@@ -198,6 +198,9 @@ Al cerrar cada bloque se compara el resultado con el diseño de referencia (qué
   - **Papelera** (24 nov 2026): «Borrar historia» ya no la elimina en el acto. La manda 30 días a la Papelera del panel,
     desde donde el administrador principal la recupera o la borra para siempre. Pasados los 30 días se borra sola, con sus
     archivos. Detalle en `docs/funcionamiento.md`.
+  - **El equipo corrige el título o el texto antes de publicar** (24 nov 2026): desde la ventana de revisión, cualquier
+    administrador. Lo que escribió el narrador queda guardado para el equipo, y el narrador lee en «Mis historias» que el
+    equipo la corrigió. Detalle en `docs/funcionamiento.md`.
   - Diferencia menor con el diseño: el aviso del último paso usa el ícono de «sin señal» cuando no hay señal (el
     prototipo dejaba el de wifi).
 - Comprobado en producción tras el despliegue: Vercel sirve `sw.js` (`application/javascript`, sin caché larga, así

@@ -160,6 +160,15 @@ describe('nextStep', () => {
     expect(nextStep({ estado: 'publicada' })).toBe('')
     expect(nextStep({ estado: 'borrador' })).toBe('Se envía cuando haya señal')
   })
+
+  it('tells the narrator what the team corrected before publishing it', () => {
+    expect(nextStep({ estado: 'publicada', corregido: ['titulo'] })).toBe('El equipo del proyecto corrigió el título antes de publicarla')
+    expect(nextStep({ estado: 'publicada', corregido: ['texto'] })).toBe('El equipo del proyecto corrigió el texto antes de publicarla')
+    expect(nextStep({ estado: 'publicada', corregido: ['titulo', 'texto'] })).toBe(
+      'El equipo del proyecto corrigió el título y el texto antes de publicarla',
+    )
+    expect(nextStep({ estado: 'publicada', corregido: [] })).toBe('')
+  })
 })
 
 describe('Mis historias: ver la ficha', () => {

@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 
 from pymongo.database import Database
 
+from lib.catalog import service as catalog
 from lib.core.clock import utcnow
 from lib.core.errors import ConflictError, InvalidDataError, NotFoundError
 from lib.stories import consent, repository, service
@@ -19,7 +20,7 @@ from lib.stories.constants import (
     MOTIVOS_RECHAZO,
     ORIGENES,
 )
-from lib.stories.schemas import HistoriaProyectoIn
+from lib.stories.schemas import CorreccionIn, HistoriaProyectoIn
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +31,14 @@ def _consent_for_admin(record: dict | None) -> dict | None:
     if not record:
         return None
     return {**record, "aceptado_en": service._iso(record.get("aceptado_en"))}
+
+
+def _correction_for_admin(story: dict) -> dict | None:
+    """What the narrator wrote, when the team's correction changed it."""
+    if not service.corrected_fields(story):
+        return None
+    record = story["correccion"]
+    return {"titulo": record["titulo"], "texto": record["texto"], "por": record.get("por_nombre", ""), "en": service._iso(record.get("en"))}
 
 
 def story_for_admin(story: dict) -> dict:
@@ -58,6 +67,7 @@ def story_for_admin(story: dict) -> dict:
         "lat": service._coordinates(story)[0],
         "lon": service._coordinates(story)[1],
         "consentimiento": _consent_for_admin(story.get("consentimiento")),
+        "correccion": _correction_for_admin(story),
         "enviada_en": service._iso(story.get("enviada_en") or story.get("creada_en")),
         "revisada_en": service._iso(story.get("revisada_en")),
         "publicada_en": service._iso(story.get("publicada_en")),
@@ -136,6 +146,49 @@ def reject(db: Database, code: str, *, admin: dict, reason_id: str, now: datetim
     if story is None:
         raise _not_decided(db, code)
     return story_for_admin(story)
+
+
+def correct(db: Database, code: str, *, admin: dict, data: CorreccionIn, now: datetime | None = None) -> dict:
+    """The team corrects the title and the text of a story still waiting for review (typos, a clearer title). What the
+    narrator wrote is kept the first time, so the team can always read it, and the narrator is told in «Mis historias» once
+    it is published. Nothing else changes: not the files, the place or the authorization."""
+    story = repository.find_by_code(db, code)
+    if story is None or story["estado"] != "revision" or story["origen"] != "comunidad":
+        raise _not_correctable(story)
+    original = story.get("correccion") or {"titulo": story["titulo"], "texto": story.get("texto", "")}
+    if data.texto and not original["texto"]:
+        raise InvalidDataError("Esta historia no tiene texto escrito: solo se puede corregir el título.")
+    if original["texto"] and not data.texto:
+        raise InvalidDataError("El texto no puede quedar vacío. Si la historia no sirve, recházala.")
+    sector = catalog.get_sector(db, story["sector_id"]) if story.get("sector_id") else None
+    changed = {**story, "titulo": data.titulo, "texto": data.texto}
+    updated = repository.correct(
+        db,
+        code,
+        {
+            "titulo": data.titulo,
+            "texto": data.texto,
+            "busqueda": service.search_text_of(changed, sector["nombre"] if sector else ""),
+            "correccion": {
+                "titulo": original["titulo"],
+                "texto": original["texto"],
+                "por": admin["_id"],
+                "por_nombre": admin.get("nombre") or admin["usuario"],
+                "en": now or utcnow(),
+            },
+        },
+    )
+    if updated is None:  # somebody decided it in the meantime
+        raise _not_correctable(repository.find_by_code(db, code))
+    return story_for_admin(updated)
+
+
+def _not_correctable(story: dict | None) -> Exception:
+    if story is None:
+        return NotFoundError("No encontramos esa historia.")
+    if story["origen"] != "comunidad":
+        return ConflictError("Las historias del proyecto se publican de una vez: no pasan por revisión.")
+    return ConflictError("Esta historia ya se revisó: solo se corrige mientras espera revisión.")
 
 
 def create_project_story(

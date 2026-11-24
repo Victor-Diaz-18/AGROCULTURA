@@ -3,7 +3,7 @@ import { COMPROBACIONES, NARRADOR_ANONIMO } from '../../config/constants.js'
 import { SHOW_CODES } from '../../config/flags.js'
 import { usePortalData } from '../../context/PortalDataContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
-import { approveStory, rejectStory } from '../../services/admin.js'
+import { approveStory, correctStory, rejectStory } from '../../services/admin.js'
 import { ApiError, OfflineError } from '../../services/http.js'
 import { consentTextOf } from '../../utils/consent.js'
 import { formatDate } from '../../utils/format.js'
@@ -22,15 +22,23 @@ import { placeLine } from '../../utils/geo.js'
  * `variant`: "admin" goes on to the next story after a decision; "portal" closes.
  * `onDecided(nextCode)` runs after a decision: the page reloads its list and opens `nextCode` (or nothing).
  * `onStale()` runs when somebody else decided this story first, so the page can reload.
+ * `onCorrected()` runs after the team corrected the title or the text, so the page can show the new title in its list.
+ *
+ * «Corregir título o texto» (typos, a clearer title) changes nothing else. What the narrator wrote stays for the team to read,
+ * and once it is published the narrator reads in «Mis historias» that the team corrected it.
  */
-export default function ReviewModal({ story, queue, variant = 'portal', onClose, onDecided, onStale }) {
+export default function ReviewModal({ story: given, queue, variant = 'portal', onClose, onDecided, onStale, onCorrected }) {
   const { config, reload: reloadPortal } = usePortalData()
   const toast = useToast()
+  const [corrected, setCorrected] = useState(null) // the story as the server answered the correction
+  const story = corrected ?? given
   const [checked, setChecked] = useState([])
   const [rejecting, setRejecting] = useState(false)
   const [reason, setReason] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [editing, setEditing] = useState(null) // { titulo, texto } while correcting
+  const [editError, setEditError] = useState('')
 
   const consent = story.consentimiento
   const allChecked = Boolean(consent) && COMPROBACIONES.every(({ id }) => checked.includes(id))
@@ -63,6 +71,28 @@ export default function ReviewModal({ story, queue, variant = 'portal', onClose,
     onDecided?.(next?.codigo ?? null)
   }
 
+  const saveCorrection = async (event) => {
+    event.preventDefault()
+    const titulo = editing.titulo.replace(/\s+/g, ' ').trim()
+    if (titulo.length < 3) return setEditError('El título debe tener al menos 3 letras.')
+    if (story.texto && !editing.texto.trim()) return setEditError('El texto no puede quedar vacío. Si la historia no sirve, recházala.')
+    setBusy(true)
+    setEditError('')
+    try {
+      setCorrected(await correctStory(story.codigo, { titulo, texto: editing.texto }))
+    } catch (failure) {
+      if (failure instanceof OfflineError) setEditError('Sin señal: la corrección no se guardó. Inténtalo cuando vuelva la conexión.')
+      else setEditError(failure instanceof ApiError ? failure.message : 'No pudimos guardar la corrección. Intenta de nuevo.')
+      if (failure instanceof ApiError && failure.status === 409) onStale?.()
+      return
+    } finally {
+      setBusy(false)
+    }
+    setEditing(null)
+    toast('Corrección guardada. Cuando se publique, el narrador verá que el equipo la corrigió.')
+    onCorrected?.()
+  }
+
   return (
     <Modal open onClose={onClose} label="Revisar historia" maxWidth={880} level={50} top={40}>
       <div className="ag-review-modal__head">
@@ -85,10 +115,66 @@ export default function ReviewModal({ story, queue, variant = 'portal', onClose,
 
       <div className="ag-review-modal__body">
         <div className="ag-review-modal__story">
-          <h2 className="ag-review-modal__title">{story.titulo}</h2>
+          {editing ? (
+            <form className="ag-review-modal__edit" onSubmit={saveCorrection} noValidate aria-label="Corregir la historia">
+              <label>
+                Título
+                <input
+                  value={editing.titulo}
+                  maxLength={120}
+                  autoFocus
+                  onChange={(event) => setEditing({ ...editing, titulo: event.target.value })}
+                />
+              </label>
+              {story.texto && (
+                <label>
+                  Texto
+                  <textarea rows={8} value={editing.texto} onChange={(event) => setEditing({ ...editing, texto: event.target.value })} />
+                </label>
+              )}
+              <span className="ag-hint">Solo para corregir la ortografía o aclarar el título: lo que escribió el narrador queda guardado.</span>
+              {editError && (
+                <p role="alert" className="ag-error">
+                  {editError}
+                </p>
+              )}
+              <div className="ag-review-modal__edit-buttons">
+                <button type="submit" className="ag-mbtn ag-mbtn--approve" disabled={busy}>
+                  {busy ? 'Guardando…' : 'Guardar corrección'}
+                </button>
+                <button type="button" className="ag-mbtn ag-mbtn--ghost" onClick={() => setEditing(null)} disabled={busy}>
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          ) : (
+            <>
+              <h2 className="ag-review-modal__title">{story.titulo}</h2>
+              <button
+                type="button"
+                className="ag-review-modal__correct"
+                onClick={() => {
+                  setEditError('')
+                  setEditing({ titulo: story.titulo, texto: story.texto ?? '' })
+                }}
+                disabled={busy}
+              >
+                {story.texto ? 'Corregir título o texto' : 'Corregir el título'}
+              </button>
+            </>
+          )}
           <span className="ag-review-modal__meta">
             Narra {story.narrador_nombre} · {sectorName} · {story.epoca} · enviada {formatDate(story.enviada_en)}
           </span>
+          {story.correccion && (
+            <details className="ag-review-modal__original">
+              <summary>
+                Corregida por {story.correccion.por} el {formatDate(story.correccion.en)}. Ver lo que escribió el narrador
+              </summary>
+              <b>{story.correccion.titulo}</b>
+              {story.correccion.texto && <p>{story.correccion.texto}</p>}
+            </details>
+          )}
           {(story.anonima || noPlace || story.finca_nombre) && (
             <ul className="ag-review-modal__private" aria-label="Lo que el público no ve de esta historia">
               {story.anonima && <li>Se publicará como «{NARRADOR_ANONIMO}»: solo el equipo ve el nombre.</li>}
@@ -103,7 +189,7 @@ export default function ReviewModal({ story, queue, variant = 'portal', onClose,
               </span>
             ))}
           </div>
-          {story.texto && <p className="ag-review-modal__text">{story.texto}</p>}
+          {story.texto && !editing && <p className="ag-review-modal__text">{story.texto}</p>}
           <StoryMedia medios={story.medios} />
           <div className="ag-review__tags">
             {story.etiquetas.map((tag) => (
@@ -181,10 +267,10 @@ export default function ReviewModal({ story, queue, variant = 'portal', onClose,
           </>
         ) : (
           <>
-            <button type="button" className="ag-mbtn ag-mbtn--reject" onClick={() => setRejecting(true)} disabled={busy}>
+            <button type="button" className="ag-mbtn ag-mbtn--reject" onClick={() => setRejecting(true)} disabled={busy || Boolean(editing)}>
               Rechazar
             </button>
-            <button type="button" className="ag-mbtn ag-mbtn--approve" onClick={() => decide(true)} disabled={!allChecked || busy}>
+            <button type="button" className="ag-mbtn ag-mbtn--approve" onClick={() => decide(true)} disabled={!allChecked || busy || Boolean(editing)}>
               Aprobar y publicar
             </button>
           </>

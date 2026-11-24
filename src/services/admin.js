@@ -20,6 +20,10 @@ export const approveStory = (codigo, confirmaciones) =>
 export const rejectStory = (codigo, motivo) =>
   request(`/admin/historias/${encodeURIComponent(codigo)}/rechazar`, { method: 'POST', body: { motivo } })
 
+/** Corrects the title and the text of a story waiting for review. Answers the story, with `correccion` (what was written before). */
+export const correctStory = (codigo, { titulo, texto }) =>
+  request(`/admin/historias/${encodeURIComponent(codigo)}`, { method: 'PATCH', body: { titulo, texto } })
+
 /** Sends a published story to the trash: it leaves the map, and the main administrator can bring it back for 30 days. */
 export const deleteStory = (codigo) => request(`/admin/historias/${encodeURIComponent(codigo)}`, { method: 'DELETE' })
 

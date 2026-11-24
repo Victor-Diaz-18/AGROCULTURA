@@ -14,7 +14,7 @@ from lib.core.db import get_db
 from lib.core.settings import Settings, get_settings
 from lib.media.storage import Storage, get_storage
 from lib.stories import review
-from lib.stories.schemas import AprobarIn, HistoriaAdmin, HistoriaPapelera, HistoriaProyectoIn, RechazarIn
+from lib.stories.schemas import AprobarIn, CorreccionIn, HistoriaAdmin, HistoriaPapelera, HistoriaProyectoIn, RechazarIn
 
 router = APIRouter(prefix="/admin", tags=["administración"], dependencies=[Depends(require_admin)])
 
@@ -43,6 +43,12 @@ def approve(codigo: str, body: AprobarIn, admin: dict = Depends(require_admin), 
 def reject(codigo: str, body: RechazarIn, admin: dict = Depends(require_admin), db: Database = Depends(get_db)):
     """Rejects a story waiting for review. The reason is required: the narrator reads it in "Mis historias"."""
     return review.reject(db, codigo, admin=admin, reason_id=body.motivo)
+
+
+@router.patch("/historias/{codigo}", response_model=HistoriaAdmin)
+def correct_story(codigo: str, body: CorreccionIn, admin: dict = Depends(require_admin), db: Database = Depends(get_db)):
+    """Corrects the title and the text of a story waiting for review. What the narrator wrote is kept for the team."""
+    return review.correct(db, codigo, admin=admin, data=body)
 
 
 @router.delete("/historias/{codigo}", status_code=204)
