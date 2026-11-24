@@ -230,7 +230,7 @@ describe('new versions of the app', () => {
         expect(sessionStorage.getItem('agrocultura.actualizando')).toBe('otra-vez')
       })
 
-      it.each(['/contar', '/historias-propias', '/admin/historias'])('a tab on %s does not: somebody may be in the middle of a story', (path) => {
+      it.each(['/contar', '/admin/historias'])('a tab on %s does not: somebody may be in the middle of a story', (path) => {
         window.history.replaceState(null, '', path)
         pwa.options.onRegisteredSW('/sw.js', waiting())
 

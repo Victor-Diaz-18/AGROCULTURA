@@ -25,7 +25,7 @@ const CHANNEL = 'agrocultura-actualizar'
 const UPDATING = 'actualizar'
 
 /** Pages where a reload nobody asked for would lose work in progress: a tab on one of these does not step aside. */
-const BUSY_PATHS = ['/contar', '/historias-propias', '/admin/historias']
+const BUSY_PATHS = ['/contar', '/admin/historias']
 
 /**
  * What a page leaves for the one that opens next in the same tab, when it reloads in the middle of an update. Read
