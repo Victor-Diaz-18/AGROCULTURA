@@ -443,8 +443,7 @@ describe('Revisión: lo que el público no ve y la autorización', () => {
     const { dialog } = await review(adminStory({ codigo: 'HIS-2026-008', titulo: 'Con reserva', narrador_nombre: 'Jorge Iván Castro', anonima: true, consentimiento: { ...FIRST.consentimiento, variante: 'aproximada_sin_nombre' } }))
 
     expect(within(dialog).getByText(/Narra Jorge Iván Castro/)).toBeInTheDocument()
-    const private_ = within(dialog).getByRole('list', { name: 'Lo que el público no ve de esta historia' })
-    expect(private_).toHaveTextContent('Se publicará como «Narrador anónimo»: solo el equipo ve el nombre.')
+    expect(within(dialog).queryByRole('list', { name: 'Lo que el público no ve de esta historia' })).not.toBeInTheDocument() // no extra notes in the review
     expect(within(dialog).getByText(/sin mi nombre \(saldrá como «Narrador anónimo»\)/)).toBeInTheDocument()
   })
 
@@ -454,15 +453,13 @@ describe('Revisión: lo que el público no ve y la autorización', () => {
     )
 
     expect(within(dialog).getByText(/Sin ubicación en el mapa/, { selector: 'span' })).toBeInTheDocument()
-    expect(within(dialog).getByRole('list', { name: 'Lo que el público no ve de esta historia' })).toHaveTextContent(
-      'Se publicará sin ubicación en el mapa. Referencia (solo para el equipo): Finca Los Mangos.',
-    )
+    expect(within(dialog).queryByRole('list', { name: 'Lo que el público no ve de esta historia' })).not.toBeInTheDocument()
   })
 
   it('shows the name of the farm, which the card will show', async () => {
     const { dialog } = await review(adminStory({ codigo: 'HIS-2026-008', finca_nombre: 'Café Don Aurelio' }))
 
-    expect(within(dialog).getByRole('list', { name: 'Lo que el público no ve de esta historia' })).toHaveTextContent('Finca o marca (se verá en la ficha): Café Don Aurelio.')
+    expect(within(dialog).queryByRole('list', { name: 'Lo que el público no ve de esta historia' })).not.toBeInTheDocument()
   })
 
   it('shows no such list for a story with a place, with its name and no farm', async () => {

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { COMPROBACIONES, NARRADOR_ANONIMO } from '../../config/constants.js'
+import { COMPROBACIONES } from '../../config/constants.js'
 import { SHOW_CODES } from '../../config/flags.js'
 import { usePortalData } from '../../context/PortalDataContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
@@ -44,7 +44,6 @@ export default function ReviewModal({ story: given, queue, variant = 'portal', o
   const allChecked = Boolean(consent) && COMPROBACIONES.every(({ id }) => checked.includes(id))
   const position = queue.findIndex((item) => item.codigo === story.codigo)
   const sectorName = placeLine(story, config.sectores)
-  const noPlace = story.ubicacion_modo === 'ninguna'
   const acceptedText = consentTextOf(consent)
 
   const toggle = (id) => setChecked((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]))
@@ -174,13 +173,6 @@ export default function ReviewModal({ story: given, queue, variant = 'portal', o
               <b>{story.correccion.titulo}</b>
               {story.correccion.texto && <p>{story.correccion.texto}</p>}
             </details>
-          )}
-          {(story.anonima || noPlace || story.finca_nombre) && (
-            <ul className="ag-review-modal__private" aria-label="Lo que el público no ve de esta historia">
-              {story.anonima && <li>Se publicará como «{NARRADOR_ANONIMO}»: solo el equipo ve el nombre.</li>}
-              {noPlace && <li>Se publicará sin ubicación en el mapa{story.lugar_nombre ? `. Referencia (solo para el equipo): ${story.lugar_nombre}` : ''}.</li>}
-              {story.finca_nombre && <li>Finca o marca (se verá en la ficha): {story.finca_nombre}.</li>}
-            </ul>
           )}
           <div className="ag-review-modal__formats">
             {story.formatos.map((format) => (
