@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
 import PageHeader from '../../components/layout/PageHeader.jsx'
-import { useAuth } from '../../context/AuthContext.jsx'
 import { usePortalData } from '../../context/PortalDataContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { deleteStoryForever, fetchTrash, restoreStory } from '../../services/admin.js'
@@ -25,7 +24,6 @@ const formatDate = (iso) =>
  * and its files at once. When its 30 days pass the server deletes it for good the next time the trash is opened.
  */
 export default function TrashPage() {
-  const { user } = useAuth()
   const { reload: reloadPortal } = usePortalData()
   const toast = useToast()
   const [stories, setStories] = useState(null)
@@ -33,8 +31,6 @@ export default function TrashPage() {
   const [problem, setProblem] = useState('')
   const [confirming, setConfirming] = useState(null) // code of the story about to be deleted for good
   const [busy, setBusy] = useState(null) // code of the story being restored or deleted
-
-  const isMain = Boolean(user?.principal)
 
   const load = useCallback(async () => {
     try {
@@ -50,8 +46,8 @@ export default function TrashPage() {
   }, [])
 
   useEffect(() => {
-    if (isMain) load()
-  }, [load, isMain])
+    load()
+  }, [load])
 
   /** Runs a change on one story; on success it leaves the list and the toast says so. Returns whether it worked. */
   const act = async (story, action, fallback, done) => {
@@ -78,19 +74,6 @@ export default function TrashPage() {
 
   const deleteForever = (story) =>
     act(story, deleteStoryForever, 'No pudimos borrarla. Intenta de nuevo.', `Se borró para siempre «${story.titulo}».`)
-
-  if (!isMain) {
-    return (
-      <>
-        <PageHeader title={TITLE} subtitle={SUBTITLE} />
-        <div className="ag-settings">
-          <section className="ag-card" aria-label={TITLE}>
-            <span className="ag-card__help">Solo el administrador principal puede ver la papelera y recuperar historias.</span>
-          </section>
-        </div>
-      </>
-    )
-  }
 
   return (
     <>

@@ -472,7 +472,7 @@ describe('borrar una historia publicada', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
   })
 
-  it('un administrador que no es el principal no ve el botón de borrar', async () => {
+  it('un administrador que no es el principal también puede borrar', async () => {
     const user = userEvent.setup()
     renderApp({ route: '/admin/historias', user: OTHER_ADMIN, api: api() })
 
@@ -480,7 +480,7 @@ describe('borrar una historia publicada', () => {
     const card = await screen.findByRole('dialog', { name: 'Ficha de la historia' })
 
     expect(within(card).getByRole('heading', { name: 'El patio donde se secaba el café' })).toBeInTheDocument()
-    expect(within(card).queryByRole('button', { name: /Borrar historia/ })).not.toBeInTheDocument()
+    expect(within(card).getByRole('button', { name: /Borrar historia/ })).toBeInTheDocument()
   })
 })
 

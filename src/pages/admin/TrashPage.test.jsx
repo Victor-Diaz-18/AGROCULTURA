@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { screen, within } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ADMIN, OTHER_ADMIN } from '../../test/auth.js'
 import { callsTo, renderApp, reply } from '../../test/renderApp.jsx'
@@ -102,12 +102,11 @@ describe('Papelera', () => {
     expect(await screen.findByText('La papelera está vacía.')).toBeInTheDocument()
   })
 
-  it('another administrator neither sees the entry nor gets the list', async () => {
+  it('another administrator also finds it in the menu and gets the list', async () => {
     const { fetchMock } = open({ user: OTHER_ADMIN })
 
-    expect(await screen.findByText('Solo el administrador principal puede ver la papelera y recuperar historias.')).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: /Papelera/ })).not.toBeInTheDocument()
-    expect(callsTo(fetchMock, '/admin/papelera')).toHaveLength(0)
+    expect(await screen.findByRole('link', { name: /Papelera/ })).toHaveAttribute('href', '/admin/papelera')
+    await waitFor(() => expect(callsTo(fetchMock, '/admin/papelera')).toHaveLength(1))
   })
 
   it('the main administrator finds it in the menu of the panel', async () => {

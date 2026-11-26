@@ -91,14 +91,13 @@ def test_a_narrator_or_a_visitor_cannot_delete(client, narrator, db):
     assert db.historias.find_one({"codigo": CODE})["estado"] == "publicada"
 
 
-def test_an_administrator_created_from_the_panel_cannot_delete(client, admin, db, storage):
+def test_an_administrator_created_from_the_panel_also_deletes(client, admin, db, storage):
     publish(db)
 
     response = client.delete(f"/api/admin/historias/{CODE}", headers=sub_admin(client, admin))
 
-    assert response.status_code == 403
-    assert response.json()["detail"] == "Solo el administrador principal puede borrar historias."
-    assert db.historias.find_one({"codigo": CODE})["estado"] == "publicada"
+    assert response.status_code == 204
+    assert db.historias.find_one({"codigo": CODE})["estado"] == "papelera"
 
 
 # ---- the trash -----------------------------------------------------------------------
@@ -196,16 +195,13 @@ def test_a_file_that_cannot_be_deleted_does_not_bring_the_story_back(db, monkeyp
     assert db.historias.find_one({"codigo": CODE}) is None
 
 
-def test_only_the_main_administrator_opens_the_trash(client, admin, narrator, db):
+def test_every_administrator_uses_the_trash_but_nobody_else(client, admin, narrator, db):
     publish(db)
     trash(client, admin)
     other = sub_admin(client, admin)
 
-    response = client.get("/api/admin/papelera", headers=other)
-    assert response.status_code == 403
-    assert response.json()["detail"] == "Solo el administrador principal puede abrir la papelera."
-    assert client.post(f"/api/admin/papelera/{CODE}/recuperar", headers=other).status_code == 403
-    assert client.delete(f"/api/admin/papelera/{CODE}", headers=other).status_code == 403
+    assert [story["codigo"] for story in client.get("/api/admin/papelera", headers=other).json()] == [CODE]
     assert client.get("/api/admin/papelera", headers=narrator["headers"]).status_code == 403
     assert client.get("/api/admin/papelera").status_code == 401
-    assert db.historias.find_one({"codigo": CODE})["estado"] == "papelera"
+    assert client.post(f"/api/admin/papelera/{CODE}/recuperar", headers=other).status_code == 200
+    assert db.historias.find_one({"codigo": CODE})["estado"] == "publicada"

@@ -74,7 +74,6 @@ def main_admin_only(message: str):
     return dependency
 
 
-# The administrators it creates cannot manage administrators, delete stories nor open the trash.
+# The administrators it creates cannot manage administrators. Since 26 Nov 2026 every administrator deletes stories and
+# uses the trash (send a story there, bring it back, delete it for good): the team decided it.
 require_main_admin = main_admin_only("Solo el administrador principal puede gestionar a los administradores.")
-require_main_admin_to_delete = main_admin_only("Solo el administrador principal puede borrar historias.")
-require_main_admin_for_trash = main_admin_only("Solo el administrador principal puede abrir la papelera.")

@@ -214,7 +214,7 @@ export default function StoryCard({ story, onClose, onDelete }) {
         </div>
       </div>
       {/* Only the main administrator gets the button (the server refuses the others too). It goes to the trash for 30 days. */}
-      {onDelete && published && user?.principal && (
+      {onDelete && published && (
         <div className="ag-card-story__danger">
           <button type="button" className="ag-btn ag-btn--danger" onClick={() => setAsking(true)}>
             <Icon name="cerrar" size={16} />
