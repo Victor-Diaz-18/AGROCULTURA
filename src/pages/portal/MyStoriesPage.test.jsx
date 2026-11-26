@@ -411,3 +411,16 @@ describe('Mis historias: sin ubicación y sin nombre', () => {
   })
 })
 
+
+describe('«Editar» mientras la historia espera revisión', () => {
+  it('only the ones still in review can be edited, and it opens the story to change it', async () => {
+    const user = userEvent.setup()
+    open()
+    await screen.findAllByRole('row')
+
+    expect(screen.getAllByRole('button', { name: /^Editar/ })).toHaveLength(1)
+    await user.click(screen.getByRole('button', { name: 'Editar «El camino de mulas»' }))
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Editar historia' })).toBeInTheDocument()
+  })
+})

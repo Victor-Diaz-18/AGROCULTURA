@@ -155,6 +155,16 @@ export default function MyStoriesPage() {
                     Ver ficha
                   </button>
                 )}
+                {story.estado === 'revision' && story.codigo && !story.video_pendiente && (
+                  <button
+                    type="button"
+                    className="ag-rowbtn ag-rowbtn--outline ag-rowbtn--sm"
+                    aria-label={`Editar «${story.titulo}»`}
+                    onClick={() => navigate(`/contar?editar=${encodeURIComponent(story.codigo)}`)}
+                  >
+                    Editar
+                  </button>
+                )}
                 {stuck(story) && (
                   <>
                     <button type="button" className="ag-rowbtn ag-rowbtn--outline ag-rowbtn--sm" onClick={() => retry(stuck(story).clientId)}>

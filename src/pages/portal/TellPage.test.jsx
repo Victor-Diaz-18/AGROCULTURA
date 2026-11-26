@@ -1163,3 +1163,84 @@ describe('Contar una historia: el nombre de la finca o marca', () => {
   })
 })
 
+
+describe('editar una historia que sigue en revisión', () => {
+  const CODE = 'HIS-2026-031'
+  const OLD_PHOTO = 'https://store1.public.blob.vercel-storage.com/historias/u1/foto_vieja-x9.jpg'
+  const told = {
+    codigo: CODE,
+    client_id: 'borrador-000031',
+    titulo: 'El camino de mulas',
+    texto: 'Antes de que hubiera carretera, el café bajaba en mula.',
+    epoca: '1950 a 1960',
+    anio_desde: 1950,
+    anio_hasta: 1960,
+    anio_escrito: true,
+    sector_id: 'minca',
+    lugar_nombre: null,
+    finca_nombre: 'Finca La Esperanza',
+    etiquetas: ['#café'],
+    ubicacion_modo: 'aproximada',
+    ubicacion_origen: 'mapa',
+    lat: 11.14,
+    lon: -74.118,
+    anonima: false,
+    narrador_nombre: 'Rosa Elena Pérez',
+    medios: [{ tipo: 'foto', url: OLD_PHOTO, mime: 'image/jpeg', bytes: 2048, duracion_s: null }],
+    estado: 'revision',
+    origen: 'comunidad',
+  }
+
+  function openToEdit(answer = () => told, saved = () => ({ ...created, codigo: CODE })) {
+    return renderApp({
+      route: `/contar?editar=${CODE}`,
+      user: NARRATOR,
+      api: { [`/historias/mias/${CODE}`]: answer, [`/historias/${CODE}`]: saved, '/historias/mias': [], '/medios': uploadAnswer },
+    })
+  }
+
+  it('brings what the story says, its photo included, and changes nothing on the phone', async () => {
+    openToEdit()
+
+    expect(await screen.findByLabelText('O escríbela')).toHaveValue(told.texto)
+    expect(screen.getByRole('heading', { level: 1, name: 'Editar historia' })).toBeInTheDocument()
+    expect(screen.getByRole('list', { name: 'Fotos y video agregados' })).toHaveTextContent('foto_01')
+    expect(await loadWorkingDraft(NARRATOR.id)).toBeNull() // a story being edited is not the new one left half told
+  })
+
+  it('saves the changes with PUT, keeps the photo it had and asks for the authorization again', async () => {
+    const user = userEvent.setup()
+    const { fetchMock } = openToEdit()
+    await screen.findByLabelText('O escríbela')
+
+    await user.click(screen.getByRole('button', { name: 'Siguiente' }))
+    expect(screen.getByLabelText('Ponle un título')).toHaveValue('El camino de mulas')
+    expect(screen.getByRole('textbox', { name: 'Desde' })).toHaveValue('1950')
+    expect(screen.getByRole('textbox', { name: 'Hasta (opcional)' })).toHaveValue('1960')
+    await user.clear(screen.getByLabelText('Ponle un título'))
+    await user.type(screen.getByLabelText('Ponle un título'), 'El camino viejo')
+    await user.click(screen.getByRole('button', { name: 'Siguiente' }))
+
+    const save = screen.getByRole('button', { name: 'Guardar cambios' })
+    expect(save).toBeDisabled()
+    expect(screen.getByText('Vuelve a marcar la autorización para guardar los cambios.')).toBeInTheDocument()
+    await authorize(user)
+    await user.click(save)
+
+    expect(await screen.findByRole('heading', { name: 'Mis historias' })).toBeInTheDocument()
+    const [, init] = callsTo(fetchMock, `/historias/${CODE}`)[0]
+    expect(init.method).toBe('PUT')
+    const body = JSON.parse(init.body)
+    expect(body).toMatchObject({ client_id: 'borrador-000031', titulo: 'El camino viejo', anio_desde: 1950, anio_hasta: 1960, finca_nombre: 'Finca La Esperanza' })
+    expect(body.medios).toEqual([{ tipo: 'foto', url: OLD_PHOTO, mime: 'image/jpeg', bytes: 2048 }])
+    expect(callsTo(fetchMock, '/medios')).toHaveLength(0) // the photo it had is not uploaded again
+    expect(callsTo(fetchMock, '/historias')).toHaveLength(0) // nor is a new story created
+  })
+
+  it('says why when the story was already reviewed', async () => {
+    openToEdit(() => reply({ detail: 'Esta historia ya fue revisada: ya no se puede editar.' }, 409))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('ya no se puede editar')
+    expect(screen.getByRole('link', { name: 'Volver a Mis historias' })).toHaveAttribute('href', '/mis-historias')
+  })
+})

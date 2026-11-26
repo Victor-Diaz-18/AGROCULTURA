@@ -24,6 +24,12 @@ export const attachVideo = (codigo, medio) =>
 
 export const fetchMyStories = () => request('/historias/mias')
 
+/** One of the narrator's stories as they told it, to change it while it waits for review. */
+export const fetchMyStory = (codigo) => request(`/historias/mias/${encodeURIComponent(codigo)}`)
+
+/** The new version of a story that waits for review (everything, as when it was told). */
+export const updateStory = (codigo, payload) => request(`/historias/${encodeURIComponent(codigo)}`, { method: 'PUT', body: payload })
+
 /** Every published story, as the map needs it (public). */
 export const fetchPublishedStories = () => request('/historias', { auth: false })
 
@@ -54,8 +60,8 @@ export function buildStoryPayload(draft, medios) {
     medios: medios.map(({ tipo, url, mime, bytes, duracion_s: duracion }) => ({
       tipo,
       url,
-      mime,
-      bytes,
+      ...(mime != null ? { mime } : {}),
+      ...(bytes != null ? { bytes } : {}),
       ...(duracion != null ? { duracion_s: duracion } : {}),
     })),
   }
@@ -69,14 +75,15 @@ export function buildStoryPayload(draft, medios) {
  * (`file.key` is "audio" or the photo's id), so a story kept on the phone can remember it across page loads.
  */
 export async function sendStory(draft, { uploaded = new WeakMap(), onProgress, onUploaded } = {}) {
+  // A file the story already had (`medio`, when it is being edited) is not uploaded again.
   const files = []
-  if (draft.audio) files.push({ key: 'audio', blob: draft.audio.blob, tipo: 'audio', name: 'audio.webm', duracion: draft.audio.seconds })
-  for (const photo of draft.fotos) files.push({ key: photo.id, blob: photo.blob, tipo: 'foto', name: photo.name })
+  if (draft.audio) files.push({ key: 'audio', blob: draft.audio.blob, medio: draft.audio.medio, tipo: 'audio', name: 'audio.webm', duracion: draft.audio.seconds })
+  for (const photo of draft.fotos) files.push({ key: photo.id, blob: photo.blob, medio: photo.medio, tipo: 'foto', name: photo.name })
 
   const medios = []
   let done = 0
   for (const file of files) {
-    let medio = uploaded.get(file.blob)
+    let medio = file.medio ?? uploaded.get(file.blob)
     if (!medio) {
       medio = await uploadMedia(file)
       uploaded.set(file.blob, medio)
@@ -86,5 +93,7 @@ export async function sendStory(draft, { uploaded = new WeakMap(), onProgress, o
     done += 1
     onProgress?.(done, files.length)
   }
-  return createStory(buildStoryPayload(draft, medios))
+  if (draft.video?.medio) medios.push(draft.video.medio) // a new video goes up after the story, on its own
+  const payload = buildStoryPayload(draft, medios)
+  return draft.codigo ? updateStory(draft.codigo, payload) : createStory(payload)
 }

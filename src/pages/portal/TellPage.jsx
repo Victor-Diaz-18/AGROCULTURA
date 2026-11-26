@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import PageHeader from '../../components/layout/PageHeader.jsx'
 import Icon from '../../components/ui/Icon.jsx'
 import pages from '../../../lib/voice/paginas.json'
@@ -19,7 +19,7 @@ import useConnectivity from '../../hooks/useConnectivity.js'
 import useRecorder from '../../hooks/useRecorder.js'
 import { clearWorkingDraft, loadWorkingDraft, saveWorkingDraft } from '../../offline/store.js'
 import { ApiError, OfflineError } from '../../services/http.js'
-import { sendStory } from '../../services/stories.js'
+import { fetchMyStory, sendStory } from '../../services/stories.js'
 import { formatDuration } from '../../utils/format.js'
 import { acceptConsent, consentText, consentVariant, isAccepted } from '../../utils/consent.js'
 import { newId } from '../../utils/id.js'
@@ -27,6 +27,17 @@ import { placeLine } from '../../utils/geo.js'
 import { checkYears, parseYear, yearsText } from '../../utils/years.js'
 
 const SUBTITLE = 'Con tu voz, una foto, un video o por escrito. Nadie la ve hasta que un administrador la aprueba.'
+const EDIT_SUBTITLE = 'Sigue en revisión: puedes cambiar lo que quieras hasta que el equipo la revise.'
+
+export const EDIT_MESSAGES = {
+  loading: 'Cargando tu historia…',
+  saved: 'Guardamos los cambios. La historia sigue en revisión.',
+  savedWithVideo: 'Guardamos los cambios. Estamos subiendo el video nuevo; la historia sigue en revisión.',
+  offline: 'Necesitas señal para guardar los cambios. Lo que cambiaste sigue aquí.',
+}
+
+/** The name a file the story already had shows in the list: «foto_01.jpg», like the new ones. */
+const shortName = (tipo, number) => `${tipo}_${String(number).padStart(2, '0')}`
 
 /** What "Escuchar instrucciones" reads on each step (F9). The last one also reads the authorization, so it can be heard before it is given. */
 /** The words live in lib/voice/paginas.json, because the server reads them aloud too. Never what the person is writing. */
@@ -88,6 +99,9 @@ export default function TellPage() {
   const { enqueue, enqueueVideo, persistent } = useOutbox()
   const { online } = useConnectivity()
   const narratorId = user?.id ?? null
+  const [searchParams] = useSearchParams()
+  const editCode = searchParams.get('editar') // a story already sent, being changed while it waits for review
+  const [editing, setEditing] = useState(editCode ? { status: 'loading' } : null)
 
   const [step, setStep] = useState(1)
   const [texto, setTexto] = useState('')
@@ -147,7 +161,7 @@ export default function TellPage() {
 
   // Pick up the story the person left half told on this phone.
   useEffect(() => {
-    if (!narratorId) return undefined
+    if (!narratorId || editCode) return undefined
     let cancelled = false
     loadWorkingDraft(narratorId)
       .catch(() => null)
@@ -179,14 +193,58 @@ export default function TellPage() {
     return () => {
       cancelled = true
     }
-  }, [narratorId])
+  }, [narratorId, editCode])
+
+  // A story being edited: what it says now, its files included (they are not uploaded again unless they are changed).
+  useEffect(() => {
+    if (!editCode || !narratorId) return undefined
+    let cancelled = false
+    fetchMyStory(editCode)
+      .then((story) => {
+        if (cancelled) return
+        const medios = story.medios ?? []
+        const audioMedio = medios.find((medio) => medio.tipo === 'audio')
+        const videoMedio = medios.find((medio) => medio.tipo === 'video')
+        const photos = medios
+          .filter((medio) => medio.tipo === 'foto')
+          .map((medio, index) => ({ id: newId(), name: shortName('foto', index + 1), url: medio.url, bytes: medio.bytes, medio }))
+        setClientId(story.client_id || newId())
+        setTexto(story.texto ?? '')
+        setTitulo(story.titulo)
+        setAudio(audioMedio ? { url: audioMedio.url, seconds: audioMedio.duracion_s ?? 0, medio: audioMedio } : null)
+        setFotos(photos)
+        setVideo(videoMedio ? { id: newId(), name: shortName('video', 1), url: videoMedio.url, bytes: videoMedio.bytes, mime: videoMedio.mime, medio: videoMedio } : null)
+        setModo(story.ubicacion_modo ?? 'aproximada')
+        setLocation(
+          story.lat != null && story.lon != null
+            ? { lat: story.lat, lon: story.lon, sectorId: story.sector_id, origen: story.ubicacion_origen ?? 'mapa' }
+            : null,
+        )
+        setLugar(story.lugar_nombre ?? '')
+        setFinca(story.finca_nombre ?? '')
+        setAnonima(Boolean(story.anonima))
+        if (story.anio_escrito && story.anio_desde != null) {
+          setAnioDesde(String(story.anio_desde))
+          setAnioHasta(story.anio_hasta != null && story.anio_hasta !== story.anio_desde ? String(story.anio_hasta) : '')
+        } else setEpoca(story.epoca ?? '')
+        setEtiquetas(story.etiquetas ?? [])
+        photoNumber.current = photos.length + 1
+        setEditing({ status: 'ready', codigo: story.codigo })
+      })
+      .catch((error) => {
+        if (!cancelled) setEditing({ status: 'error', message: error instanceof ApiError ? error.message : SEND_MESSAGES.failed })
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [editCode, narratorId])
 
   const keepDraft = useCallback(() => {
-    if (!narratorId || !savedRef.current || finished.current) return
+    if (!narratorId || !savedRef.current || finished.current || editCode) return
     const current = latest.current
     const done = isBlank(current) ? clearWorkingDraft(narratorId) : saveWorkingDraft(narratorId, current)
     done.catch(() => {}) // without room on the phone the story still works, it is only not kept
-  }, [narratorId])
+  }, [narratorId, editCode])
 
   // Typing is saved when the person pauses; moving to another step (a deliberate act) is saved at once.
   useEffect(() => {
@@ -245,10 +303,16 @@ export default function TellPage() {
     1: canContinue ? 'Puedes agregar fotos o un video si los tienes.' : 'Graba un audio o escribe la historia para seguir.',
     2: canContinue ? 'Todo listo para revisar.' : 'Falta el título, el lugar o el año.',
     3: !accepted
-      ? 'Marca la autorización para poder enviarla.'
-      : online
-        ? `Al enviarla pasa a revisión${codeNote('F6')}.`
-        : 'Sin señal: quedará como borrador.',
+      ? editing
+        ? 'Vuelve a marcar la autorización para guardar los cambios.'
+        : 'Marca la autorización para poder enviarla.'
+      : editing
+        ? online
+          ? 'Al guardar, sigue en revisión.'
+          : EDIT_MESSAGES.offline
+        : online
+          ? `Al enviarla pasa a revisión${codeNote('F6')}.`
+          : 'Sin señal: quedará como borrador.',
   }[step]
 
   const startRecording = () => recorder.start()
@@ -315,6 +379,7 @@ export default function TellPage() {
   }
 
   const story = () => ({
+    ...(editing?.codigo ? { codigo: editing.codigo } : {}),
     clientId,
     titulo: titulo.trim(),
     texto: texto.trim(),
@@ -356,10 +421,45 @@ export default function TellPage() {
     navigate('/mis-historias')
   }
 
+  // The changes of a story already sent go straight to the server: they are not kept on the phone to send later.
+  const saveChanges = async () => {
+    if (!online) {
+      setSendError(EDIT_MESSAGES.offline)
+      setSending(false)
+      return
+    }
+    let sent
+    try {
+      sent = await sendStory(story(), { uploaded: uploaded.current })
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) openLogin({ rol: 'narrador' })
+      setSendError(describeFailure(error))
+      setSending(false)
+      return
+    }
+    const newVideo = video && !video.medio
+    let message = newVideo ? EDIT_MESSAGES.savedWithVideo : EDIT_MESSAGES.saved
+    if (newVideo) {
+      try {
+        await enqueueVideo({ clientId, codigo: sent.codigo, titulo: titulo.trim(), video })
+      } catch {
+        message = SEND_MESSAGES.videoNotKept
+      }
+    }
+    finished.current = true
+    toast(message)
+    reloadMine()
+    navigate('/mis-historias')
+  }
+
   const send = async () => {
     if (!accepted) return // nothing leaves without the authorization (the button is disabled; this is for the keyboard and for tests)
     setSending(true)
     setSendError('')
+    if (editing) {
+      await saveChanges()
+      return
+    }
     if (!online) {
       await keepOnDevice()
       return
@@ -402,13 +502,36 @@ export default function TellPage() {
     else send()
   }
 
-  const nextLabel = step < 3 ? 'Siguiente' : sending ? 'Enviando…' : online ? 'Enviar historia' : 'Guardar en el dispositivo'
+  const nextLabel =
+    step < 3 ? 'Siguiente' : sending ? (editing ? 'Guardando…' : 'Enviando…') : editing ? 'Guardar cambios' : online ? 'Enviar historia' : 'Guardar en el dispositivo'
+
+  if (editing && editing.status !== 'ready') {
+    return (
+      <>
+        <PageHeader title="Editar historia" subtitle={EDIT_SUBTITLE} />
+        {editing.status === 'loading' ? (
+          <p role="status" className="ag-hint">
+            {EDIT_MESSAGES.loading}
+          </p>
+        ) : (
+          <div className="ag-tell__card">
+            <p role="alert" className="ag-error">
+              {editing.message}
+            </p>
+            <Link to="/mis-historias" className="ag-btn ag-btn--outline">
+              Volver a Mis historias
+            </Link>
+          </div>
+        )}
+      </>
+    )
+  }
 
   return (
     <>
       <PageHeader
-        title="Contar una historia"
-        subtitle={SUBTITLE}
+        title={editing ? 'Editar historia' : 'Contar una historia'}
+        subtitle={editing ? EDIT_SUBTITLE : SUBTITLE}
         actions={
           <ListenButton
             title="Contar una historia"

@@ -13,7 +13,8 @@ import Icon from '../ui/Icon.jsx'
  * "Agregar foto" (F4) and, when `onAddVideo` is given, "Agregar video" (F13). Each photo is reduced on the phone
  * (see offline/media.js) before it is kept; a video is kept as it is (it cannot be reduced there) after checking its type
  * and that it is no more than 25 MB, since it goes up straight to Blob later.
- * photos: [{ id, name, blob }]. video: { id, name, blob, mime } or null: a story has one at most.
+ * photos: [{ id, name, blob }]. video: { id, name, blob, mime } or null: a story has one at most. A story being edited
+ * brings the ones it already had as { id, name, url, bytes, medio } (no blob): they are not uploaded again.
  */
 
 export const PHOTO_MESSAGES = {
@@ -24,12 +25,19 @@ export const PHOTO_MESSAGES = {
 /** "video_01.mp4": the same friendly names the photos get. */
 const videoName = (mime) => `video_01.${{ 'video/quicktime': 'mov', 'video/webm': 'webm' }[mime] ?? 'mp4'}`
 
+/** The size of a file on the phone, or of one the story already had (being edited). */
+const sizeOf = (item) => {
+  const bytes = item.blob?.size ?? item.bytes
+  return bytes ? ` · ${formatBytes(bytes)}` : ''
+}
+
 function VideoChip({ video, onRemove }) {
   return (
     <li className="ag-attached__item">
       <b>Video</b>
       <span>
-        {video.name} · {formatBytes(video.blob.size)}
+        {video.name}
+        {sizeOf(video)}
       </span>
       <button type="button" className="ag-attached__remove" aria-label={`Quitar ${video.name}`} onClick={onRemove}>
         <Icon name="cerrar" size={14} strokeWidth={2.4} />
@@ -39,13 +47,15 @@ function VideoChip({ video, onRemove }) {
 }
 
 function PhotoChip({ photo, onRemove }) {
-  const url = useObjectUrl(photo.blob)
+  const local = useObjectUrl(photo.blob)
+  const url = photo.url ?? local
   return (
     <li className="ag-attached__item">
       {url && <img className="ag-attached__thumb" src={url} alt="" />}
       <b>Foto</b>
       <span>
-        {photo.name} · {formatBytes(photo.blob.size)}
+        {photo.name}
+        {sizeOf(photo)}
       </span>
       <button type="button" className="ag-attached__remove" aria-label={`Quitar ${photo.name}`} onClick={() => onRemove(photo.id)}>
         <Icon name="cerrar" size={14} strokeWidth={2.4} />

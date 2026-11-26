@@ -8,7 +8,7 @@ import Icon from '../ui/Icon.jsx'
  * Voice recorder of "Contar una historia" (F5). It only shows state; the recording itself
  * lives in the page (useRecorder), so it keeps going if the person moves to the next step.
  *
- * audio: { blob, seconds } once a recording exists.
+ * audio: { blob, seconds } once a recording exists, or { url, seconds, medio } for the one a story being edited already has.
  */
 
 // The prototype's bars, drawn once (not animated).
@@ -31,8 +31,9 @@ function Wave() {
 }
 
 /** "Oír mi audio": lets the person check the recording before sending it. */
-function Listen({ blob }) {
-  const url = useObjectUrl(blob)
+function Listen({ blob, address }) {
+  const local = useObjectUrl(blob)
+  const url = address ?? local
   const player = useRef(null)
   const [playing, setPlaying] = useState(false)
 
@@ -90,7 +91,7 @@ export default function AudioRecorder({ status, seconds, audio, error, notice, s
             </span>
           </div>
           <div className="ag-rec__actions">
-            <Listen blob={audio.blob} />
+            <Listen blob={audio.blob} address={audio.url} />
             <button type="button" className="ag-rec__btn ag-rec__btn--again" onClick={onStart} disabled={!supported}>
               Grabar de nuevo
             </button>
