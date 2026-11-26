@@ -254,6 +254,22 @@ describe('Mapa de historias: filtros y búsqueda (F11)', () => {
     await waitFor(() => expect(titles()).toEqual(['El camino de mulas']))
   })
 
+  it('«Borrar filtros» puts every filter back, the search box included, and waits disabled while nothing filters', async () => {
+    const user = userEvent.setup()
+    await openFiltered()
+    const clear = screen.getByRole('button', { name: 'Borrar filtros' })
+    expect(clear).toBeDisabled()
+
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Formato' }), 'Video')
+    await user.type(screen.getByRole('searchbox', { name: 'Buscar historias' }), 'patio')
+    await user.click(clear)
+
+    expect(screen.getByRole('combobox', { name: 'Formato' })).toHaveValue('todos')
+    expect(screen.getByRole('searchbox', { name: 'Buscar historias' })).toHaveValue('')
+    await waitFor(() => expect(titles()).toHaveLength(STORIES.length))
+    expect(screen.getByRole('button', { name: 'Borrar filtros' })).toBeDisabled()
+  })
+
   it('the years and the format menu filter too', async () => {
     const user = userEvent.setup()
     await openFiltered()

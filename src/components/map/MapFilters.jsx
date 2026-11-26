@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { NO_FILTERS, sectorTabs } from '../../utils/filters.js'
+import { NO_FILTERS, isFiltering, sectorTabs } from '../../utils/filters.js'
 import FCode from '../ui/FCode.jsx'
 import Icon from '../ui/Icon.jsx'
 import SegmentedTabs from '../ui/SegmentedTabs.jsx'
@@ -24,6 +24,14 @@ export default function MapFilters({ filters, onChange, stories, sectors }) {
   const applied = useRef(filters.q)
   const [moreOpen, setMoreOpen] = useState(false) // on a phone only; on a wide screen everything is always there
   const moreActive = ['origen', 'desde', 'hasta', 'formato'].filter((key) => filters[key] !== NO_FILTERS[key]).length
+  const anything = isFiltering(filters) || text.trim() !== '' // also a search still being typed
+
+  /** «Borrar filtros»: every filter back to the start, the search box included (also what is still being typed). */
+  const clearAll = () => {
+    applied.current = ''
+    setText('')
+    onChange(NO_FILTERS)
+  }
 
   // Cleared from outside ("Quitar los filtros"): the box follows. Typing is never overwritten by an older value.
   useEffect(() => {
@@ -69,6 +77,10 @@ export default function MapFilters({ filters, onChange, stories, sectors }) {
         </div>
         <button type="button" className="ag-mapfilters__toggle" aria-expanded={moreOpen} onClick={() => setMoreOpen((open) => !open)}>
           Más filtros{moreActive > 0 ? ` (${moreActive})` : ''}
+        </button>
+        <button type="button" className="ag-mapfilters__clear" onClick={clearAll} disabled={!anything}>
+          <Icon name="cerrar" size={14} strokeWidth={2.4} />
+          Borrar filtros
         </button>
         <div className="ag-mapfilters__more">
         <fieldset className="ag-mapfilters__years">
