@@ -8,7 +8,7 @@ import Icon from '../ui/Icon.jsx'
  * browser (webm) often report no length of their own, so it is preferred over what the file says.
  * Without `url` (the example stories have no real file) the button is off and says so.
  */
-export default function AudioPlayer({ url, seconds = 0, title = 'Audio del narrador' }) {
+export default function AudioPlayer({ url, seconds = 0, title = 'Audio del narrador', credit = '' }) {
   const player = useRef(null)
   const [playing, setPlaying] = useState(false)
   const [position, setPosition] = useState(0)
@@ -70,6 +70,7 @@ export default function AudioPlayer({ url, seconds = 0, title = 'Audio del narra
           {title}
           {SHOW_CODES ? ' · F5' : ''}
         </span>
+        {credit && <span className="ag-audio__credit">{credit}</span>}
         <div
           className="ag-audio__bar"
           role="progressbar"

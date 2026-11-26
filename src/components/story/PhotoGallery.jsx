@@ -22,6 +22,7 @@ export default function PhotoGallery({ photos }) {
           <span>Foto de la historia</span>
         </div>
       )}
+      {photo.leyenda && <p className="ag-media__caption">{photo.leyenda}</p>}
       {photos.length > 1 && (
         <ul className="ag-gallery__thumbs" aria-label="Fotos de la historia">
           {photos.map((item, index) => (

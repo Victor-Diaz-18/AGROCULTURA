@@ -114,6 +114,14 @@
   border-radius: 12px;
   background: #17261f;
 }
+.ag-audio__credit {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  opacity: 0.8;
+}
 .ag-media__caption,
 .ag-media__credits {
   margin: 0;

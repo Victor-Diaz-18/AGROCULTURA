@@ -1,0 +1,162 @@
+{
+  "descripcion": "Historias documentadas del proyecto para el mapa. Sin nombres de personas en los textos; las fechas salen de la fuente más confiable (Viloria De la Hoz, 2019). Las fotos son de Wikimedia Commons y los audios de Xeno-canto, todos con licencia libre; cada archivo lleva su crédito en la leyenda. Las carga scripts/cargar_historias.py.",
+  "historias": [
+    {
+      "client_id": "doc-hacienda-minca",
+      "titulo": "Hacienda Minca, una de las primeras de Colombia",
+      "sector_id": "minca",
+      "anio_desde": 1800,
+      "anio_hasta": 1892,
+      "etiquetas": ["#café", "#finca"],
+      "texto": "En las laderas de Minca se sembraba café para vender por lo menos desde finales del siglo XVIII, antes de que el grano se extendiera por el interior del país.\n\nEntre 1800 y 1818 se desarrollaron los cafetales de la hacienda Minca, reconocida como una de las primeras haciendas cafeteras de Colombia. A mediados del siglo XIX, junto al cafetal había cañaverales, un ingenio, casas y potreros. En 1838 la compró un comerciante de Santa Marta, y en 1892 su familia la vendió.\n\nFuentes: Joaquín Viloria De la Hoz, «Aroma de café: Economía y empresas cafeteras en la Sierra Nevada de Santa Marta», revista Jangwa Pana 18(2), Universidad del Magdalena, 2019 (https://doi.org/10.21676/16574923.2924, licencia CC BY-NC-SA 4.0). Colombia Exotic, «Historia del pueblo Minca» (colombiaexotic.com/historia.php).",
+      "medios": [
+        {
+          "tipo": "foto",
+          "commons": "Santa Marta Vista Desde Minca En La Sierra Nevada.jpg",
+          "leyenda": "Santa Marta vista desde Minca. Foto: Samuel Rengifo, Wikimedia Commons, CC BY-SA 4.0."
+        },
+        {
+          "tipo": "audio",
+          "xenocanto": "379797",
+          "duracion_s": 29,
+          "leyenda": "Canto de la tángara de pecho rosado (Rhodinocichla rosea), grabado en Minca en 2016. Grabación: Fabrice Schmitt, Xeno-canto XC379797, CC BY-NC-SA 4.0."
+        }
+      ]
+    },
+    {
+      "client_id": "doc-hacienda-la-victoria",
+      "titulo": "La Victoria, la hacienda de los ingleses",
+      "sector_id": "minca",
+      "anio_desde": 1896,
+      "anio_hasta": 1954,
+      "etiquetas": ["#café", "#finca", "#oficios"],
+      "texto": "En 1896 una sociedad inglesa fundó la hacienda La Victoria, arriba de Minca. Más tarde la manejó otra compañía de accionistas ingleses; uno de ellos era gerente del ferrocarril de Santa Marta.\n\nEn los años treinta la hacienda tenía 280 hectáreas, 120 de ellas sembradas de café. El grano se beneficiaba, se trillaba y se empacaba en la misma finca, y bajaba al puerto de Santa Marta para viajar a Europa. Una pequeña planta hidroeléctrica, movida por el agua de la montaña, le da la energía que consume.\n\nEn 1954 pasó a la familia que todavía la trabaja. Hoy recibe visitantes como un museo vivo del café. Algunas páginas de turismo dicen que se fundó en 1892; aquí usamos la fecha del estudio académico.\n\nFuentes: Joaquín Viloria De la Hoz, «Aroma de café: Economía y empresas cafeteras en la Sierra Nevada de Santa Marta», revista Jangwa Pana 18(2), Universidad del Magdalena, 2019 (https://doi.org/10.21676/16574923.2924, licencia CC BY-NC-SA 4.0). Colombia Exotic, «Estación de San Lorenzo» (colombiaexotic.com/sanlorenzo.php).",
+      "medios": [
+        {
+          "tipo": "foto",
+          "commons": "Café De Colombia Listo Para Molienda.jpg",
+          "leyenda": "Café de la Sierra Nevada de Santa Marta listo para moler. Foto: Samuel Rengifo, Wikimedia Commons, CC BY-SA 4.0."
+        },
+        {
+          "tipo": "foto",
+          "commons": "Minca santamarta paisajes restaurante vegetacion fauna 012.JPG",
+          "leyenda": "Un río de Minca. Foto: MirfakVelez_12, Wikimedia Commons, CC BY-SA 3.0."
+        }
+      ]
+    },
+    {
+      "client_id": "doc-hacienda-cincinnati",
+      "titulo": "Cincinnati, el café que llegó con la luz eléctrica",
+      "sector_id": "la-tagua",
+      "anio_desde": 1898,
+      "anio_hasta": 1932,
+      "etiquetas": ["#café", "#finca", "#familia"],
+      "texto": "Un ingeniero norteamericano llegó a Colombia en 1889 a instalar teléfonos y telégrafos. En 1892 construyó en Santa Marta una pequeña planta hidroeléctrica, recordada como una de las primeras del país, y desde 1893 recorrió la Sierra buscando tierras para el café.\n\nEn 1898 sembró, con su esposa, los primeros cafetos de la hacienda Cincinnati, en la vereda La Tagua. A comienzos del siglo XX ya vendía café en Europa. Contrató 25 familias campesinas de Puerto Rico que sabían recoger café, y en cosecha llegaban unos 800 recolectores. En 1925 la hacienda tenía 500.000 cafetos, y en 1932, 700.000.\n\nFuentes: Joaquín Viloria De la Hoz, «Aroma de café: Economía y empresas cafeteras en la Sierra Nevada de Santa Marta», revista Jangwa Pana 18(2), Universidad del Magdalena, 2019 (https://doi.org/10.21676/16574923.2924, licencia CC BY-NC-SA 4.0). Santa Marta Al Día, «La transformación de Minca y La Tagua» (ubicación de la hacienda en la vereda La Tagua).",
+      "medios": [
+        {
+          "tipo": "audio",
+          "xenocanto": "467903",
+          "duracion_s": 93,
+          "leyenda": "Canto del cerquero de la Sierra Nevada (Arremon basilicus), ave que solo vive en esta sierra, grabado en una finca de la vereda La Tagua en 2019. Grabación: Jorge Enrique Avendaño, Xeno-canto XC467903, CC BY-NC-SA 4.0 (convertida a un formato más liviano)."
+        }
+      ]
+    },
+    {
+      "client_id": "doc-haciendas-camino-minca",
+      "titulo": "Las haciendas del camino de Minca",
+      "sector_id": "minca",
+      "anio_desde": 1895,
+      "anio_hasta": 1920,
+      "etiquetas": ["#café", "#finca", "#cosecha"],
+      "texto": "Entre 1895 y 1920 la vertiente norte de la Sierra se volvió a llenar de cafetales. Por el camino de Minca nacieron El Recuerdo (1895, de empresarios ingleses), María Teresa y La Victoria (1896), Cincinnati (1898) y Vista Nieve, adonde en 1917 llegaron trabajadores de Santander. Casi todas eran de empresas o familias extranjeras.\n\nEn esta parte de la Sierra hay una sola cosecha al año, entre octubre y febrero, y el café crece a la sombra de los árboles.\n\nFuentes: Joaquín Viloria De la Hoz, «Aroma de café: Economía y empresas cafeteras en la Sierra Nevada de Santa Marta», revista Jangwa Pana 18(2), Universidad del Magdalena, 2019 (https://doi.org/10.21676/16574923.2924, licencia CC BY-NC-SA 4.0). Colombia Exotic, «Minca, origen de su café y cafetales» (colombiaexotic.com/coffee.php).",
+      "medios": [
+        {
+          "tipo": "foto",
+          "commons": "Mirador Eterno A Santa Marta.jpg",
+          "leyenda": "Vista hacia Santa Marta desde una finca de Minca. Foto: Samuel Rengifo, Wikimedia Commons, CC BY-SA 4.0."
+        },
+        {
+          "tipo": "foto",
+          "commons": "Minca santamarta paisajes restaurante vegetacion fauna 07.JPG",
+          "leyenda": "Laderas de Minca. Foto: MirfakVelez_12, Wikimedia Commons, CC BY-SA 3.0."
+        },
+        {
+          "tipo": "audio",
+          "xenocanto": "479874",
+          "duracion_s": 51,
+          "leyenda": "Canto del atlapetes de Santa Marta (Atlapetes melanocephalus), ave que solo vive en esta sierra, grabado en El Campano, arriba de Minca, en 2019. Grabación: Rolf A. de By, Xeno-canto XC479874, CC BY-NC-SA 4.0."
+        }
+      ]
+    },
+    {
+      "client_id": "doc-del-cafe-a-la-cana",
+      "titulo": "Del café a la caña: así nació el caserío de Minca",
+      "sector_id": "minca",
+      "anio_desde": 1925,
+      "anio_hasta": 1949,
+      "etiquetas": ["#café", "#familia"],
+      "texto": "En 1925 la hacienda Minca todavía tenía unos 100.000 cafetos. A finales de los años treinta empezaron a cambiarlos por caña de azúcar, y en 1943 una parte de 64 hectáreas se convirtió en la hacienda cañera Arimaca.\n\nEn esa misma década, una familia llegada de Santander ocupó 125 hectáreas de la vieja hacienda y después las negoció. De ahí salió el caserío que hoy es el pueblo de Minca.\n\nFuente: Joaquín Viloria De la Hoz, «Aroma de café: Economía y empresas cafeteras en la Sierra Nevada de Santa Marta», revista Jangwa Pana 18(2), Universidad del Magdalena, 2019 (https://doi.org/10.21676/16574923.2924, licencia CC BY-NC-SA 4.0).",
+      "medios": [
+        {
+          "tipo": "foto",
+          "commons": "Minca santamarta paisajes restaurante vegetacion fauna 04.JPG",
+          "leyenda": "Casas del pueblo de Minca. Foto: MirfakVelez_12, Wikimedia Commons, CC BY-SA 3.0."
+        }
+      ]
+    },
+    {
+      "client_id": "doc-anos-dificiles",
+      "titulo": "Años difíciles para el café",
+      "sector_id": "minca",
+      "anio_desde": 1964,
+      "anio_hasta": 2005,
+      "etiquetas": ["#café", "#finca"],
+      "texto": "En 1964 el Incora expropió 974 hectáreas de la hacienda Cincinnati. En los años setenta llegó la bonanza marimbera: trajo violencia, tala de monte y competencia por los trabajadores. El jornal subió, muchos caficultores tradicionales no pudieron seguir y varias haciendas se vendieron.\n\nEntre 1996 y 2002 entraron grupos armados ilegales a las vertientes de la Sierra. En 2002, la casa grande de La Victoria estaba ocupada por paramilitares. En 2005, con la Ley de Justicia y Paz, empezó la desmovilización de los paramilitares.\n\nLas voces de quienes lo vivieron están en el Archivo de Memoria Viva del Museo Minca (museominca.org/memoria-viva) y en el documental «Minca: Memoria y conflicto», de La Oraloteca de la Universidad del Magdalena, que se puede ver aquí abajo.\n\nFuentes: Joaquín Viloria De la Hoz, «Aroma de café: Economía y empresas cafeteras en la Sierra Nevada de Santa Marta», revista Jangwa Pana 18(2), Universidad del Magdalena, 2019 (https://doi.org/10.21676/16574923.2924, licencia CC BY-NC-SA 4.0). Museo Minca, Archivo de Memoria Viva. La Oraloteca, «Minca: Memoria y conflicto» (YouTube).",
+      "medios": [
+        {
+          "tipo": "youtube",
+          "url": "https://www.youtube.com/watch?v=ZnR1xU-DRP8",
+          "leyenda": "«Minca: Memoria y conflicto», documental de La Oraloteca (Universidad del Magdalena), en YouTube."
+        }
+      ]
+    },
+    {
+      "client_id": "doc-san-lorenzo-agua",
+      "titulo": "San Lorenzo, donde nace el agua",
+      "sector_id": "san-lorenzo",
+      "anio_desde": 1970,
+      "anio_hasta": 1979,
+      "etiquetas": [],
+      "texto": "En el cerro de San Lorenzo, a 2.240 metros sobre el mar, nacen siete ríos: Guachaca, Córdoba, Toribio, Gaira, Manzanares, Piedras y Mendihuaca. Es la «estrella hídrica» de esta parte de la Sierra, y sus aguas bajan hacia las fincas cafeteras de la vertiente.\n\nEn los años setenta el INDERENA construyó allí unas cabañas para ensayar la reforestación con pinos: la Estación Experimental de San Lorenzo. El ensayo fracasó años después. Hoy la estación depende de Parques Nacionales Naturales y sirve para la educación ambiental.\n\nEn el audio se oye un azulejo grabado en 2007 en un claro con cafetal de la cuchilla de San Lorenzo, a 1.240 metros.\n\nFuente: Colombia Exotic, «Estación de San Lorenzo» (colombiaexotic.com/sanlorenzo.php).",
+      "medios": [
+        {
+          "tipo": "foto",
+          "commons": "Amanecer en la Cuchilla de San Lorenzo - Nevados - Sierra Nevada de Santa Marta - Flickr - Alejandro Bayer.jpg",
+          "leyenda": "Amanecer en la cuchilla de San Lorenzo, con los picos nevados al fondo. Foto: Alejandro Bayer Tamayo, Wikimedia Commons, CC BY-SA 2.0."
+        },
+        {
+          "tipo": "foto",
+          "commons": "Vista desde la Cuchilla de San Lorenzo - Palma de cera de la Sierra Nevada de Santa Marta (Ceroxylon ceriferum) - Flickr - Alejandro Bayer.jpg",
+          "leyenda": "Palma de cera de la Sierra Nevada (Ceroxylon ceriferum) en la cuchilla de San Lorenzo. Foto: Alejandro Bayer Tamayo, Wikimedia Commons, CC BY-SA 2.0."
+        },
+        {
+          "tipo": "audio",
+          "xenocanto": "236211",
+          "duracion_s": 28,
+          "leyenda": "Canto del azulejo (Thraupis episcopus) en un claro con cafetal de la cuchilla de San Lorenzo, 2007. Grabación: Niels Krabbe, Xeno-canto XC236211, CC BY-NC-SA 4.0."
+        }
+      ]
+    },
+    {
+      "client_id": "doc-mujeres-del-cafe",
+      "titulo": "Mujeres del café de la Sierra",
+      "ubicacion_modo": "ninguna",
+      "lugar_nombre": "Sierra Nevada de Santa Marta",
+      "anio_desde": 2024,
+      "anio_hasta": 2024,
+      "etiquetas": ["#café", "#oficios"],
+      "texto": "Detrás del café de la Sierra Nevada de Santa Marta hay mujeres. Trabajan en las fincas, controlan la calidad del grano, lo catan y lo preparan, crean sus propias empresas, venden en otros países y dirigen asociaciones. Algunas son hijas de caficultores y recorren caminos difíciles para acompañar a otros productores; otras vivieron de cerca el conflicto armado.\n\nUna asociación de la Sierra reúne a más de 350 familias que producen café, cacao y miel y reciben turistas en sus fincas.\n\nAsí lo contó un reportaje publicado el 27 de junio de 2024, Día Nacional del Café en Colombia.\n\nFuente: Roger Urieles, «El café con rostro de mujer: heroínas de la Sierra Nevada de Santa Marta», El Tiempo, 27 de junio de 2024.",
+      "medios": []
+    }
+  ]
+}

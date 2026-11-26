@@ -1,3 +1,4 @@
+import { splitCaption } from '../../utils/caption.js'
 import { youtubeEmbed, youtubeId } from '../../utils/youtube.js'
 import AudioPlayer from './AudioPlayer.jsx'
 
@@ -20,7 +21,7 @@ export default function StoryMedia({ medios }) {
           key={medio.url ?? `audio-${index}`}
           url={medio.url}
           seconds={medio.duracion_s ?? 0}
-          {...(medio.leyenda ? { title: medio.leyenda } : {})}
+          {...(medio.leyenda ? { title: splitCaption(medio.leyenda)[0], credit: splitCaption(medio.leyenda)[1] } : {})}
         />
       ))}
       {photos.length > 0 && (

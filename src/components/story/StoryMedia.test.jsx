@@ -21,7 +21,7 @@ describe('los archivos de una historia', () => {
       />,
     )
 
-    expect(screen.getByText(/^Canto del atlapetes de Santa Marta/)).toBeInTheDocument()
+    expect(screen.getByText(/^Canto del atlapetes de Santa Marta/)).toBeInTheDocument() // no credit in this caption: all of it is the title
     expect(screen.queryByText(/Audio del narrador/)).not.toBeInTheDocument()
     expect(screen.getByRole('list', { name: 'Sobre las fotos' })).toHaveTextContent('Foto 1: Foto: autor, CC BY-SA 4.0')
   })
@@ -30,5 +30,17 @@ describe('los archivos de una historia', () => {
     const { container } = render(<StoryMedia medios={[{ tipo: 'youtube', url: 'https://evil.example.com/x' }]} />)
 
     expect(container.querySelector('iframe')).toBeNull()
+  })
+})
+
+describe('la leyenda de un archivo', () => {
+  it('separates what it is from its credit', async () => {
+    const { splitCaption } = await import('../../utils/caption.js')
+
+    expect(splitCaption('Canto del azulejo en 2007. Grabación: Niels Krabbe, Xeno-canto XC236211, CC BY-NC-SA 4.0.')).toEqual([
+      'Canto del azulejo en 2007.',
+      'Grabación: Niels Krabbe, Xeno-canto XC236211, CC BY-NC-SA 4.0.',
+    ])
+    expect(splitCaption('Sin crédito')).toEqual(['Sin crédito', ''])
   })
 })

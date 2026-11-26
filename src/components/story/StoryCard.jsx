@@ -16,6 +16,8 @@ import Modal from '../ui/Modal.jsx'
 import OriginBadge from '../ui/OriginBadge.jsx'
 import AudioPlayer from './AudioPlayer.jsx'
 import PhotoGallery from './PhotoGallery.jsx'
+import { splitCaption } from '../../utils/caption.js'
+import { youtubeEmbed, youtubeId } from '../../utils/youtube.js'
 import ShareButton from './ShareButton.jsx'
 
 /**
@@ -48,6 +50,7 @@ export default function StoryCard({ story, onClose, onDelete }) {
   const referenceImage = story.estado === undefined && realPhotos.length === 0 ? referenceImageFor(story) : null
   const audios = story.medios.filter((medio) => medio.tipo === 'audio')
   const videos = story.medios.filter((medio) => medio.tipo === 'video')
+  const youtube = story.medios.filter((medio) => medio.tipo === 'youtube' && youtubeId(medio.url))
 
   const [asking, setAsking] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -102,10 +105,27 @@ export default function StoryCard({ story, onClose, onDelete }) {
           ) : (
             <PhotoGallery photos={photos} />
           )}
+          {youtube.map((medio) => (
+            <figure key={medio.url} className="ag-media__figure">
+              <iframe
+                className="ag-media__youtube"
+                src={youtubeEmbed(youtubeId(medio.url))}
+                title={medio.leyenda ? `Video: ${medio.leyenda}` : 'Video de la historia en YouTube'}
+                loading="lazy"
+                allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                referrerPolicy="strict-origin-when-cross-origin"
+                allowFullScreen
+              />
+              {medio.leyenda && <figcaption className="ag-media__caption">{medio.leyenda}</figcaption>}
+            </figure>
+          ))}
           {videos.map((medio, index) =>
             medio.url ? (
-              // eslint-disable-next-line jsx-a11y/media-has-caption
-              <video key={medio.url} className="ag-media__video" src={medio.url} controls preload="metadata" aria-label="Video de la historia" />
+              <figure key={medio.url} className="ag-media__figure">
+                {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+                <video className="ag-media__video" src={medio.url} controls preload="metadata" aria-label="Video de la historia" />
+                {medio.leyenda && <figcaption className="ag-media__caption">{medio.leyenda}</figcaption>}
+              </figure>
             ) : (
               <div key={`video-${index}`} className="ag-card-story__video">
                 <span className="ag-card-story__play">
@@ -116,7 +136,12 @@ export default function StoryCard({ story, onClose, onDelete }) {
             ),
           )}
           {audios.map((medio, index) => (
-            <AudioPlayer key={medio.url ?? `audio-${index}`} url={medio.url} seconds={medio.duracion_s ?? 0} />
+            <AudioPlayer
+              key={medio.url ?? `audio-${index}`}
+              url={medio.url}
+              seconds={medio.duracion_s ?? 0}
+              {...(medio.leyenda ? { title: splitCaption(medio.leyenda)[0], credit: splitCaption(medio.leyenda)[1] } : {})}
+            />
           ))}
           {!isVisitor && (
             <>
