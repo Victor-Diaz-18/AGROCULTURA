@@ -21,6 +21,7 @@ import './components/tell/tell.css'
 import './components/story/story.css'
 import './components/admin/admin.css'
 import './pages/pages.css'
+import './styles/movil.css' // last: the sizes for a phone
 
 import App from './App.jsx'
 import { watchForUpdates } from './offline/updates.js'

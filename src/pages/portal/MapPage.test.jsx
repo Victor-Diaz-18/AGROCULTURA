@@ -284,7 +284,7 @@ describe('Mapa de historias: filtros y búsqueda (F11)', () => {
     await user.click(bar().getByRole('button', { name: /^Minca/ }))
 
     expect(await screen.findByText('No hay historias con estos filtros')).toBeInTheDocument()
-    expect(screen.getByText('Prueba con otro sector, otra época o borra la búsqueda.')).toBeInTheDocument()
+    expect(screen.getByText('Prueba con otro sector, otros años o borra la búsqueda.')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Quitar los filtros' }))
 

@@ -109,7 +109,7 @@ export default function MapPage() {
       stories.length === 0
         ? ['Todavía no hay historias publicadas', 'Cuando un administrador apruebe la primera, aparece aquí.']
         : filtered.length === 0
-          ? ['No hay historias con estos filtros', 'Prueba con otro sector, otra época o borra la búsqueda.']
+          ? ['No hay historias con estos filtros', 'Prueba con otro sector, otros años o borra la búsqueda.']
           : visible.length === 0
             ? ['No hay historias en esta zona del mapa', 'Mueve o aleja el mapa para ver más.']
             : null,

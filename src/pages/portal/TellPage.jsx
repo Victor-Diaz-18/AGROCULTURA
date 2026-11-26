@@ -243,7 +243,7 @@ export default function TellPage() {
 
   const help = {
     1: canContinue ? 'Puedes agregar fotos o un video si los tienes.' : 'Graba un audio o escribe la historia para seguir.',
-    2: canContinue ? 'Todo listo para revisar.' : 'Falta el título, el lugar o la época.',
+    2: canContinue ? 'Todo listo para revisar.' : 'Falta el título, el lugar o el año.',
     3: !accepted
       ? 'Marca la autorización para poder enviarla.'
       : online

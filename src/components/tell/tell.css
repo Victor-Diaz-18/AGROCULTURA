@@ -498,9 +498,8 @@
 .ag-option {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  min-height: 56px;
-  padding: 12px 14px;
+  gap: 10px;
+  padding: 10px 12px;
   border: 1.5px solid var(--borde-fuerte);
   border-radius: 12px;
   background: #fff;
@@ -513,52 +512,53 @@
 }
 .ag-option input {
   flex: none;
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
   margin: 2px 0 0;
   accent-color: var(--verde-oscuro);
 }
 .ag-option__body {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  font-size: 15px;
+  gap: 2px;
+  font-size: 14px;
 }
 .ag-option__text {
-  font-size: 13.5px;
-  line-height: 1.45;
+  font-size: 13px;
+  line-height: 1.4;
   color: var(--texto-3);
 }
 .ag-consent {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 16px;
-  border: 2px solid var(--verde-oscuro);
-  border-radius: 14px;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--verde-oscuro);
+  border-radius: 12px;
   background: #fff;
 }
 .ag-consent__box {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
+  gap: 10px;
   cursor: pointer;
 }
 .ag-consent__box input {
   flex: none;
-  width: 26px;
-  height: 26px;
+  width: 20px;
+  height: 20px;
   margin: 1px 0 0;
   accent-color: var(--verde-oscuro);
 }
 .ag-consent__text {
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 700;
-  line-height: 1.45;
+  line-height: 1.4;
 }
 .ag-consent .ag-hint {
   margin: 0;
-  padding-left: 40px;
+  padding-left: 30px;
+  font-size: 12.5px;
 }
 
 /* On a phone: the steps in one short line (the current one says its name), and Atrás / Siguiente always at hand at the bottom */
@@ -636,4 +636,11 @@
 }
 .ag-years__input {
   max-width: 180px;
+}
+/* The field sits where the bold «¿Cuándo ocurrió?» was: its help and its error keep their own weight. */
+.ag-years .ag-hint {
+  font-weight: 400;
+}
+.ag-years .ag-error {
+  font-weight: 700;
 }

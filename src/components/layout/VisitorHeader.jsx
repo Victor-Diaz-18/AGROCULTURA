@@ -61,9 +61,11 @@ export default function VisitorHeader() {
             </NavLink>
           )}
           {team && (
-            <NavLink to="/admin" className="ag-vnav__item ag-vnav__item--panel">
+            <NavLink to="/admin" className="ag-vnav__item ag-vnav__item--panel" aria-label="Panel del equipo">
               <Icon name="inicio" size={18} />
-              <span>Panel del equipo</span>
+              <span>
+                Panel<span className="ag-vnav__wide"> del equipo</span>
+              </span>
             </NavLink>
           )}
           {narrator && (

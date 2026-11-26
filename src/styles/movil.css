@@ -1,0 +1,130 @@
+/*
+ * The phone (up to 720 px wide): the same pages, with smaller titles, buttons and cards, so the screen holds more of what
+ * matters. Only sizes change here; the computer keeps its look. The opening of the visitor's page (photo, title and its
+ * buttons) is left as it is.
+ * Imported last (main.jsx) and with «body» in front, so it wins over the rules of each component.
+ */
+@media (max-width: 720px) {
+  /* ---------- Title of each page ---------- */
+  body .ag-page-head {
+    gap: 10px;
+  }
+  body .ag-page-head h1 {
+    font-size: 23px;
+    line-height: 1.15;
+  }
+  body .ag-page-head p {
+    font-size: 14px;
+    line-height: 1.45;
+  }
+  body .ag-page-head__actions .ag-btn {
+    height: 36px;
+    padding: 0 12px;
+    font-size: 13.5px;
+  }
+
+  /* ---------- «Contar una historia» ---------- */
+  body .ag-step {
+    height: 36px;
+  }
+  body .ag-step__num {
+    width: 26px;
+    height: 26px;
+    font-size: 12.5px;
+  }
+  body .ag-tell__footer {
+    padding: 8px 14px;
+  }
+  body .ag-tell__next,
+  body .ag-tell__back {
+    height: 42px;
+  }
+  /* The summary at the side repeats what the person just wrote, and step 3 shows all of it: on a phone it only takes room. */
+  body .ag-tell__aside {
+    display: none;
+  }
+  body .ag-consent__text {
+    font-size: 14px;
+  }
+
+  /* ---------- «Inicio» right after signing in ---------- */
+  body .ag-launch h1 {
+    font-size: 24px;
+  }
+  body .ag-launch__grid {
+    gap: 10px;
+  }
+  body .ag-launch__card {
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 14px;
+  }
+  body .ag-launch__art {
+    width: 46px;
+    height: 46px;
+    border-radius: 13px;
+  }
+  body .ag-launch__art svg {
+    width: 24px;
+    height: 24px;
+  }
+  body .ag-launch__text b {
+    font-size: 16px;
+  }
+  body .ag-launch__text span {
+    font-size: 13.5px;
+    line-height: 1.4;
+  }
+
+  /* ---------- The team's summary: two cards per row ---------- */
+  body .ag-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important; /* the page sets its columns inline */
+    gap: 10px;
+  }
+  body .ag-stat {
+    padding: 14px;
+  }
+  body .ag-stat__value {
+    font-size: 26px;
+  }
+
+  /* ---------- Titles inside the windows (card of a story, review, new story of the project) ---------- */
+  body .ag-card-story__title {
+    font-size: 22px;
+  }
+  body .ag-review-modal__title {
+    font-size: 20px;
+  }
+  body .ag-project-modal__title {
+    font-size: 19px;
+  }
+
+  /* ---------- The visitor's page below the opening ---------- */
+  body .ag-vmaphead h2,
+  body .ag-vhist h2,
+  body .ag-vjourney h2,
+  body .ag-vhow h2 {
+    font-size: 21px;
+  }
+  body .ag-vhow__steps li {
+    padding: 14px 16px;
+  }
+  body .ag-vhow__icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+  }
+
+  /* ---------- An administrator on the public pages: everything in one row ---------- */
+  body .ag-header--team .ag-vuser__avatar {
+    display: none;
+  }
+  body .ag-header--team .ag-vnav__wide {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+}

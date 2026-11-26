@@ -98,7 +98,7 @@ describe('Contar una historia: steps and gating (F3)', () => {
     expect(screen.getByText('Dónde y cuándo').closest('li')).toHaveAttribute('aria-current', 'step')
     expect(screen.getByText('Cuéntala').closest('li')).toHaveTextContent('✓')
     expect(nextButton()).toBeDisabled()
-    expect(screen.getByText('Falta el título, el lugar o la época.')).toBeInTheDocument()
+    expect(screen.getByText('Falta el título, el lugar o el año.')).toBeInTheDocument()
 
     await user.type(screen.getByLabelText('Ponle un título'), 'El camino de mulas')
     await user.type(screen.getByRole('textbox', { name: 'Desde' }), '1955')
