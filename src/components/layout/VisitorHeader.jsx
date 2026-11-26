@@ -44,7 +44,6 @@ export default function VisitorHeader() {
         <span className="ag-brand__text">
           <span className="ag-brand__name">{config.portal.nombre}</span>
           <span className="ag-brand__sub ag-brand__sub--wide">Memoria cafetera de Minca y sectores aledaños</span>
-          {config.portal.datos_de_ejemplo && <span className="ag-brand__sub">Datos de ejemplo</span>}
         </span>
       </Link>
 

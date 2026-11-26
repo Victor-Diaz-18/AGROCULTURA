@@ -83,10 +83,11 @@ describe('La vista de un visitante sin cuenta', () => {
     expect(screen.queryByRole('button', { name: /Simular conexión/ })).not.toBeInTheDocument()
   })
 
-  it('shows the sample-data notice and who makes this', async () => {
+  it('says who makes this, and never «Datos de ejemplo» under the logo', async () => {
     visit({ '/config': { ...CONFIG, portal: { ...CONFIG.portal, datos_de_ejemplo: true } } })
 
-    expect(await screen.findByText('Datos de ejemplo')).toBeInTheDocument()
+    expect(await screen.findByRole('contentinfo')).toHaveTextContent('Universidad del Magdalena')
+    expect(screen.queryByText('Datos de ejemplo')).not.toBeInTheDocument()
     expect(screen.getByRole('contentinfo')).toHaveTextContent('Universidad del Magdalena')
     expect(within(screen.getByRole('contentinfo')).getByRole('link', { name: 'CC BY-SA 3.0' })).toBeInTheDocument() // the license of the photo asks for its credit
     expect(within(screen.getByRole('contentinfo')).getByText(/diego_cue/)).toBeInTheDocument()

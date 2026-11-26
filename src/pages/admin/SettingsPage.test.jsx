@@ -114,16 +114,10 @@ describe('Configuración: portal y moderación (F7)', () => {
     await waitFor(() => expect(toggle).not.toBeChecked())
   })
 
-  it('lets the team turn off the "datos de ejemplo" label before real use', async () => {
-    const user = userEvent.setup()
-    const { fetchMock } = open()
-    const toggle = await screen.findByRole('switch', { name: /Mostrar «datos de ejemplo»/ })
-    await waitFor(() => expect(toggle).toBeChecked()) // once the configuration has loaded
-
-    await user.click(toggle)
-
-    await waitFor(() => expect(toggle).not.toBeChecked())
-    expect(bodyOf(fetchMock, '/admin/portal')).toEqual({ datos_de_ejemplo: false })
+  it('has no switch for a «datos de ejemplo» label: the header never shows one', async () => {
+    open()
+    await screen.findByRole('switch', { name: /Avisar al narrador si se rechaza/ })
+    expect(screen.queryByRole('switch', { name: /datos de ejemplo/i })).not.toBeInTheDocument()
   })
 
   it('shows the sectors but there is nothing to edit in them', async () => {

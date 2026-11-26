@@ -5,10 +5,11 @@ import { STATS } from '../../test/fixtures.js'
 import { renderApp } from '../../test/renderApp.jsx'
 
 describe('Header', () => {
-  it('shows "datos de ejemplo" while the portal holds sample data', async () => {
+  it('never shows «datos de ejemplo» under the logo, even while the portal holds sample data', async () => {
     renderApp({ user: ADMIN })
 
-    expect(await screen.findByText(/datos de ejemplo/i)).toBeInTheDocument()
+    expect(await screen.findByRole('link', { name: /Panel del equipo/ })).toBeInTheDocument()
+    expect(screen.queryByText(/datos de ejemplo/i)).not.toBeInTheDocument()
   })
 
   it.each([

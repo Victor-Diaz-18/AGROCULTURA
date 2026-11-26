@@ -108,9 +108,6 @@ export default function SettingsPage({ variant = 'portal' }) {
               {nameError}
             </p>
           )}
-          <Switch checked={portal.datos_de_ejemplo} onChange={(value) => save({ datos_de_ejemplo: value })}>
-            <b>Mostrar «datos de ejemplo» en el encabezado.</b> Apágalo antes de usar la plataforma con familias reales.
-          </Switch>
         </section>
 
         <section className="ag-card" aria-label="Moderación">
