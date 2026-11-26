@@ -36,7 +36,7 @@ export default function VisitorHeader() {
   }
 
   return (
-    <header className={`ag-header ag-header--visitor${narrator ? ' ag-header--narrator' : ''}${pathname === '/' ? ' ag-header--over-photo' : ''}`}>
+    <header className={`ag-header ag-header--visitor${narrator ? ' ag-header--narrator' : ''}${team ? ' ag-header--team' : ''}${pathname === '/' ? ' ag-header--over-photo' : ''}`}>
       <Link to="/" className="ag-brand ag-brand--link">
         <span className="ag-brand__logo">
           <img src={logo} alt="" />
@@ -51,12 +51,6 @@ export default function VisitorHeader() {
       <div className="ag-header__right">
         {/* On a phone the narrator's menu becomes a bar fixed at the bottom of the screen, with big buttons. */}
         <nav aria-label="Secciones" className="ag-vnav">
-          {narrator && (
-            <NavLink to="/inicio" className="ag-vnav__item">
-              <Icon name="inicio" size={20} />
-              <span>Inicio</span>
-            </NavLink>
-          )}
           <NavLink to="/" end className="ag-vnav__item">
             {narrator && <Icon name="mapa" size={20} />}
             <span>Mapa de historias</span>
@@ -68,7 +62,7 @@ export default function VisitorHeader() {
             </NavLink>
           )}
           {team && (
-            <NavLink to="/admin/inicio" className="ag-vnav__item">
+            <NavLink to="/admin" className="ag-vnav__item ag-vnav__item--panel">
               <Icon name="inicio" size={18} />
               <span>Panel del equipo</span>
             </NavLink>

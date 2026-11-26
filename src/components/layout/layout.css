@@ -1384,3 +1384,63 @@
     bottom: calc(84px + env(safe-area-inset-bottom));
   }
 }
+
+/* ---------- The admin's «Panel del equipo» on the public page, also on a phone ---------- */
+@media (max-width: 720px) {
+  .ag-header--team .ag-vnav {
+    display: flex;
+  }
+  .ag-header--team .ag-vnav__item:not(.ag-vnav__item--panel) {
+    display: none;
+  }
+  .ag-header--team .ag-vnav__item--panel {
+    height: 36px;
+    padding: 0 10px;
+    border: 1px solid var(--cab-texto-suave);
+    border-radius: 10px;
+    font-size: 13px;
+  }
+}
+
+/* ---------- «Más» in the admin's bar (phone only) ---------- */
+.ag-nav__more {
+  display: none;
+}
+@media (max-width: 720px) {
+  .ag-nav--admin .ag-nav__more {
+    position: relative;
+    display: flex;
+    flex: 1;
+  }
+  .ag-nav__more > .ag-nav__item--bar {
+    width: 100%;
+    border: 0;
+  }
+  .ag-nav__sheet {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 10px);
+    display: flex;
+    flex-direction: column;
+    min-width: 220px;
+    padding: 6px;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 12px 32px rgba(23, 38, 31, 0.3);
+  }
+  .ag-nav__sheetlink {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    padding: 0 12px;
+    border-radius: 10px;
+    color: var(--verde-oscuro);
+    font-size: 15px;
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .ag-nav__sheetlink:hover {
+    background: var(--verde-claro);
+  }
+}

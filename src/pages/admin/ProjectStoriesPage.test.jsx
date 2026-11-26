@@ -152,7 +152,7 @@ describe('Nueva historia del proyecto', () => {
     await user.type(within(dialog).getByLabelText('Título'), '  El patio de secado ')
     await user.click(within(dialog).getByRole('button', { name: 'San Lorenzo' }))
     await user.selectOptions(within(dialog).getByRole('combobox', { name: 'Época' }), '1980 a 1999')
-    await user.type(within(dialog).getByLabelText('Nombre del lugar (si quieres)'), '  Patio  de los Pérez ')
+    await user.type(within(dialog).getByLabelText('Nombre del lugar (opcional)'), '  Patio  de los Pérez ')
     await user.type(within(dialog).getByLabelText('Quién la cuenta'), 'Doña Rosa')
     await user.type(within(dialog).getByLabelText('Relato'), 'Se secaba al sol.')
     await user.click(within(dialog).getByRole('button', { name: '#finca' }))
@@ -386,7 +386,7 @@ describe('Nueva historia del proyecto: lugar, nombre y autorización', () => {
     await user.click(within(dialog).getByRole('radio', { name: 'Sin ubicación' }))
 
     expect(within(dialog).queryByRole('application', { name: 'Mapa para elegir dónde ocurrió' })).not.toBeInTheDocument()
-    expect(within(dialog).getByLabelText('Nombre de referencia (si quieres)')).toHaveAccessibleDescription('Solo lo ve el equipo. El público no lo ve.')
+    expect(within(dialog).getByLabelText('Nombre de referencia (opcional)')).toHaveAccessibleDescription('Solo lo ve el equipo. El público no lo ve.')
   })
 
   it('needs no place to publish a story without one, but needs the authorization', async () => {
@@ -429,7 +429,7 @@ describe('Nueva historia del proyecto: lugar, nombre y autorización', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByLabelText('Título'), 'Una entrevista')
     await user.type(within(dialog).getByLabelText('Relato'), 'Texto.')
-    await user.type(within(dialog).getByLabelText('Nombre de la finca o marca (si quieres)'), 'Café La Loma')
+    await user.type(within(dialog).getByLabelText('Nombre de la finca o marca (opcional)'), 'Café La Loma')
     await user.click(within(dialog).getByRole('checkbox', { name: 'Publicar sin el nombre de quien la cuenta' }))
     await pickPlaceAndPeriod(dialog, user)
     await user.click(publishButton())

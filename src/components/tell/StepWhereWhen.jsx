@@ -50,7 +50,7 @@ export default function StepWhereWhen({ config, titulo, onTitulo, modo, onModo, 
 
       <div className="ag-tell__block">
         <label htmlFor="ag-lugar" className="ag-tell__label">
-          {withoutPlace ? 'Nombre de referencia' : 'Nombre del lugar'} <span className="ag-tell__optional">(si quieres)</span>
+          {withoutPlace ? 'Nombre de referencia' : 'Nombre del lugar'} <span className="ag-tell__optional">(opcional)</span>
         </label>
         <input
           id="ag-lugar"
@@ -69,7 +69,7 @@ export default function StepWhereWhen({ config, titulo, onTitulo, modo, onModo, 
 
       <div className="ag-tell__block">
         <label htmlFor="ag-finca" className="ag-tell__label">
-          Nombre de la finca o marca <span className="ag-tell__optional">(si quieres)</span>
+          Nombre de la finca o marca <span className="ag-tell__optional">(opcional)</span>
         </label>
         <input
           id="ag-finca"

@@ -1,5 +1,6 @@
+import { useEffect, useState } from 'react'
 import logo from '../../assets/logo-temporal.png'
-import { Link, Outlet } from 'react-router-dom'
+import { Link, Outlet, useLocation } from 'react-router-dom'
 import AdminLogin from '../auth/AdminLogin.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
 import useFocusOnNavigation from '../../hooks/useFocusOnNavigation.js'
@@ -9,6 +10,37 @@ import NavMenu from './NavMenu.jsx'
 import initials from '../../utils/initials.js'
 
 /** Frame of the administration panel (F6, F7, F12). Meant mostly for desktop. */
+/**
+ * «Más», only on a phone: the bar at the bottom has the three places used most; the rest of the menu opens from here.
+ * The list exists only while it is open, so the menu never has the same link twice.
+ */
+function MoreMenu({ items }) {
+  const [open, setOpen] = useState(false)
+  const { pathname } = useLocation()
+  useEffect(() => setOpen(false), [pathname])
+  return (
+    <div className="ag-nav__more">
+      <button type="button" className="ag-nav__item ag-nav__item--bar" aria-expanded={open} onClick={() => setOpen((value) => !value)}>
+        <Icon name="lista" size={18} />
+        <span className="ag-nav__label">Más opciones</span>
+        <span className="ag-nav__short" aria-hidden="true">
+          Más
+        </span>
+      </button>
+      {open && (
+        <div className="ag-nav__sheet">
+          {items.map((item) => (
+            <Link key={item.to} to={item.to} className="ag-nav__sheetlink">
+              <Icon name={item.icon} size={18} />
+              {item.label}
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function AdminShell() {
   useFocusOnNavigation()
   const { config, stats } = usePortalData()
@@ -19,11 +51,10 @@ export default function AdminShell() {
     {
       title: 'GESTIÓN',
       items: [
-        { to: '/admin/inicio', label: 'Inicio', icon: 'inicio', code: '', bar: true, short: 'Inicio' },
-        { to: '/admin', end: true, label: 'Resumen', icon: 'resumen', code: 'F1' },
+        { to: '/admin', end: true, label: 'Resumen', icon: 'resumen', code: 'F1', bar: true, short: 'Resumen' },
         { to: '/admin/revision', label: 'Revisión', icon: 'bandeja', code: 'F6', count: stats.en_revision, alert: true, bar: true, short: 'Revisión' },
         { to: '/admin/historias', label: 'Historias del proyecto', icon: 'bandera', code: 'F12', bar: true, short: 'Historias' },
-        { to: '/admin/configuracion', label: 'Configuración', icon: 'engranaje', code: 'F7', bar: true, short: 'Ajustes' },
+        { to: '/admin/configuracion', label: 'Configuración', icon: 'engranaje', code: 'F7' },
         { to: '/admin/narradores', label: 'Narradores', icon: 'personas' },
         // Only the main administrator manages the others and deletes stories: nobody else sees these entries.
         ...(user?.principal
@@ -92,7 +123,9 @@ export default function AdminShell() {
                 <span>Crear historia</span>
               </Link>
             }
-          />
+          >
+            <MoreMenu items={groups.flatMap((group) => group.items).filter((item) => !item.bar)} />
+          </NavMenu>
           <main id="contenido" tabIndex={-1} className="ag-main">
             <Outlet />
           </main>

@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import useConnectivity from '../hooks/useConnectivity.js'
 import { fetchMe } from '../services/auth.js'
 import { ApiError } from '../services/http.js'
@@ -25,13 +25,10 @@ const AuthContext = createContext({
   logout: () => {},
 })
 
-/** Pages that need a session: signing out on one of them goes back to the map. */
-const PROTECTED_PATHS = ['/contar', '/mis-historias', '/revision', '/historias-propias', '/configuracion', '/administradores']
 
 export function AuthProvider({ children }) {
   const toast = useToast()
   const navigate = useNavigate()
-  const { pathname } = useLocation()
   const { online } = useConnectivity()
   const [session, setSession] = useState(() => loadSession())
   const [login, setLogin] = useState({ open: false, rol: null, destino: null, nonce: 0 })
@@ -78,8 +75,8 @@ export function AuthProvider({ children }) {
   const logout = useCallback(() => {
     endSession()
     toast('Sesión cerrada.', 'info')
-    if (PROTECTED_PATHS.some((path) => pathname.startsWith(path))) navigate('/')
-  }, [endSession, toast, navigate, pathname])
+    navigate('/') // always back to the public map, as a visitor (also from the team's panel)
+  }, [endSession, toast, navigate])
 
   const value = useMemo(
     () => ({ user, role, token, login, openLogin, closeLogin, startSession, logout }),

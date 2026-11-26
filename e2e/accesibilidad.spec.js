@@ -83,6 +83,11 @@ test('la administración y sus diálogos', async ({ page }) => {
   await page.keyboard.press('Escape')
 
   for (const [link, name] of [[/Historias del proyecto/, 'historias del proyecto'], [/Configuración/, 'configuración']]) {
+    const target = page.getByRole('link', { name: link }).first()
+    // On a phone the less used sections live under «Más», at the end of the bottom bar.
+    if (!(await target.isVisible()) && (await page.getByRole('button', { name: /Más opciones/ }).isVisible())) {
+      await page.getByRole('button', { name: /Más opciones/ }).click()
+    }
     await page.getByRole('link', { name: link }).first().click()
     await page.waitForTimeout(500)
     await check(page, name)

@@ -66,7 +66,7 @@ describe('/admin (F7)', () => {
     expect(screen.queryByRole('heading', { name: 'Resumen' })).not.toBeInTheDocument()
   })
 
-  it('goes back to the card when the administrator signs out', async () => {
+  it('signing out takes the administrator to the public map, as a visitor', async () => {
     const user = userEvent.setup()
     renderApp({ route: '/admin', user: ADMIN })
     await screen.findByRole('heading', { name: 'Resumen' })
@@ -74,6 +74,7 @@ describe('/admin (F7)', () => {
     const header = screen.getByRole('banner')
     await user.click(within(header).getByRole('button', { name: 'Salir' }))
 
-    expect(await screen.findByRole('heading', { name: 'Acceso del equipo' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: /La memoria del café/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Ingresar/ })).toBeInTheDocument()
   })
 })

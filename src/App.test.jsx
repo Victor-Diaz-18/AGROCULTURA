@@ -35,6 +35,6 @@ describe('App', () => {
     expect(await screen.findByRole('heading', { name: 'Avatares en realidad aumentada' })).toBeInTheDocument()
     expect(screen.getByText('Estamos trabajando en esto.')).toBeInTheDocument()
     expect(screen.queryByText(/No se construye|FASE FUTURA/)).not.toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Volver al inicio' })).toHaveAttribute('href', '/admin/inicio')
+    expect(screen.getByRole('link', { name: 'Volver al panel' })).toHaveAttribute('href', '/admin')
   })
 })

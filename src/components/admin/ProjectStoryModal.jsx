@@ -175,7 +175,7 @@ export default function ProjectStoryModal({ onClose, onPublished }) {
       </fieldset>
 
       <div className="ag-project-modal__field">
-        <label htmlFor="ag-proyecto-lugar">{modo === 'ninguna' ? 'Nombre de referencia (si quieres)' : 'Nombre del lugar (si quieres)'}</label>
+        <label htmlFor="ag-proyecto-lugar">{modo === 'ninguna' ? 'Nombre de referencia (opcional)' : 'Nombre del lugar (opcional)'}</label>
         <input
           id="ag-proyecto-lugar"
           type="text"
@@ -192,7 +192,7 @@ export default function ProjectStoryModal({ onClose, onPublished }) {
       </div>
 
       <div className="ag-project-modal__field">
-        <label htmlFor="ag-proyecto-finca">Nombre de la finca o marca (si quieres)</label>
+        <label htmlFor="ag-proyecto-finca">Nombre de la finca o marca (opcional)</label>
         <input
           id="ag-proyecto-finca"
           type="text"

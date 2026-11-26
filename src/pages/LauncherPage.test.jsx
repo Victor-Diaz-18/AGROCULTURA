@@ -41,3 +41,22 @@ describe('«Inicio»: todas las acciones en tarjetas', () => {
     expect(await screen.findByText('¿Qué quieres hacer?')).toBeInTheDocument()
   })
 })
+
+describe('«Inicio» aparece solo al ingresar', () => {
+  it('no está en el menú del narrador ni en el del administrador', async () => {
+    const { unmount } = renderApp({ route: '/', user: NARRATOR, api: { '/historias/mias': [] } })
+    const nav = await screen.findByRole('navigation', { name: 'Secciones' })
+    expect(within(nav).queryByRole('link', { name: /Inicio/ })).not.toBeInTheDocument()
+    unmount()
+
+    renderApp({ route: '/admin', user: ADMIN })
+    const panel = await screen.findByRole('navigation', { name: 'Secciones de administración' })
+    expect(within(panel).queryByRole('link', { name: /^Inicio/ })).not.toBeInTheDocument()
+  })
+
+  it('el administrador tiene «Panel del equipo» en el mapa público y lo lleva al panel', async () => {
+    renderApp({ route: '/', user: ADMIN })
+
+    expect(await screen.findByRole('link', { name: /Panel del equipo/ })).toHaveAttribute('href', '/admin')
+  })
+})

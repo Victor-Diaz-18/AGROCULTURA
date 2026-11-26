@@ -52,8 +52,8 @@ export default function FuturePage() {
         </span>
         <b>Estamos trabajando en esto.</b>
         <span>{feature.coming}</span>
-        <Link to="/admin/inicio" className="ag-btn ag-btn--dark">
-          Volver al inicio
+        <Link to="/admin" className="ag-btn ag-btn--dark">
+          Volver al panel
         </Link>
       </div>
     </>
