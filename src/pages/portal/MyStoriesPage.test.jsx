@@ -424,3 +424,11 @@ describe('«Editar» mientras la historia espera revisión', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Editar historia' })).toBeInTheDocument()
   })
 })
+
+describe('lo que corrigió el equipo, dicho al narrador', () => {
+  it('names each thing in a plain list', () => {
+    expect(nextStep({ estado: 'publicada', corregido: ['titulo', 'epoca', 'etiquetas'] })).toBe(
+      'El equipo del proyecto corrigió el título, los años y las etiquetas antes de publicarla',
+    )
+  })
+})

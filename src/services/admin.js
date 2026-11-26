@@ -20,9 +20,11 @@ export const approveStory = (codigo, confirmaciones) =>
 export const rejectStory = (codigo, motivo) =>
   request(`/admin/historias/${encodeURIComponent(codigo)}/rechazar`, { method: 'POST', body: { motivo } })
 
-/** Corrects the title and the text of a story waiting for review. Answers the story, with `correccion` (what was written before). */
-export const correctStory = (codigo, { titulo, texto }) =>
-  request(`/admin/historias/${encodeURIComponent(codigo)}`, { method: 'PATCH', body: { titulo, texto } })
+/**
+ * Corrects what is written in a story waiting for review: title, text and, when given, the years, the names of the place and the
+ * farm and the tags. Answers the story, with `correccion` (what the narrator had written).
+ */
+export const correctStory = (codigo, changes) => request(`/admin/historias/${encodeURIComponent(codigo)}`, { method: 'PATCH', body: changes })
 
 /** Sends a published story to the trash: it leaves the map, and the main administrator can bring it back for 30 days. */
 export const deleteStory = (codigo) => request(`/admin/historias/${encodeURIComponent(codigo)}`, { method: 'DELETE' })
@@ -63,6 +65,10 @@ export const resetNarratorPassword = (id, clave) =>
 
 export const createProjectStory = (payload) => request('/admin/historias-proyecto', { method: 'POST', body: payload })
 
+/** The new version of a team story, published or not (everything, as when it was created). */
+export const updateProjectStory = (codigo, payload) =>
+  request(`/admin/historias-proyecto/${encodeURIComponent(codigo)}`, { method: 'PUT', body: payload })
+
 /**
  * Uploads the audio and photos (through the API) and the video (straight to Blob), then publishes the team's story.
  * `uploaded` remembers what already went up, so a retry does not upload it again. `userId` is the administrator's: the
@@ -70,13 +76,14 @@ export const createProjectStory = (payload) => request('/admin/historias-proyect
  * published without its video: whoever uploads it is looking at the screen and can try again.
  */
 export async function publishProjectStory(draft, { uploaded = new WeakMap(), userId, onProgress } = {}) {
+  // A file the story already had (`medio`, when it is being edited) is not uploaded again.
   const files = []
-  if (draft.audio) files.push({ blob: draft.audio.blob, tipo: 'audio', name: draft.audio.name, duracion: draft.audio.seconds })
-  for (const photo of draft.fotos) files.push({ blob: photo.blob, tipo: 'foto', name: photo.name })
+  if (draft.audio) files.push({ blob: draft.audio.blob, medio: draft.audio.medio, tipo: 'audio', name: draft.audio.name, duracion: draft.audio.seconds })
+  for (const photo of draft.fotos) files.push({ blob: photo.blob, medio: photo.medio, tipo: 'foto', name: photo.name })
 
   const medios = []
   for (const file of files) {
-    let medio = uploaded.get(file.blob)
+    let medio = file.medio ?? uploaded.get(file.blob)
     if (!medio) {
       medio = await uploadMedia(file)
       uploaded.set(file.blob, medio)
@@ -84,7 +91,7 @@ export async function publishProjectStory(draft, { uploaded = new WeakMap(), use
     medios.push(medio)
   }
   if (draft.video) {
-    let medio = uploaded.get(draft.video.blob)
+    let medio = draft.video.medio ?? uploaded.get(draft.video.blob)
     if (!medio) {
       medio = await uploadVideo(draft.video, { userId, onProgress })
       uploaded.set(draft.video.blob, medio)
@@ -92,5 +99,6 @@ export async function publishProjectStory(draft, { uploaded = new WeakMap(), use
     medios.push(medio)
   }
   // The same options as a narrator's story (place, name, farm, authorization), plus who tells it.
-  return createProjectStory({ ...buildStoryPayload(draft, medios), narrador_nombre: draft.narrador || undefined })
+  const payload = { ...buildStoryPayload(draft, medios), narrador_nombre: draft.narrador || undefined }
+  return draft.codigo ? updateProjectStory(draft.codigo, payload) : createProjectStory(payload)
 }

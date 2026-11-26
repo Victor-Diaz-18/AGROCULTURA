@@ -209,7 +209,7 @@ describe('Revisión: corregir el título o el texto antes de publicar', () => {
     const user = userEvent.setup()
     const { dialog, fetchMock } = await openFirst(user)
 
-    await user.click(within(dialog).getByRole('button', { name: 'Corregir título o texto' }))
+    await user.click(within(dialog).getByRole('button', { name: 'Editar la historia' }))
     const title = within(dialog).getByLabelText('Título')
     await user.clear(title)
     await user.type(title, 'El beneficiadero de la vereda')
@@ -223,7 +223,9 @@ describe('Revisión: corregir el título o el texto antes de publicar', () => {
     expect(within(dialog).getByText('Entre varias familias, armamos el beneficiadero.')).toBeInTheDocument()
     const [call] = callsTo(fetchMock, '/admin/historias/HIS-2026-008')
     expect(call[1].method).toBe('PATCH')
-    expect(JSON.parse(call[1].body)).toEqual({ titulo: 'El beneficiadero de la vereda', texto: 'Entre varias familias, armamos el beneficiadero.' })
+    const sent = JSON.parse(call[1].body)
+    expect(sent).toMatchObject({ titulo: 'El beneficiadero de la vereda', texto: 'Entre varias familias, armamos el beneficiadero.' })
+    expect(sent).not.toHaveProperty('anio_desde') // a period of before, left as it was
 
     const original = within(dialog).getByText(/Corregida por Administración el .*Ver lo que escribió el narrador/)
     await user.click(original)
@@ -235,7 +237,7 @@ describe('Revisión: corregir el título o el texto antes de publicar', () => {
     const { dialog, fetchMock } = await openFirst(user)
     await tickAll(user)
 
-    await user.click(within(dialog).getByRole('button', { name: 'Corregir título o texto' }))
+    await user.click(within(dialog).getByRole('button', { name: 'Editar la historia' }))
     expect(within(dialog).getByRole('button', { name: 'Aprobar y publicar' })).toBeDisabled()
     expect(within(dialog).getByRole('button', { name: 'Rechazar' })).toBeDisabled()
 
@@ -251,7 +253,7 @@ describe('Revisión: corregir el título o el texto antes de publicar', () => {
     const user = userEvent.setup()
     const { dialog } = await openFirst(user, correctingApi({ queue: [{ ...FIRST, texto: '' }] }))
 
-    await user.click(within(dialog).getByRole('button', { name: 'Corregir el título' }))
+    await user.click(within(dialog).getByRole('button', { name: 'Editar la historia' }))
 
     expect(within(dialog).getByLabelText('Título')).toBeInTheDocument()
     expect(within(dialog).queryByLabelText('Texto')).not.toBeInTheDocument()
@@ -260,7 +262,7 @@ describe('Revisión: corregir el título o el texto antes de publicar', () => {
   it('will not leave the title too short or the text empty', async () => {
     const user = userEvent.setup()
     const { dialog, fetchMock } = await openFirst(user)
-    await user.click(within(dialog).getByRole('button', { name: 'Corregir título o texto' }))
+    await user.click(within(dialog).getByRole('button', { name: 'Editar la historia' }))
 
     await user.clear(within(dialog).getByLabelText('Título'))
     await user.type(within(dialog).getByLabelText('Título'), 'El')
@@ -277,7 +279,7 @@ describe('Revisión: corregir el título o el texto antes de publicar', () => {
   it('says so when somebody else already decided the story', async () => {
     const user = userEvent.setup()
     const { dialog } = await openFirst(user, correctingApi({ fails: 'Esta historia ya se revisó: solo se corrige mientras espera revisión.' }))
-    await user.click(within(dialog).getByRole('button', { name: 'Corregir título o texto' }))
+    await user.click(within(dialog).getByRole('button', { name: 'Editar la historia' }))
 
     await user.click(within(dialog).getByRole('button', { name: 'Guardar corrección' }))
 
@@ -501,3 +503,44 @@ describe('Revisión: lo que el público no ve y la autorización', () => {
   })
 })
 
+describe('el equipo corrige años, nombres y etiquetas', () => {
+  it('sends the years, the names and the tags it changed, and keeps the rest of the narrator', async () => {
+    const user = userEvent.setup()
+    const story = adminStory({ codigo: 'HIS-2026-040', titulo: 'La trilla', epoca: '1955', anio_desde: 1955, anio_hasta: 1955, finca_nombre: 'Finca Vieja', etiquetas: ['#café'] })
+    const { fetchMock } = renderApp({
+      route: '/admin/revision',
+      user: ADMIN,
+      api: { '/admin/historias': [story], '/admin/historias/HIS-2026-040': (init) => ({ ...story, ...JSON.parse(init.body), epoca: '1950 a 1958' }) },
+    })
+    await user.click(await screen.findByRole('button', { name: 'Revisar', exact: true }))
+    const dialog = await screen.findByRole('dialog')
+    await user.click(within(dialog).getByRole('button', { name: 'Editar la historia' }))
+
+    expect(within(dialog).getByRole('textbox', { name: 'Desde' })).toHaveValue('1955')
+    await user.clear(within(dialog).getByRole('textbox', { name: 'Desde' }))
+    await user.type(within(dialog).getByRole('textbox', { name: 'Desde' }), '1950')
+    await user.type(within(dialog).getByRole('textbox', { name: 'Hasta (opcional)' }), '1958')
+    await user.clear(within(dialog).getByLabelText('Nombre de la finca o marca (opcional)'))
+    await user.type(within(dialog).getByLabelText('Nombre de la finca o marca (opcional)'), 'Finca La Vieja')
+    await user.click(within(dialog).getByRole('button', { name: '#finca' }))
+    await user.click(within(dialog).getByRole('button', { name: 'Guardar corrección' }))
+
+    await waitFor(() => expect(callsTo(fetchMock, '/admin/historias/HIS-2026-040')).toHaveLength(1))
+    const sent = JSON.parse(callsTo(fetchMock, '/admin/historias/HIS-2026-040')[0][1].body)
+    expect(sent).toMatchObject({ anio_desde: 1950, anio_hasta: 1958, finca_nombre: 'Finca La Vieja', etiquetas: ['#café', '#finca'] })
+  })
+
+  it('does not save years that make no sense', async () => {
+    const user = userEvent.setup()
+    const story = adminStory({ codigo: 'HIS-2026-041', epoca: '1955', anio_desde: 1955, anio_hasta: 1955 })
+    const { fetchMock } = renderApp({ route: '/admin/revision', user: ADMIN, api: { '/admin/historias': [story] } })
+    await user.click(await screen.findByRole('button', { name: 'Revisar', exact: true }))
+    const dialog = await screen.findByRole('dialog')
+    await user.click(within(dialog).getByRole('button', { name: 'Editar la historia' }))
+    await user.type(within(dialog).getByRole('textbox', { name: 'Hasta (opcional)' }), '1940')
+    await user.click(within(dialog).getByRole('button', { name: 'Guardar corrección' }))
+
+    expect(within(dialog).getAllByRole('alert').at(-1)).toHaveTextContent('no puede ser anterior')
+    expect(callsTo(fetchMock, '/admin/historias/HIS-2026-041')).toHaveLength(0)
+  })
+})

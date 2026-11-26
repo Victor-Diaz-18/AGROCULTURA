@@ -271,7 +271,9 @@
 }
 .ag-table__action {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
+  gap: 8px;
 }
 .ag-table__empty {
   padding: 28px 18px;

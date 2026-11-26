@@ -29,6 +29,8 @@ export default function ProjectStoriesPage({ variant = 'portal' }) {
   const creating = params.get('nueva') === '1'
   const [cardCode, setCardCode] = useState(null)
   const card = stories.find((story) => story.codigo === cardCode)
+  const [editCode, setEditCode] = useState(null)
+  const editStory = stories.find((story) => story.codigo === editCode)
 
   const setCreating = (open) => setParams(open ? { nueva: '1' } : {}, { replace: true })
   const emptyText = {
@@ -64,9 +66,9 @@ export default function ProjectStoriesPage({ variant = 'portal' }) {
       <div className="ag-table-card ag-table-card--cards">
         <DataTable
           label="Historias del proyecto"
-          columns={[{ label: 'CÓDIGO' }, { label: 'HISTORIA' }, { label: 'SECTOR' }, { label: 'ÉPOCA' }, { label: 'FORMATOS' }, { label: 'FICHA', align: 'right' }]}
-          template="130px minmax(240px, 2fr) 120px 150px 160px 120px"
-          minWidth={760}
+          columns={[{ label: 'CÓDIGO' }, { label: 'HISTORIA' }, { label: 'SECTOR' }, { label: 'ÉPOCA' }, { label: 'FORMATOS' }, { label: 'ACCIONES', align: 'right' }]}
+          template="130px minmax(240px, 2fr) 120px 150px 160px 190px"
+          minWidth={830}
           empty={emptyText}
         >
           {stories.map((story) => (
@@ -80,6 +82,14 @@ export default function ProjectStoriesPage({ variant = 'portal' }) {
                 <button type="button" className="ag-rowbtn ag-rowbtn--teal" onClick={() => setCardCode(story.codigo)}>
                   Ver ficha
                 </button>
+                <button
+                  type="button"
+                  className="ag-rowbtn ag-rowbtn--outline"
+                  aria-label={`Editar «${story.titulo}»`}
+                  onClick={() => setEditCode(story.codigo)}
+                >
+                  Editar
+                </button>
               </Cell>
             </TableRow>
           ))}
@@ -87,6 +97,18 @@ export default function ProjectStoriesPage({ variant = 'portal' }) {
       </div>
 
       {card && <StoryCard key={card.codigo} story={card} onClose={() => setCardCode(null)} onDelete={removeStory} />}
+
+      {editStory && (
+        <ProjectStoryModal
+          key={editStory.codigo}
+          story={editStory}
+          onClose={() => setEditCode(null)}
+          onPublished={() => {
+            setEditCode(null)
+            reload()
+          }}
+        />
+      )}
 
       {creating && (
         <ProjectStoryModal

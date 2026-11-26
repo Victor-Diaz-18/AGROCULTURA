@@ -146,7 +146,7 @@ describe('every page passes axe', () => {
     await screen.findByText(/Ver lo que escribió el narrador/)
     await expectAccessible()
 
-    await user.click(screen.getByRole('button', { name: 'Corregir título o texto' }))
+    await user.click(screen.getByRole('button', { name: 'Editar la historia' }))
     await screen.findByLabelText('Título')
     await expectAccessible()
   })

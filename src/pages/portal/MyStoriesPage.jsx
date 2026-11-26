@@ -29,12 +29,21 @@ const TABS = [
   { id: 'rechazada', label: ESTADOS.rechazada.label, dot: 'var(--st-rechazada-dot)' },
 ]
 
-const CORRECTED = { titulo: 'el título', texto: 'el texto' }
+const CORRECTED = {
+  titulo: 'el título',
+  texto: 'el texto',
+  epoca: 'los años',
+  lugar_nombre: 'el nombre del lugar',
+  finca_nombre: 'el nombre de la finca',
+  etiquetas: 'las etiquetas',
+}
 
 /** What the team corrected before publishing a story, said to its narrator ("" when nothing). */
 export function correctedText(fields = []) {
   const parts = fields.map((field) => CORRECTED[field]).filter(Boolean)
-  return parts.length > 0 ? `El equipo del proyecto corrigió ${parts.join(' y ')} antes de publicarla` : ''
+  if (parts.length === 0) return ''
+  const list = parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(', ')} y ${parts.at(-1)}`
+  return `El equipo del proyecto corrigió ${list} antes de publicarla`
 }
 
 /** What happens next with a story: the rejection reason, why a draft or a video is stuck, or the next step of its state (and its video, if one is still on the phone). */

@@ -9,7 +9,11 @@ import { consentTextOf } from '../../utils/consent.js'
 import { formatDate } from '../../utils/format.js'
 import StoryMedia from '../story/StoryMedia.jsx'
 import Icon from '../ui/Icon.jsx'
+import Chip from '../ui/Chip.jsx'
 import Modal from '../ui/Modal.jsx'
+import YearsField from '../tell/YearsField.jsx'
+import { LIMITS } from '../../config/constants.js'
+import { checkYears, parseYear } from '../../utils/years.js'
 import { placeLine } from '../../utils/geo.js'
 
 /**
@@ -24,9 +28,17 @@ import { placeLine } from '../../utils/geo.js'
  * `onStale()` runs when somebody else decided this story first, so the page can reload.
  * `onCorrected()` runs after the team corrected the title or the text, so the page can show the new title in its list.
  *
- * «Corregir título o texto» (typos, a clearer title) changes nothing else. What the narrator wrote stays for the team to read,
+ * «Editar la historia» corrects what is written in it (title, text, years, names, tags); the rest is the narrator's. What they wrote stays for the team to read,
  * and once it is published the narrator reads in «Mis historias» that the team corrected it.
  */
+/** What else the narrator wrote, shown when the team changed it. */
+const ORIGINAL_FIELDS = [
+  ['epoca', 'Años'],
+  ['lugar_nombre', 'Nombre del lugar'],
+  ['finca_nombre', 'Finca o marca'],
+  ['etiquetas', 'Etiquetas'],
+]
+
 export default function ReviewModal({ story: given, queue, variant = 'portal', onClose, onDecided, onStale, onCorrected }) {
   const { config, reload: reloadPortal } = usePortalData()
   const toast = useToast()
@@ -37,7 +49,7 @@ export default function ReviewModal({ story: given, queue, variant = 'portal', o
   const [reason, setReason] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  const [editing, setEditing] = useState(null) // { titulo, texto } while correcting
+  const [editing, setEditing] = useState(null) // { titulo, texto, desde, hasta, lugar, finca, etiquetas } while correcting
   const [editError, setEditError] = useState('')
 
   const consent = story.consentimiento
@@ -75,10 +87,24 @@ export default function ReviewModal({ story: given, queue, variant = 'portal', o
     const titulo = editing.titulo.replace(/\s+/g, ' ').trim()
     if (titulo.length < 3) return setEditError('El título debe tener al menos 3 letras.')
     if (story.texto && !editing.texto.trim()) return setEditError('El texto no puede quedar vacío. Si la historia no sirve, recházala.')
+    const yearsProblem = editing.desde.trim() ? checkYears(editing.desde, editing.hasta) : ''
+    if (yearsProblem) return setEditError(yearsProblem)
+    const years = editing.desde.trim()
+      ? { anio_desde: parseYear(editing.desde), anio_hasta: parseYear(editing.hasta) ?? parseYear(editing.desde) }
+      : {} // left empty: the years stay as the narrator wrote them
     setBusy(true)
     setEditError('')
     try {
-      setCorrected(await correctStory(story.codigo, { titulo, texto: editing.texto }))
+      setCorrected(
+        await correctStory(story.codigo, {
+          titulo,
+          texto: editing.texto,
+          ...years,
+          lugar_nombre: editing.lugar.trim() || null,
+          finca_nombre: editing.finca.trim() || null,
+          etiquetas: editing.etiquetas,
+        }),
+      )
     } catch (failure) {
       if (failure instanceof OfflineError) setEditError('Sin señal: la corrección no se guardó. Inténtalo cuando vuelva la conexión.')
       else setEditError(failure instanceof ApiError ? failure.message : 'No pudimos guardar la corrección. Intenta de nuevo.')
@@ -131,7 +157,60 @@ export default function ReviewModal({ story: given, queue, variant = 'portal', o
                   <textarea rows={8} value={editing.texto} onChange={(event) => setEditing({ ...editing, texto: event.target.value })} />
                 </label>
               )}
-              <span className="ag-hint">Solo para corregir la ortografía o aclarar el título: lo que escribió el narrador queda guardado.</span>
+              <YearsField
+                id="ag-corregir-anios"
+                desde={editing.desde}
+                hasta={editing.hasta}
+                onDesde={(desde) => setEditing({ ...editing, desde })}
+                onHasta={(hasta) => setEditing({ ...editing, hasta })}
+              />
+              {!/^\d{4}( a \d{4})?$/.test(story.epoca ?? '') && (
+                <span className="ag-hint">Ahora dice «{story.epoca}». Si dejas los años vacíos, queda así.</span>
+              )}
+              <label>
+                {story.ubicacion_modo === 'ninguna' ? 'Nombre de referencia (opcional)' : 'Nombre del lugar (opcional)'}
+                <input
+                  className="ag-review-modal__plain"
+                  value={editing.lugar}
+                  maxLength={80}
+                  onChange={(event) => setEditing({ ...editing, lugar: event.target.value })}
+                />
+              </label>
+              <label>
+                Nombre de la finca o marca (opcional)
+                <input
+                  className="ag-review-modal__plain"
+                  value={editing.finca}
+                  maxLength={80}
+                  onChange={(event) => setEditing({ ...editing, finca: event.target.value })}
+                />
+              </label>
+              <fieldset className="ag-review-modal__tags">
+                <legend>Etiquetas</legend>
+                {[...new Set([...config.etiquetas, ...editing.etiquetas])].map((tag) => (
+                  <Chip
+                    key={tag}
+                    size="sm"
+                    pressed={editing.etiquetas.includes(tag)}
+                    onClick={() =>
+                      setEditing({
+                        ...editing,
+                        etiquetas: editing.etiquetas.includes(tag)
+                          ? editing.etiquetas.filter((item) => item !== tag)
+                          : editing.etiquetas.length >= LIMITS.etiquetas
+                            ? editing.etiquetas
+                            : [...editing.etiquetas, tag],
+                      })
+                    }
+                  >
+                    {tag}
+                  </Chip>
+                ))}
+              </fieldset>
+              <span className="ag-hint">
+                Lo que escribió el narrador queda guardado. El lugar en el mapa, los archivos, si sale con su nombre y la autorización
+                son decisiones del narrador: no se cambian aquí.
+              </span>
               {editError && (
                 <p role="alert" className="ag-error">
                   {editError}
@@ -154,11 +233,20 @@ export default function ReviewModal({ story: given, queue, variant = 'portal', o
                 className="ag-review-modal__correct"
                 onClick={() => {
                   setEditError('')
-                  setEditing({ titulo: story.titulo, texto: story.texto ?? '' })
+                  const told = story.anio_desde != null && /^\d{4}( a \d{4})?$/.test(story.epoca ?? '') // written years, not a period of before
+                  setEditing({
+                    titulo: story.titulo,
+                    texto: story.texto ?? '',
+                    desde: told ? String(story.anio_desde) : '',
+                    hasta: told && story.anio_hasta !== story.anio_desde ? String(story.anio_hasta) : '',
+                    lugar: story.lugar_nombre ?? '',
+                    finca: story.finca_nombre ?? '',
+                    etiquetas: story.etiquetas ?? [],
+                  })
                 }}
                 disabled={busy}
               >
-                {story.texto ? 'Corregir título o texto' : 'Corregir el título'}
+                Editar la historia
               </button>
             </>
           )}
@@ -172,6 +260,11 @@ export default function ReviewModal({ story: given, queue, variant = 'portal', o
               </summary>
               <b>{story.correccion.titulo}</b>
               {story.correccion.texto && <p>{story.correccion.texto}</p>}
+              {ORIGINAL_FIELDS.filter(([field]) => story.correccion.campos?.includes(field)).map(([field, label]) => (
+                <p key={field}>
+                  {label}: {[].concat(story.correccion[field] ?? '—').join(' ') || '—'}
+                </p>
+              ))}
             </details>
           )}
           <div className="ag-review-modal__formats">

@@ -483,3 +483,51 @@ describe('borrar una historia publicada', () => {
     expect(within(card).queryByRole('button', { name: /Borrar historia/ })).not.toBeInTheDocument()
   })
 })
+
+describe('editar una historia del proyecto', () => {
+  const OLD_PHOTO = 'https://store1.public.blob.vercel-storage.com/historias/a1/foto-vieja.jpg'
+  const published = {
+    ...PROJECT,
+    codigo: 'HIS-2026-050',
+    titulo: 'El patio donde se secaba el café',
+    texto: 'Historia preparada por el equipo.',
+    epoca: '1965',
+    anio_desde: 1965,
+    anio_hasta: 1965,
+    narrador_nombre: 'Familia Pérez',
+    lat: 11.12,
+    lon: -74.09,
+    ubicacion_origen: 'mapa',
+    medios: [{ tipo: 'foto', url: OLD_PHOTO, mime: 'image/jpeg', bytes: 4096 }],
+  }
+
+  it('opens with everything it says and saves it with PUT, without uploading the photo again', async () => {
+    const user = userEvent.setup()
+    const { fetchMock } = renderApp({
+      route: '/admin/historias',
+      user: ADMIN,
+      api: {
+        '/admin/historias': [published],
+        '/admin/historias-proyecto/HIS-2026-050': (init) => ({ ...published, ...JSON.parse(init.body) }),
+      },
+    })
+
+    await user.click(await screen.findByRole('button', { name: 'Editar «El patio donde se secaba el café»' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Editar historia del proyecto' })
+    expect(within(dialog).getByLabelText('Título')).toHaveValue('El patio donde se secaba el café')
+    expect(within(dialog).getByRole('textbox', { name: 'Desde' })).toHaveValue('1965')
+    await user.clear(within(dialog).getByLabelText('Título'))
+    await user.type(within(dialog).getByLabelText('Título'), 'El patio del café')
+    await authorize(dialog, user) // confirmed again, as when it was created
+    await user.click(within(dialog).getByRole('button', { name: 'Guardar cambios' }))
+
+    await waitFor(() => expect(callsTo(fetchMock, '/admin/historias-proyecto/HIS-2026-050')).toHaveLength(1))
+    const [, init] = callsTo(fetchMock, '/admin/historias-proyecto/HIS-2026-050')[0]
+    expect(init.method).toBe('PUT')
+    const body = JSON.parse(init.body)
+    expect(body).toMatchObject({ titulo: 'El patio del café', anio_desde: 1965, narrador_nombre: 'Familia Pérez' })
+    expect(body.medios).toEqual([{ tipo: 'foto', url: OLD_PHOTO, mime: 'image/jpeg', bytes: 4096 }])
+    expect(callsTo(fetchMock, '/medios')).toHaveLength(0)
+    expect(await screen.findByText('Cambios guardados.')).toBeInTheDocument()
+  })
+})

@@ -30,26 +30,48 @@ export const AUDIO_MESSAGES = {
   tooBig: `Ese audio pesa más de ${formatBytes(MAX_UPLOAD_BYTES)}, que es lo máximo por ahora. Comprímelo o usa un fragmento más corto.`,
 }
 
-export default function ProjectStoryModal({ onClose, onPublished }) {
+/** What a team story being edited already has, in the shape the form uses (its files are addresses: they are not uploaded again). */
+function startingPoint(story) {
+  if (!story) return null
+  const medios = story.medios ?? []
+  const named = (tipo, number) => `${tipo}_${String(number).padStart(2, '0')}`
+  const audioMedio = medios.find((medio) => medio.tipo === 'audio' && medio.url)
+  const videoMedio = medios.find((medio) => medio.tipo === 'video' && medio.url)
+  const written = /^\d{4}( a \d{4})?$/.test(story.epoca ?? '') && story.anio_desde != null // years, not a period of before
+  return {
+    location: story.lat != null && story.lon != null ? { lat: story.lat, lon: story.lon, origen: story.ubicacion_origen ?? 'mapa', sectorId: story.sector_id } : null,
+    anioDesde: written ? String(story.anio_desde) : '',
+    anioHasta: written && story.anio_hasta !== story.anio_desde ? String(story.anio_hasta) : '',
+    fotos: medios
+      .filter((medio) => medio.tipo === 'foto' && medio.url)
+      .map((medio, index) => ({ id: newId(), name: named('foto', index + 1), url: medio.url, bytes: medio.bytes, medio })),
+    video: videoMedio ? { id: newId(), name: named('video', 1), url: videoMedio.url, bytes: videoMedio.bytes, mime: videoMedio.mime, medio: videoMedio } : null,
+    audio: audioMedio ? { name: named('audio', 1), url: audioMedio.url, bytes: audioMedio.bytes, seconds: audioMedio.duracion_s, medio: audioMedio } : null,
+  }
+}
+
+/** `story`: a team story to edit (as the list has it). Without it, a new one. */
+export default function ProjectStoryModal({ story: editing = null, onClose, onPublished }) {
   const { config, reload } = usePortalData()
   const { user } = useAuth()
   const toast = useToast()
-  const [titulo, setTitulo] = useState('')
-  const [location, setLocation] = useState(null) // { lat, lon, origen, sectorId }: anywhere in the zone
-  const [modo, setModo] = useState('aproximada') // "aproximada" (a point, about 500 m for the public) or "ninguna" (no place on the map)
-  const [lugar, setLugar] = useState('')
-  const [finca, setFinca] = useState('')
-  const [anonima, setAnonima] = useState(false) // publish without the name of whoever tells it
+  const [start] = useState(() => startingPoint(editing))
+  const [titulo, setTitulo] = useState(editing?.titulo ?? '')
+  const [location, setLocation] = useState(start?.location ?? null) // { lat, lon, origen, sectorId }: anywhere in the zone
+  const [modo, setModo] = useState(editing?.ubicacion_modo ?? 'aproximada') // "aproximada" (a point, about 500 m for the public) or "ninguna" (no place on the map)
+  const [lugar, setLugar] = useState(editing?.lugar_nombre ?? '')
+  const [finca, setFinca] = useState(editing?.finca_nombre ?? '')
+  const [anonima, setAnonima] = useState(Boolean(editing?.anonima)) // publish without the name of whoever tells it
   const [consent, setConsent] = useState(null) // the team's confirmation that it has the authorization of whoever tells the story
-  const [anioDesde, setAnioDesde] = useState('')
-  const [anioHasta, setAnioHasta] = useState('')
-  const [narrador, setNarrador] = useState('')
-  const [texto, setTexto] = useState('')
-  const [etiquetas, setEtiquetas] = useState([])
-  const [fotos, setFotos] = useState([])
-  const [video, setVideo] = useState(null) // { id, name, blob, mime }: it goes straight to Blob
+  const [anioDesde, setAnioDesde] = useState(start?.anioDesde ?? '')
+  const [anioHasta, setAnioHasta] = useState(start?.anioHasta ?? '')
+  const [narrador, setNarrador] = useState(editing?.narrador_nombre ?? '')
+  const [texto, setTexto] = useState(editing?.texto ?? '')
+  const [etiquetas, setEtiquetas] = useState(editing?.etiquetas ?? [])
+  const [fotos, setFotos] = useState(start?.fotos ?? [])
+  const [video, setVideo] = useState(start?.video ?? null) // { id, name, blob, mime }: it goes straight to Blob
   const [progress, setProgress] = useState(null) // percent of the video that is going up
-  const [audio, setAudio] = useState(null)
+  const [audio, setAudio] = useState(start?.audio ?? null)
   const [audioProblem, setAudioProblem] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -108,6 +130,7 @@ export default function ProjectStoryModal({ onClose, onPublished }) {
     try {
       const story = await publishProjectStory(
         {
+          ...(editing ? { codigo: editing.codigo } : {}),
           clientId,
           titulo: titulo.trim(),
           texto: texto.trim(),
@@ -128,23 +151,32 @@ export default function ProjectStoryModal({ onClose, onPublished }) {
         { uploaded: uploaded.current, userId: user?.id, onProgress: setProgress },
       )
       const sector = config.sectores.find((item) => item.id === story.sector_id)
-      toast(sector ? `Historia del proyecto publicada en ${sector.nombre}.` : 'Historia del proyecto publicada.')
+      if (editing) toast('Cambios guardados.')
+      else toast(sector ? `Historia del proyecto publicada en ${sector.nombre}.` : 'Historia del proyecto publicada.')
       reload() // the counters change
       onPublished?.(story)
     } catch (failure) {
       setBusy(false)
       if (failure instanceof OfflineError) setError('Sin señal: no pudimos publicarla. Tus datos siguen aquí; inténtalo cuando vuelva la conexión.')
-      else setError(failure instanceof ApiError ? failure.message : 'No pudimos publicar la historia. Intenta de nuevo.')
+      else setError(failure instanceof ApiError ? failure.message : editing ? 'No pudimos guardar los cambios. Intenta de nuevo.' : 'No pudimos publicar la historia. Intenta de nuevo.')
     }
   }
 
   return (
-    <Modal open onClose={busy ? undefined : onClose} label="Nueva historia del proyecto" maxWidth={520} level={55} top={60} className="ag-project-modal">
+    <Modal
+      open
+      onClose={busy ? undefined : onClose}
+      label={editing ? 'Editar historia del proyecto' : 'Nueva historia del proyecto'}
+      maxWidth={520}
+      level={55}
+      top={60}
+      className="ag-project-modal"
+    >
       <div className="ag-project-modal__head">
         <div>
-          <h2 className="ag-project-modal__title">Nueva historia del proyecto</h2>
+          <h2 className="ag-project-modal__title">{editing ? 'Editar historia del proyecto' : 'Nueva historia del proyecto'}</h2>
           <span className="ag-project-modal__sub">
-            Se publica de una vez y se marca como «del proyecto».
+            {editing ? `${editing.codigo}. Los cambios se ven de una vez en el mapa.` : 'Se publica de una vez y se marca como «del proyecto».'}
           </span>
         </div>
         <button type="button" className="ag-close" aria-label="Cerrar" onClick={onClose} disabled={busy}>
@@ -213,6 +245,11 @@ export default function ProjectStoryModal({ onClose, onPublished }) {
       </div>
 
       <YearsField id="ag-proyecto-anios" className="ag-project-modal__field" desde={anioDesde} hasta={anioHasta} onDesde={setAnioDesde} onHasta={setAnioHasta} />
+      {editing && !start.anioDesde && (
+        <p className="ag-hint">
+          Tenía la época «{editing.epoca}». Escribe los años en que ocurrió para guardar los cambios.
+        </p>
+      )}
 
       <label className="ag-project-modal__field">
         Quién la cuenta
@@ -284,7 +321,8 @@ export default function ProjectStoryModal({ onClose, onPublished }) {
             <li className="ag-attached__item">
               <b>Audio</b>
               <span>
-                {audio.name} · {formatBytes(audio.blob.size)}
+                {audio.name}
+                {audio.blob || audio.bytes ? ` · ${formatBytes(audio.blob?.size ?? audio.bytes)}` : ''}
                 {audio.seconds ? ` · ${formatDuration(audio.seconds)}` : ''}
               </span>
               <button type="button" className="ag-attached__remove" aria-label={`Quitar ${audio.name}`} onClick={() => setAudio(null)}>
@@ -313,7 +351,7 @@ export default function ProjectStoryModal({ onClose, onPublished }) {
         </p>
       )}
       <button type="button" className="ag-mbtn ag-mbtn--project ag-mbtn--full" onClick={publish} disabled={!valid || busy}>
-        {busy ? 'Publicando…' : 'Publicar historia del proyecto'}
+        {editing ? (busy ? 'Guardando…' : 'Guardar cambios') : busy ? 'Publicando…' : 'Publicar historia del proyecto'}
       </button>
     </Modal>
   )
