@@ -13,7 +13,7 @@ from lib.config.schemas import PortalPublico
 from lib.core.db import get_db
 from lib.core.settings import Settings, get_settings
 from lib.media.storage import Storage, get_storage
-from lib.stories import review
+from lib.stories import review, service
 from lib.stories.schemas import AprobarIn, CorreccionIn, HistoriaAdmin, HistoriaPapelera, HistoriaProyectoIn, RechazarIn
 
 router = APIRouter(prefix="/admin", tags=["administración"], dependencies=[Depends(require_admin)])
@@ -47,7 +47,8 @@ def reject(codigo: str, body: RechazarIn, admin: dict = Depends(require_admin), 
 
 @router.patch("/historias/{codigo}", response_model=HistoriaAdmin)
 def correct_story(codigo: str, body: CorreccionIn, admin: dict = Depends(require_admin), db: Database = Depends(get_db)):
-    """Corrects the title and the text of a story waiting for review. What the narrator wrote is kept for the team."""
+    """Corrects what is written in a story waiting for review (title, text, years, names, tags). What the narrator wrote is
+    kept for the team."""
     return review.correct(db, codigo, admin=admin, data=body)
 
 
@@ -104,6 +105,20 @@ def create_project_story(
     story, created = review.create_project_story(db, admin=admin, data=body)
     if not created:
         response.status_code = 200
+    return story
+
+
+@router.put("/historias-proyecto/{codigo}", response_model=HistoriaAdmin)
+def edit_project_story(
+    codigo: str,
+    body: HistoriaProyectoIn,
+    admin: dict = Depends(require_admin),
+    db: Database = Depends(get_db),
+    storage: Storage = Depends(get_storage),
+):
+    """Changes everything of a story of the team, published or not. The files it no longer has are deleted."""
+    story, removed = review.edit_project_story(db, codigo, admin=admin, data=body)
+    service.delete_files_quietly(removed, storage.delete)
     return story
 
 

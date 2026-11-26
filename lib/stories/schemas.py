@@ -101,6 +101,31 @@ class ConsentimientoIn(BaseModel):
         return value
 
 
+def check_years(desde: int | None, hasta: int | None) -> int | None:
+    """The years have to make sense: from ANIO_MINIMO to this year, and the last one not before the first. Returns the last one."""
+    if desde is None:
+        if hasta is not None:
+            raise ValueError("Escribe el año en que ocurrió la historia.")
+        return None
+    hasta = hasta if hasta is not None else desde
+    this_year = utcnow().year
+    for year in (desde, hasta):
+        if not ANIO_MINIMO <= year <= this_year:
+            raise ValueError(f"Escribe un año entre {ANIO_MINIMO} y {this_year}.")
+    if hasta < desde:
+        raise ValueError("El año «hasta» no puede ser anterior al año «desde».")
+    return hasta
+
+
+def clean_name(value: str | None, limit: int, what: str) -> str | None:
+    name = re.sub(r"\s+", " ", value or "").strip()
+    if not name:
+        return None
+    if len(name) > limit:
+        raise ValueError(f"El nombre {what} es muy largo (máximo {limit} letras).")
+    return name
+
+
 class HistoriaIn(BaseModel):
     """What a narrator sends. Anything else (state, origin, author, code) is ignored: the server decides."""
 
@@ -169,20 +194,13 @@ class HistoriaIn(BaseModel):
 
     @model_validator(mode="after")
     def check_years(self):
-        """The years have to make sense: from ANIO_MINIMO to this year, and the last one not before the first."""
-        if self.anio_desde is None:
-            if self.anio_hasta is not None or self.epoca is None:
-                raise ValueError("Escribe el año en que ocurrió la historia.")
-            return self
-        hasta = self.anio_hasta if self.anio_hasta is not None else self.anio_desde
-        this_year = utcnow().year
-        for year in (self.anio_desde, hasta):
-            if not ANIO_MINIMO <= year <= this_year:
-                raise ValueError(f"Escribe un año entre {ANIO_MINIMO} y {this_year}.")
-        if hasta < self.anio_desde:
-            raise ValueError("El año «hasta» no puede ser anterior al año «desde».")
-        self.anio_hasta = hasta
-        self.epoca = epoch_of_years(self.anio_desde, hasta)
+        """New stories have their years; only a draft kept from before them comes with a period."""
+        if self.anio_desde is None and self.epoca is None:
+            raise ValueError("Escribe el año en que ocurrió la historia.")
+        hasta = check_years(self.anio_desde, self.anio_hasta)
+        if self.anio_desde is not None:
+            self.anio_hasta = hasta
+            self.epoca = epoch_of_years(self.anio_desde, hasta)
         return self
 
     @field_validator("etiquetas")
@@ -305,6 +323,11 @@ class CorreccionAdmin(BaseModel):
 
     titulo: str
     texto: str
+    epoca: str | None = None
+    lugar_nombre: str | None = None
+    finca_nombre: str | None = None
+    etiquetas: list[str] | None = None
+    campos: list[str] = Field(default_factory=list)  # which of them the team changed
     por: str
     en: str
 
@@ -333,6 +356,7 @@ class HistoriaAdmin(BaseModel):
     motivo_rechazo: str | None = None
     lat: float | None = None
     lon: float | None = None
+    ubicacion_origen: str | None = None
     consentimiento: ConsentimientoAdmin | None = None  # None: sent before it existed, or demo data
     correccion: CorreccionAdmin | None = None  # None: nobody corrected it, or the correction left it as it was
     enviada_en: str
@@ -341,10 +365,17 @@ class HistoriaAdmin(BaseModel):
 
 
 class CorreccionIn(BaseModel):
-    """What the team corrects of a story waiting for review: its title and its text (typos, a clearer title). Nothing else."""
+    """What the team corrects of a story waiting for review: what is written in it (title, text, years, the names of the place
+    and the farm, the tags). Not the point, the files, the name or not, nor the authorization: the narrator chose those.
+    The form sends every field as it should stay; years and tags left out stay as they are."""
 
     titulo: str = Field(max_length=500)
     texto: str = Field("", max_length=20000)
+    anio_desde: int | None = None
+    anio_hasta: int | None = None
+    lugar_nombre: str | None = Field(None, max_length=200)
+    finca_nombre: str | None = Field(None, max_length=200)
+    etiquetas: list[str] | None = Field(None, max_length=20)
 
     @field_validator("titulo")
     @classmethod
@@ -355,6 +386,31 @@ class CorreccionIn(BaseModel):
     @classmethod
     def check_text(cls, value: str) -> str:
         return clean_text(value)
+
+    @field_validator("lugar_nombre")
+    @classmethod
+    def clean_place_name(cls, value: str | None) -> str | None:
+        return clean_name(value, MAX_PLACE_NAME, "del lugar")
+
+    @field_validator("finca_nombre")
+    @classmethod
+    def clean_farm_name(cls, value: str | None) -> str | None:
+        return clean_name(value, MAX_FARM_NAME, "de la finca")
+
+    @field_validator("etiquetas")
+    @classmethod
+    def check_tags(cls, value: list[str] | None) -> list[str] | None:
+        if value is None:
+            return None
+        tags = list(dict.fromkeys(tag.strip() for tag in value if tag.strip()))
+        if len(tags) > MAX_TAGS or any(len(tag) > 40 for tag in tags):
+            raise ValueError(f"Elige hasta {MAX_TAGS} etiquetas.")
+        return tags
+
+    @model_validator(mode="after")
+    def check_the_years(self):
+        self.anio_hasta = check_years(self.anio_desde, self.anio_hasta)
+        return self
 
 
 class HistoriaPapelera(HistoriaAdmin):
@@ -390,3 +446,37 @@ class HistoriaMia(BaseModel):
     # What the team corrected before publishing it ("titulo", "texto"), so the narrator knows. Only on a published story.
     corregido: list[str] = Field(default_factory=list)
     enviada_en: str
+
+
+class MedioEditable(BaseModel):
+    tipo: str
+    url: str | None = None
+    mime: str | None = None
+    bytes: int | None = None
+    duracion_s: int | None = None
+
+
+class HistoriaEditable(BaseModel):
+    """A story as its author told it, to change it while it waits for review."""
+
+    codigo: str
+    client_id: str
+    titulo: str
+    texto: str
+    epoca: str
+    anio_desde: int | None = None
+    anio_hasta: int | None = None
+    anio_escrito: bool = True  # False: told with one of the periods of before
+    sector_id: str | None = None
+    lugar_nombre: str | None = None
+    finca_nombre: str | None = None
+    etiquetas: list[str]
+    ubicacion_modo: str = "aproximada"
+    ubicacion_origen: str | None = None
+    lat: float | None = None
+    lon: float | None = None
+    anonima: bool = False
+    narrador_nombre: str
+    medios: list[MedioEditable]
+    estado: str
+    origen: str

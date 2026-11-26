@@ -136,6 +136,14 @@ def correct(db: Database, code: str, changes: dict) -> dict | None:
     )
 
 
+def replace_content(db: Database, story_id, origen: str, changes: dict, unset: dict) -> dict | None:
+    """Saves the new version of a story: a community one only while it waits for review, a team one while it is not in the
+    trash. None when it no longer applies."""
+    estado = {"estado": "revision"} if origen == "comunidad" else {"estado": {"$ne": ESTADO_PAPELERA}}
+    update = {"$set": changes, **({"$unset": unset} if unset else {})}
+    return collection(db).find_one_and_update({"_id": story_id, "origen": origen, **estado}, update, return_document=ReturnDocument.AFTER)
+
+
 def add_video(db: Database, story_id, medio: dict) -> dict | None:
     """Adds the video to a story that is in review and has none. None when it did not apply (it has one, or was reviewed).
 

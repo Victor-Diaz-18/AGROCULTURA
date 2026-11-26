@@ -5,7 +5,17 @@ from lib.auth.constants import ROL_NARRADOR
 from lib.auth.deps import require_roles
 from lib.core.db import get_db
 from lib.stories import service
-from lib.stories.schemas import Estadisticas, HistoriaIn, HistoriaMapa, HistoriaMia, HistoriaOut, HistoriaPublica, VideoIn
+from lib.media.storage import Storage, get_storage
+from lib.stories.schemas import (
+    Estadisticas,
+    HistoriaEditable,
+    HistoriaIn,
+    HistoriaMapa,
+    HistoriaMia,
+    HistoriaOut,
+    HistoriaPublica,
+    VideoIn,
+)
 
 router = APIRouter(tags=["historias"])
 
@@ -38,6 +48,27 @@ def create_story(
     story, created = service.create_story(db, user=user, data=body)
     if not created:
         response.status_code = 200
+    return service.story_out(story)
+
+
+@router.get("/historias/mias/{codigo}", response_model=HistoriaEditable)
+def my_story_to_edit(codigo: str, user: dict = Depends(require_roles(ROL_NARRADOR)), db: Database = Depends(get_db)):
+    """One of the narrator's stories as they told it, to change it while it waits for review (409 once it was reviewed)."""
+    return service.story_to_edit(service.own_story(db, user, codigo))
+
+
+@router.put("/historias/{codigo}", response_model=HistoriaOut)
+def edit_my_story(
+    codigo: str,
+    body: HistoriaIn,
+    user: dict = Depends(require_roles(ROL_NARRADOR)),
+    db: Database = Depends(get_db),
+    storage: Storage = Depends(get_storage),
+):
+    """The narrator changes everything of their story while it waits for review, and authorizes it again. The files it
+    no longer has are deleted. Once reviewed it cannot be changed (409)."""
+    story, removed = service.edit_own_story(db, user=user, code=codigo, data=body)
+    service.delete_files_quietly(removed, storage.delete)
     return service.story_out(story)
 
 

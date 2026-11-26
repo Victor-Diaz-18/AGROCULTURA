@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import unicodedata
 from datetime import datetime
 
@@ -15,6 +16,8 @@ from lib.media.validation import check_media_url, check_video
 from lib.stories import consent, privacy, repository
 from lib.stories.constants import NARRADOR_ANONIMO, ORIGENES, TIPOS_MEDIO, years_of
 from lib.stories.schemas import HistoriaIn, VideoIn
+
+logger = logging.getLogger(__name__)
 
 
 def years_out(story: dict) -> dict:
@@ -64,12 +67,18 @@ def search_text_of(story: dict, sector_name: str) -> str:
     )
 
 
+# What the team may correct of a story waiting for review. The rest (the point, the files, the name or not, the authorization)
+# is what the narrator chose and authorized: only they change it.
+CORRECTABLE = ("titulo", "texto", "epoca", "lugar_nombre", "finca_nombre", "etiquetas")
+
+
 def corrected_fields(story: dict) -> list[str]:
-    """What the team changed of what the narrator wrote ("titulo", "texto"); empty when nothing is different."""
+    """What the team changed of what the narrator wrote (some of CORRECTABLE); empty when nothing is different.
+    A correction kept before the other fields could be corrected has only the title and the text."""
     original = story.get("correccion")
     if not original:
         return []
-    return [field for field in ("titulo", "texto") if original.get(field, "") != story.get(field, "")]
+    return [field for field in CORRECTABLE if field in original and original[field] != story.get(field)]
 
 
 def search_text(*parts: str) -> str:
@@ -83,6 +92,157 @@ def formats_of(story: dict) -> list[str]:
     kinds = {medio["tipo"] for medio in story.get("medios", [])}
     labels = [label for kind, label in (("audio", "Audio"), ("foto", "Foto"), ("video", "Video")) if kind in kinds]
     return labels or ["Texto"]
+
+
+def _check_media(medios, owners: tuple[str, ...]) -> None:
+    """Every file must be one these users uploaded (the narrator; for a team story also the administrator editing it)."""
+    for medio in medios:
+        problem = None
+        for owner in owners:
+            try:
+                check_media_url(medio.url, owner)
+                problem = None
+                break
+            except InvalidDataError as error:
+                problem = error
+        if problem:
+            raise problem
+        if medio.tipo == "video":
+            check_video(medio.mime, medio.bytes, medio.url)
+
+
+def story_fields(
+    db: Database, data: HistoriaIn, *, media_owners: tuple[str, ...], consent_from: str, now: datetime
+) -> tuple[dict, dict | None, str]:
+    """What a story says, checked against the catalog: the same for a new story and for one being edited.
+
+    Returns (fields, point or None, name of its sector or "").
+    """
+    available_tags = set(catalog.list_tag_names(db))
+    for tag in data.etiquetas:
+        if tag not in available_tags:
+            raise InvalidDataError(f"La etiqueta {tag} ya no está disponible. Elige otra.")
+    _check_media(data.medios, media_owners)
+
+    # Without a place on the map there is no point to keep (it was already thrown away by the schema) and no sector: what the
+    # narrator wrote as the name of the place stays, as a reference for the administrators.
+    # With a place, the story can be anywhere in the zone: its point is what matters. The sector is only a reference, found from
+    # the point (never taken from the client), and there may be none.
+    modo = data.ubicacion_modo
+    location = None
+    sector = None
+    if modo == "aproximada":
+        if data.ubicacion is not None:
+            location = {"type": "Point", "coordinates": [round(data.ubicacion.lon, 6), round(data.ubicacion.lat, 6)]}
+            sector = catalog.sector_at(
+                db, data.ubicacion.lat, data.ubicacion.lon, include_provisional=data.ubicacion_origen == "sector"
+            )
+        else:  # a team story sent without a point (through the API): the center of the sector it names
+            sector = catalog.get_sector(db, data.sector_id) if data.sector_id else None
+            if sector is None:
+                raise InvalidDataError("Elige dónde ocurrió: toca un punto del mapa o un sector.")
+            location = dict(sector["centro"])
+    fields = {
+        "titulo": data.titulo,
+        "texto": data.texto,
+        "epoca": data.epoca,
+        "anio_desde": data.anio_desde,
+        "anio_hasta": data.anio_hasta,
+        "sector_id": sector["_id"] if sector else None,
+        "lugar_nombre": data.lugar_nombre,
+        "finca_nombre": data.finca_nombre,
+        "etiquetas": data.etiquetas,
+        "ubicacion_modo": modo,
+        "ubicacion_origen": data.ubicacion_origen,
+        "medios": [medio.model_dump(exclude_none=True) for medio in data.medios],
+        "anonima": data.anonima,
+        "consentimiento": consent.record(data.consentimiento, anonima=data.anonima, modo=modo, de=consent_from, now=now),
+    }
+    return fields, location, sector["nombre"] if sector else ""
+
+
+def replace_content(
+    db: Database, story: dict, data: HistoriaIn, *, media_owners: tuple[str, ...], consent_from: str, extra: dict, now: datetime
+) -> tuple[dict | None, list[str]]:
+    """Writes the new version of a story (still in review, or a team story). Returns (story or None if it can no longer be
+    edited, the addresses of the files it no longer has)."""
+    fields, location, sector_name = story_fields(db, data, media_owners=media_owners, consent_from=consent_from, now=now)
+    changes = {**fields, **extra}
+    unset = {}
+    if location is not None:
+        changes["ubicacion"] = location
+    else:
+        unset["ubicacion"] = ""
+    changes["busqueda"] = search_text_of({**story, **changes, "ubicacion": location}, sector_name)
+    if story["origen"] == "comunidad":
+        unset["correccion"] = ""  # what the team corrected was of the version before: the new one is reviewed as it comes
+    updated = repository.replace_content(db, story["_id"], story["origen"], changes, unset)
+    kept = {medio["url"] for medio in fields["medios"]}
+    removed = [medio["url"] for medio in story.get("medios", []) if isinstance(medio.get("url"), str) and medio["url"] not in kept]
+    return updated, removed
+
+
+NOT_EDITABLE = "Esta historia ya fue revisada: ya no se puede editar."
+
+
+def delete_files_quietly(urls: list[str], delete_files) -> None:
+    """Deletes the files a story no longer has. One that cannot be deleted is logged; it never undoes the edit."""
+    if not urls:
+        return
+    try:
+        delete_files(urls)
+    except Exception as exc:  # noqa: BLE001
+        logger.error("Could not delete %d files left by an edit (%s)", len(urls), type(exc).__name__)
+
+
+def own_story(db: Database, user: dict, code: str) -> dict:
+    """A story of this narrator that can still be edited: it is waiting for review."""
+    story = repository.find_by_code(db, code)
+    if story is None or story.get("autor_id") != user["_id"]:
+        raise NotFoundError("No encontramos esa historia.")  # also for somebody else's story: no hint that it exists
+    if story["estado"] != "revision":
+        raise ConflictError(NOT_EDITABLE)
+    return story
+
+
+def story_to_edit(story: dict) -> dict:
+    """Everything the form needs to show a story again, with its exact point (only its author or the team see it)."""
+    coordinates = (story.get("ubicacion") or {}).get("coordinates")
+    return {
+        "codigo": story["codigo"],
+        "client_id": story.get("client_id", ""),
+        "titulo": story["titulo"],
+        "texto": story.get("texto", ""),
+        "epoca": story["epoca"],
+        **years_out(story),
+        "anio_escrito": story.get("anio_desde") is not None,  # False: told with a period of before
+        "sector_id": story.get("sector_id"),
+        "lugar_nombre": story.get("lugar_nombre"),
+        "finca_nombre": story.get("finca_nombre"),
+        "etiquetas": story.get("etiquetas", []),
+        "ubicacion_modo": story.get("ubicacion_modo", "aproximada"),
+        "ubicacion_origen": story.get("ubicacion_origen"),
+        "lat": coordinates[1] if coordinates else None,
+        "lon": coordinates[0] if coordinates else None,
+        "anonima": bool(story.get("anonima")),
+        "narrador_nombre": story.get("narrador_nombre", ""),
+        "medios": [{key: medio.get(key) for key in ("tipo", "url", "mime", "bytes", "duracion_s")} for medio in story.get("medios", [])],
+        "estado": story["estado"],
+        "origen": story["origen"],
+    }
+
+
+def edit_own_story(db: Database, *, user: dict, code: str, data: HistoriaIn, now: datetime | None = None) -> tuple[dict, list[str]]:
+    """The narrator changes their story while it waits for review: everything, as when they told it. The authorization is
+    given again (it may now be for another way of publishing). Returns (story, addresses of the files it no longer has)."""
+    now = now or utcnow()
+    story = own_story(db, user, code)
+    updated, removed = replace_content(
+        db, story, data, media_owners=(str(user["_id"]),), consent_from=consent.DE_NARRADOR, extra={"editada_en": now}, now=now
+    )
+    if updated is None:  # reviewed between the read and the write
+        raise ConflictError(NOT_EDITABLE)
+    return updated, removed
 
 
 def create_story(db: Database, *, user: dict, data: HistoriaIn, now: datetime | None = None) -> tuple[dict, bool]:
@@ -121,57 +281,14 @@ def insert_story(
     if existing:
         return existing, False
 
-    available_tags = set(catalog.list_tag_names(db))
-    for tag in data.etiquetas:
-        if tag not in available_tags:
-            raise InvalidDataError(f"La etiqueta {tag} ya no está disponible. Elige otra.")
-    for medio in data.medios:
-        check_media_url(medio.url, str(author_id))
-        if medio.tipo == "video":
-            check_video(medio.mime, medio.bytes, medio.url)
-
-    # Without a place on the map there is no point to keep (it was already thrown away by the schema) and no sector: what the
-    # narrator wrote as the name of the place stays, as a reference for the administrators.
-    # With a place, the story can be anywhere in the zone: its point is what matters. The sector is only a reference, found from
-    # the point (never taken from the client), and there may be none.
-    modo = data.ubicacion_modo
-    location = None
-    sector = None
-    if modo == "aproximada":
-        if data.ubicacion is not None:
-            location = {"type": "Point", "coordinates": [round(data.ubicacion.lon, 6), round(data.ubicacion.lat, 6)]}
-            sector = catalog.sector_at(
-                db, data.ubicacion.lat, data.ubicacion.lon, include_provisional=data.ubicacion_origen == "sector"
-            )
-        else:  # a team story sent without a point (through the API): the center of the sector it names
-            sector = catalog.get_sector(db, data.sector_id) if data.sector_id else None
-            if sector is None:
-                raise InvalidDataError("Elige dónde ocurrió: toca un punto del mapa o un sector.")
-            location = dict(sector["centro"])
-    sector_id = sector["_id"] if sector else None
-    sector_name = sector["nombre"] if sector else ""
-    authorization = consent.record(data.consentimiento, anonima=data.anonima, modo=modo, de=consent_from, now=now)
-
+    fields, location, sector_name = story_fields(db, data, media_owners=(str(author_id),), consent_from=consent_from, now=now)
     published = estado == "publicada"
     document = {
         "client_id": data.client_id,
-        "titulo": data.titulo,
-        "texto": data.texto,
-        "epoca": data.epoca,
-        "anio_desde": data.anio_desde,
-        "anio_hasta": data.anio_hasta,
+        **fields,
         "fecha_hechos": None,
-        "sector_id": sector_id,
-        "lugar_nombre": data.lugar_nombre,
-        "finca_nombre": data.finca_nombre,
-        "etiquetas": data.etiquetas,
-        "ubicacion_modo": modo,
-        "ubicacion_origen": data.ubicacion_origen,
-        "medios": [medio.model_dump(exclude_none=True) for medio in data.medios],
         "autor_id": author_id,
         "narrador_nombre": narrador_nombre,  # the real name, always: the public gets `anonima` applied (see privacy.py)
-        "anonima": data.anonima,
-        "consentimiento": authorization,
         "estado": estado,
         "motivo_rechazo": None,
         "origen": origen,

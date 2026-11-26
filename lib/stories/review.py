@@ -16,9 +16,11 @@ from lib.stories.constants import (
     COMPROBACION_CONSENTIMIENTO,
     COMPROBACIONES,
     DIAS_EN_PAPELERA,
+    ESTADO_PAPELERA,
     ESTADOS,
     MOTIVOS_RECHAZO,
     ORIGENES,
+    epoch_of_years,
 )
 from lib.stories.schemas import CorreccionIn, HistoriaProyectoIn
 
@@ -35,10 +37,18 @@ def _consent_for_admin(record: dict | None) -> dict | None:
 
 def _correction_for_admin(story: dict) -> dict | None:
     """What the narrator wrote, when the team's correction changed it."""
-    if not service.corrected_fields(story):
+    fields = service.corrected_fields(story)
+    if not fields:
         return None
     record = story["correccion"]
-    return {"titulo": record["titulo"], "texto": record["texto"], "por": record.get("por_nombre", ""), "en": service._iso(record.get("en"))}
+    return {
+        **{field: record.get(field) for field in service.CORRECTABLE},
+        "titulo": record["titulo"],
+        "texto": record["texto"],
+        "campos": fields,
+        "por": record.get("por_nombre", ""),
+        "en": service._iso(record.get("en")),
+    }
 
 
 def story_for_admin(story: dict) -> dict:
@@ -67,6 +77,7 @@ def story_for_admin(story: dict) -> dict:
         "motivo_rechazo": story.get("motivo_rechazo"),
         "lat": service._coordinates(story)[0],
         "lon": service._coordinates(story)[1],
+        "ubicacion_origen": story.get("ubicacion_origen"),
         "consentimiento": _consent_for_admin(story.get("consentimiento")),
         "correccion": _correction_for_admin(story),
         "enviada_en": service._iso(story.get("enviada_en") or story.get("creada_en")),
@@ -150,33 +161,41 @@ def reject(db: Database, code: str, *, admin: dict, reason_id: str, now: datetim
 
 
 def correct(db: Database, code: str, *, admin: dict, data: CorreccionIn, now: datetime | None = None) -> dict:
-    """The team corrects the title and the text of a story still waiting for review (typos, a clearer title). What the
-    narrator wrote is kept the first time, so the team can always read it, and the narrator is told in «Mis historias» once
-    it is published. Nothing else changes: not the files, the place or the authorization."""
+    """The team corrects what is written in a story still waiting for review: title, text, years, the names of the place and
+    the farm, the tags (typos, a clearer title, a wrong year). What the narrator wrote is kept the first time, so the team can
+    always read it, and the narrator is told in «Mis historias» once it is published. The point, the files, the name or not
+    and the authorization do not change: the narrator chose and authorized them."""
     story = repository.find_by_code(db, code)
     if story is None or story["estado"] != "revision" or story["origen"] != "comunidad":
         raise _not_correctable(story)
-    original = story.get("correccion") or {"titulo": story["titulo"], "texto": story.get("texto", "")}
+    # A correction kept before the other fields could be corrected has only the title and the text: the rest is still the narrator's.
+    original = {field: story.get(field) for field in service.CORRECTABLE} | {"texto": story.get("texto", "")}
+    original |= {key: value for key, value in (story.get("correccion") or {}).items() if key in service.CORRECTABLE}
     if data.texto and not original["texto"]:
         raise InvalidDataError("Esta historia no tiene texto escrito: solo se puede corregir el título.")
     if original["texto"] and not data.texto:
         raise InvalidDataError("El texto no puede quedar vacío. Si la historia no sirve, recházala.")
+    changes = {"titulo": data.titulo, "texto": data.texto, "lugar_nombre": data.lugar_nombre, "finca_nombre": data.finca_nombre}
+    if data.anio_desde is not None:
+        changes |= {"anio_desde": data.anio_desde, "anio_hasta": data.anio_hasta, "epoca": epoch_of_years(data.anio_desde, data.anio_hasta)}
+    if data.etiquetas is not None:
+        available = set(catalog.list_tag_names(db))
+        missing = [tag for tag in data.etiquetas if tag not in available and tag not in story.get("etiquetas", [])]
+        if missing:
+            raise InvalidDataError(f"La etiqueta {missing[0]} ya no está disponible. Elige otra.")
+        changes["etiquetas"] = data.etiquetas
     sector = catalog.get_sector(db, story["sector_id"]) if story.get("sector_id") else None
-    changed = {**story, "titulo": data.titulo, "texto": data.texto}
+    changed = {**story, **changes}
+    previous = story.get("correccion") or {}
+    record = {field: original[field] for field in service.CORRECTABLE}
+    record |= {key: previous.get(key, story.get(key)) for key in ("anio_desde", "anio_hasta")}
     updated = repository.correct(
         db,
         code,
         {
-            "titulo": data.titulo,
-            "texto": data.texto,
+            **changes,
             "busqueda": service.search_text_of(changed, sector["nombre"] if sector else ""),
-            "correccion": {
-                "titulo": original["titulo"],
-                "texto": original["texto"],
-                "por": admin["_id"],
-                "por_nombre": admin.get("nombre") or admin["usuario"],
-                "en": now or utcnow(),
-            },
+            "correccion": {**record, "por": admin["_id"], "por_nombre": admin.get("nombre") or admin["usuario"], "en": now or utcnow()},
         },
     )
     if updated is None:  # somebody decided it in the meantime
@@ -207,6 +226,31 @@ def create_project_story(
         now=now,
     )
     return story_for_admin(story), created
+
+
+def edit_project_story(
+    db: Database, code: str, *, admin: dict, data: HistoriaProyectoIn, now: datetime | None = None
+) -> tuple[dict, list[str]]:
+    """The team changes one of its own stories, published or not: everything, as when it was created. Any administrator may
+    (the files can be of whoever created it or of whoever edits it). Returns (story, addresses of the files it no longer has)."""
+    now = now or utcnow()
+    story = repository.find_by_code(db, code)
+    if story is None or story["estado"] == ESTADO_PAPELERA:
+        raise NotFoundError("No encontramos esa historia.")
+    if story["origen"] != "proyecto":
+        raise ConflictError("Aquí solo se editan las historias del proyecto. Las de las familias se corrigen al revisarlas.")
+    updated, removed = service.replace_content(
+        db,
+        story,
+        data,
+        media_owners=(str(story["autor_id"]), str(admin["_id"])),
+        consent_from=consent.DE_EQUIPO,
+        extra={"narrador_nombre": data.narrador_nombre, "editada_en": now, "editada_por": admin["_id"]},
+        now=now,
+    )
+    if updated is None:  # sent to the trash in the meantime
+        raise NotFoundError("No encontramos esa historia.")
+    return story_for_admin(updated), removed
 
 
 # ---- the trash: a deleted story can be brought back for DIAS_EN_PAPELERA days -------
