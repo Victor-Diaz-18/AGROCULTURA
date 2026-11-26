@@ -56,7 +56,7 @@ test('el área del narrador: contar en tres pasos y «Mis historias»', async ({
   await page.getByRole('radio', { name: 'Lugar aproximado' }).check()
   await page.getByLabel('Ponle un título').fill('Mi historia')
   await page.getByRole('button', { name: 'Minca', exact: true }).click()
-  await page.getByRole('combobox', { name: /Cuándo ocurrió/ }).selectOption('Antes de 1960')
+  await page.getByRole('textbox', { name: 'Desde', exact: true }).fill('1955')
   await page.getByRole('button', { name: 'Siguiente' }).click()
   await check(page, 'contar 3')
   await page.getByRole('checkbox', { name: 'Publicar sin mi nombre' }).check()

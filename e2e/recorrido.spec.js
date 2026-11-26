@@ -30,7 +30,7 @@ async function tellStory(page, { title, text }) {
   await page.getByRole('button', { name: 'Siguiente' }).click()
   await page.getByLabel('Ponle un título').fill(title)
   await page.getByRole('button', { name: 'Minca', exact: true }).click()
-  await page.getByRole('combobox', { name: /Cuándo ocurrió/ }).selectOption('Antes de 1960')
+  await page.getByRole('textbox', { name: 'Desde', exact: true }).fill('1955')
   await page.getByRole('button', { name: 'Siguiente' }).click()
 }
 
@@ -94,7 +94,7 @@ test('ya aprobada, cualquier visitante la encuentra en el mapa, la busca, la abr
   const card = visitor.getByRole('dialog', { name: 'Ficha de la historia' })
   await expect(card.getByRole('heading', { name: STORY })).toBeVisible()
   await expect(card).toContainText('Rosa Elena Pérez')
-  await expect(card).toContainText('Antes de 1960')
+  await expect(card).toContainText('1955')
 })
 
 test('sin señal la familia guarda su historia en el dispositivo y sale sola al volver la conexión', async ({ page, context }) => {
@@ -158,7 +158,7 @@ test('una historia sin ubicación y sin nombre: se cuenta, se aprueba, sale en l
   await page.getByRole('radio', { name: 'Sin ubicación' }).check()
   await expect(page.getByRole('application', { name: 'Mapa para elegir dónde ocurrió' })).toHaveCount(0) // no map for a story without a place
   await page.getByLabel(/Nombre de referencia/).fill('Finca Los Mangos, cerca de San Lorenzo')
-  await page.getByRole('combobox', { name: /Cuándo ocurrió/ }).selectOption('1980 a 1999')
+  await page.getByRole('textbox', { name: 'Desde', exact: true }).fill('1985')
   await page.getByRole('button', { name: 'Siguiente' }).click()
   await page.getByRole('checkbox', { name: 'Publicar sin mi nombre' }).check()
   await expect(page.getByRole('checkbox', { name: /^Autorizo/ })).toHaveAccessibleName(

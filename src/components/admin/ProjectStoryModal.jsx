@@ -17,6 +17,8 @@ import FCode from '../ui/FCode.jsx'
 import Icon from '../ui/Icon.jsx'
 import Button from '../ui/Button.jsx'
 import Modal from '../ui/Modal.jsx'
+import YearsField from '../tell/YearsField.jsx'
+import { checkYears, parseYear } from '../../utils/years.js'
 
 /**
  * "Nueva historia del proyecto" (F12): a story the team uploads; it is published at once.
@@ -39,7 +41,8 @@ export default function ProjectStoryModal({ onClose, onPublished }) {
   const [finca, setFinca] = useState('')
   const [anonima, setAnonima] = useState(false) // publish without the name of whoever tells it
   const [consent, setConsent] = useState(null) // the team's confirmation that it has the authorization of whoever tells the story
-  const [chosenEpoca, setEpoca] = useState('')
+  const [anioDesde, setAnioDesde] = useState('')
+  const [anioHasta, setAnioHasta] = useState('')
   const [narrador, setNarrador] = useState('')
   const [texto, setTexto] = useState('')
   const [etiquetas, setEtiquetas] = useState([])
@@ -56,15 +59,15 @@ export default function ProjectStoryModal({ onClose, onPublished }) {
   const photoNumber = useRef(1)
   const audioInput = useRef(null)
 
-  // Neither the place nor the period have a default: a wrong one would go unnoticed.
-  const epoca = chosenEpoca
+  // Neither the place nor the years have a default: a wrong one would go unnoticed.
+  const yearsOk = anioDesde.trim() !== '' && checkYears(anioDesde, anioHasta) === ''
 
   // The authorization is for one text (with or without the name, with a place or none): it only counts while the choices are the same.
   const choice = { anonima, modo }
   const accepted = isAccepted(consent, choice)
   const authorization = consentText(choice, 'equipo')
   const placed = modo === 'ninguna' || Boolean(location)
-  const valid = titulo.trim().length >= LIMITS.tituloMin && placed && Boolean(epoca) && (texto.trim().length > 0 || Boolean(audio)) && accepted
+  const valid = titulo.trim().length >= LIMITS.tituloMin && placed && yearsOk && (texto.trim().length > 0 || Boolean(audio)) && accepted
 
   const photos = {
     photos: fotos,
@@ -108,7 +111,8 @@ export default function ProjectStoryModal({ onClose, onPublished }) {
           clientId,
           titulo: titulo.trim(),
           texto: texto.trim(),
-          epoca,
+          anioDesde: parseYear(anioDesde),
+          anioHasta: parseYear(anioHasta) ?? parseYear(anioDesde),
           location,
           ubicacionModo: modo,
           lugar: lugar.trim(),
@@ -208,17 +212,7 @@ export default function ProjectStoryModal({ onClose, onPublished }) {
         </span>
       </div>
 
-      <label className="ag-project-modal__field">
-        Época
-        <select className="ag-project-modal__select" value={epoca} onChange={(event) => setEpoca(event.target.value)}>
-          <option value="">Elige una época</option>
-          {config.epocas.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-      </label>
+      <YearsField id="ag-proyecto-anios" className="ag-project-modal__field" desde={anioDesde} hasta={anioHasta} onDesde={setAnioDesde} onHasta={setAnioHasta} />
 
       <label className="ag-project-modal__field">
         Quién la cuenta

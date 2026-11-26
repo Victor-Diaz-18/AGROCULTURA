@@ -191,7 +191,8 @@ describe('Mapa de historias: filtros y búsqueda (F11)', () => {
     const origins = within(screen.getByRole('group', { name: 'Filtrar por origen' }))
     expect(origins.getAllByRole('button').map((button) => button.textContent)).toEqual(['Todas', 'Comunidad', 'Proyecto'])
     expect(screen.getByRole('searchbox', { name: 'Buscar historias' })).toHaveAttribute('placeholder', 'Buscar por título, narrador o etiqueta…')
-    expect(screen.getByRole('combobox', { name: 'Época' })).toHaveValue('todas')
+    expect(screen.getByRole('textbox', { name: 'Desde el año' })).toHaveValue('')
+    expect(screen.getByRole('textbox', { name: 'Hasta el año' })).toHaveValue('')
     expect(screen.getByRole('combobox', { name: 'Formato' })).toHaveValue('todos')
   })
 
@@ -253,11 +254,12 @@ describe('Mapa de historias: filtros y búsqueda (F11)', () => {
     await waitFor(() => expect(titles()).toEqual(['El camino de mulas']))
   })
 
-  it('the period and the format menus filter too', async () => {
+  it('the years and the format menu filter too', async () => {
     const user = userEvent.setup()
     await openFiltered()
 
-    await user.selectOptions(screen.getByRole('combobox', { name: 'Época' }), '1960 a 1979')
+    await user.type(screen.getByRole('textbox', { name: 'Desde el año' }), '1960')
+    await user.type(screen.getByRole('textbox', { name: 'Hasta el año' }), '1979')
     expect(titles().sort()).toEqual(['El patio donde se secaba el café', 'La primera cosecha'])
 
     await user.selectOptions(screen.getByRole('combobox', { name: 'Formato' }), 'Video')

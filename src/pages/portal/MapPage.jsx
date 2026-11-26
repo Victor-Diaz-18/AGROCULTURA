@@ -189,7 +189,7 @@ export default function MapPage() {
       )}
 
       <div className="ag-mapcard">
-        <MapFilters filters={filters} onChange={changeFilters} stories={stories} sectors={config.sectores} epocas={config.epocas} />
+        <MapFilters filters={filters} onChange={changeFilters} stories={stories} sectors={config.sectores} />
         <div className="ag-mapcard__body">
           <StoryMap
             stories={filtered}

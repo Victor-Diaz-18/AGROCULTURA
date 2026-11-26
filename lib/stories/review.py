@@ -54,6 +54,7 @@ def story_for_admin(story: dict) -> dict:
         "finca_nombre": story.get("finca_nombre"),
         "ubicacion_modo": story.get("ubicacion_modo", "aproximada"),
         "epoca": story["epoca"],
+        **service.years_out(story),
         "etiquetas": story.get("etiquetas", []),
         "formatos": service.formats_of(story),
         "medios": [

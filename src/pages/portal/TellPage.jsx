@@ -24,6 +24,7 @@ import { formatDuration } from '../../utils/format.js'
 import { acceptConsent, consentText, consentVariant, isAccepted } from '../../utils/consent.js'
 import { newId } from '../../utils/id.js'
 import { placeLine } from '../../utils/geo.js'
+import { checkYears, parseYear, yearsText } from '../../utils/years.js'
 
 const SUBTITLE = 'Con tu voz, una foto, un video o por escrito. Nadie la ve hasta que un administrador la aprueba.'
 
@@ -58,6 +59,7 @@ const isBlank = (draft) =>
   !draft.video &&
   !draft.location &&
   !draft.epoca &&
+  !draft.anioDesde &&
   draft.fotos.length === 0 &&
   draft.etiquetas.length === 0
 
@@ -99,7 +101,9 @@ export default function TellPage() {
   const [finca, setFinca] = useState('')
   const [anonima, setAnonima] = useState(false) // "publicar sin mi nombre"
   const [consent, setConsent] = useState(null) // what was kept when the authorization was ticked (see utils/consent.js)
-  const [epoca, setEpoca] = useState('')
+  const [epoca, setEpoca] = useState('') // only a draft kept before the years existed has a period
+  const [anioDesde, setAnioDesde] = useState('')
+  const [anioHasta, setAnioHasta] = useState('')
   const [etiquetas, setEtiquetas] = useState([])
   const [sending, setSending] = useState(false)
   const [sendError, setSendError] = useState('')
@@ -128,6 +132,8 @@ export default function TellPage() {
     anonima,
     consentimiento: consent,
     epoca,
+    anioDesde,
+    anioHasta,
     etiquetas,
     audio,
     fotos,
@@ -161,7 +167,9 @@ export default function TellPage() {
           setFinca(found.finca ?? '')
           setAnonima(Boolean(found.anonima))
           setConsent(found.consentimiento ?? null)
-          setEpoca(found.epoca)
+          setEpoca(found.epoca ?? '')
+          setAnioDesde(String(found.anioDesde ?? ''))
+          setAnioHasta(String(found.anioHasta ?? ''))
           setEtiquetas(found.etiquetas)
           photoNumber.current = found.photoNumber ?? found.fotos.length + 1
           setRecovered(true)
@@ -185,7 +193,7 @@ export default function TellPage() {
     if (!saved) return undefined
     const timer = setTimeout(keepDraft, SAVE_DELAY_MS)
     return () => clearTimeout(timer)
-  }, [saved, keepDraft, clientId, texto, titulo, location, modo, lugar, finca, anonima, consent, epoca, etiquetas, audio, fotos, video])
+  }, [saved, keepDraft, clientId, texto, titulo, location, modo, lugar, finca, anonima, consent, epoca, anioDesde, anioHasta, etiquetas, audio, fotos, video])
 
   useEffect(() => {
     if (saved) keepDraft()
@@ -215,6 +223,11 @@ export default function TellPage() {
     if (steps && steps.getBoundingClientRect().top < 0) steps.scrollIntoView?.({ block: 'start' })
   }, [step])
 
+  // The years: valid ones win; a draft kept before the years existed keeps its period while nothing is written.
+  const yearsOk = anioDesde.trim() !== '' && checkYears(anioDesde, anioHasta) === ''
+  const whenOk = yearsOk || (Boolean(epoca) && !anioDesde.trim())
+  const whenText = yearsOk ? yearsText(parseYear(anioDesde), parseYear(anioHasta) ?? parseYear(anioDesde)) : anioDesde.trim() ? '' : epoca
+
   const recording = recorder.status === 'recording'
   // The authorization was given for one text (name or not, place or not): it only counts while the choices are the same.
   const choice = { anonima, modo }
@@ -224,7 +237,7 @@ export default function TellPage() {
   const placed = modo === 'ninguna' || Boolean(location) // without a place on the map there is no point to wait for
   const canContinue = {
     1: Boolean(audio) || recording || texto.trim().length > 0,
-    2: titulo.trim().length >= LIMITS.tituloMin && placed && Boolean(epoca),
+    2: titulo.trim().length >= LIMITS.tituloMin && placed && whenOk,
     3: !sending && accepted, // without signal the story is kept on the phone; without the authorization it goes nowhere
   }[step]
 
@@ -274,6 +287,8 @@ export default function TellPage() {
     setAnonima(false)
     setConsent(null)
     setEpoca('')
+    setAnioDesde('')
+    setAnioHasta('')
     setEtiquetas([])
     setSendError('')
     setRecovered(false)
@@ -288,7 +303,7 @@ export default function TellPage() {
     titulo: titulo.trim() || 'Sin título todavía',
     // Without a place on the map the name of reference is not said: it is not public, and the page may be read aloud or shown to others.
     lugar: modo === 'ninguna' ? NO_LOCATION : location ? placeLine({ sector_id: location.sectorId, lugar_nombre: lugar.trim() }, config.sectores) : 'Sin elegir',
-    epoca: epoca || 'Sin elegir',
+    epoca: whenText || 'Sin elegir',
     narrador: anonima ? NARRADOR_ANONIMO : (user?.nombre ?? ''),
     finca: finca.trim(),
     texto:
@@ -303,7 +318,9 @@ export default function TellPage() {
     clientId,
     titulo: titulo.trim(),
     texto: texto.trim(),
-    epoca,
+    epoca: whenText, // how "Mis historias" shows it while it is still on the phone
+    anioDesde: yearsOk ? parseYear(anioDesde) : null,
+    anioHasta: yearsOk ? (parseYear(anioHasta) ?? parseYear(anioDesde)) : null,
     location,
     ubicacionModo: modo,
     lugar: lugar.trim(),
@@ -438,8 +455,10 @@ export default function TellPage() {
               onLugar={setLugar}
               finca={finca}
               onFinca={setFinca}
-              epoca={epoca}
-              onEpoca={setEpoca}
+              anioDesde={anioDesde}
+              onAnioDesde={setAnioDesde}
+              anioHasta={anioHasta}
+              onAnioHasta={setAnioHasta}
               etiquetas={etiquetas}
               onToggleTag={toggleTag}
             />
@@ -486,7 +505,7 @@ export default function TellPage() {
                 Lugar: <b>{summary.lugar}</b>
               </span>
               <span>
-                Época: <b>{summary.epoca}</b>
+                Cuándo: <b>{summary.epoca}</b>
               </span>
               <span>
                 Formatos: <b>{summary.formatosTexto}</b>

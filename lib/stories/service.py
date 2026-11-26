@@ -13,8 +13,14 @@ from lib.core.clock import utcnow
 from lib.core.errors import ConflictError, InvalidDataError, NotFoundError
 from lib.media.validation import check_media_url, check_video
 from lib.stories import consent, privacy, repository
-from lib.stories.constants import NARRADOR_ANONIMO, ORIGENES, TIPOS_MEDIO
+from lib.stories.constants import NARRADOR_ANONIMO, ORIGENES, TIPOS_MEDIO, years_of
 from lib.stories.schemas import HistoriaIn, VideoIn
+
+
+def years_out(story: dict) -> dict:
+    """The years the lists and the filters use: the ones written, or the ones a period of before covers."""
+    desde, hasta = years_of(story)
+    return {"anio_desde": desde, "anio_hasta": hasta}
 
 
 def get_stats(db: Database) -> dict:
@@ -152,7 +158,9 @@ def insert_story(
         "titulo": data.titulo,
         "texto": data.texto,
         "epoca": data.epoca,
-        "fecha_hechos": None,  # the design only asks for the epoch
+        "anio_desde": data.anio_desde,
+        "anio_hasta": data.anio_hasta,
+        "fecha_hechos": None,
         "sector_id": sector_id,
         "lugar_nombre": data.lugar_nombre,
         "finca_nombre": data.finca_nombre,
@@ -211,6 +219,8 @@ def my_stories(db: Database, user: dict) -> list[dict]:
             "ubicacion_modo": story.get("ubicacion_modo", "aproximada"),
             "anonima": bool(story.get("anonima")),
             "epoca": story["epoca"],
+        **years_out(story),
+            **years_out(story),
             "formatos": formats_of(story),
             "estado": story["estado"],
             "motivo_rechazo": story.get("motivo_rechazo"),
@@ -248,6 +258,7 @@ def story_for_map(story: dict) -> dict:
         "lugar_nombre": story.get("lugar_nombre") if located else None,
         "finca_nombre": story.get("finca_nombre"),
         "epoca": story["epoca"],
+        **years_out(story),
         "formatos": formats_of(story),
         "origen": story["origen"],
         "con_ubicacion": located,

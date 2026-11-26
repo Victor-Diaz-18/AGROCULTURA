@@ -53,10 +53,11 @@ async function writeStory(user, text = 'Antes de que hubiera carretera, el café
   await proceed(user)
 }
 
-async function fillWhereAndWhen(user, { title = 'El camino de mulas', sector = 'Minca', epoca = 'Antes de 1960' } = {}) {
+async function fillWhereAndWhen(user, { title = 'El camino de mulas', sector = 'Minca', desde = '1955', hasta = '' } = {}) {
   await user.type(screen.getByLabelText('Ponle un título'), title)
   if (sector) await user.click(screen.getByRole('button', { name: sector }))
-  if (epoca) await user.selectOptions(screen.getByRole('combobox', { name: /Cuándo ocurrió/ }), epoca)
+  if (desde) await user.type(screen.getByRole('textbox', { name: 'Desde' }), desde)
+  if (hasta) await user.type(screen.getByRole('textbox', { name: 'Hasta (opcional)' }), hasta)
 }
 
 const sentBody = (fetchMock) => JSON.parse(callsTo(fetchMock, '/historias')[0][1].body)
@@ -100,7 +101,7 @@ describe('Contar una historia: steps and gating (F3)', () => {
     expect(screen.getByText('Falta el título, el lugar o la época.')).toBeInTheDocument()
 
     await user.type(screen.getByLabelText('Ponle un título'), 'El camino de mulas')
-    await user.selectOptions(screen.getByRole('combobox', { name: /Cuándo ocurrió/ }), 'Antes de 1960')
+    await user.type(screen.getByRole('textbox', { name: 'Desde' }), '1955')
     expect(nextButton()).toBeDisabled() // still no place
 
     await user.click(screen.getByRole('button', { name: 'Minca' }))
@@ -126,11 +127,11 @@ describe('Contar una historia: steps and gating (F3)', () => {
     expect(summary).toHaveTextContent('Formatos: Ninguno todavía')
 
     await writeStory(user)
-    await fillWhereAndWhen(user, { sector: 'La Tagua', epoca: '1960 a 1979' })
+    await fillWhereAndWhen(user, { sector: 'La Tagua', desde: '1965', hasta: '1970' })
 
     expect(summary).toHaveTextContent('El camino de mulas')
     expect(summary).toHaveTextContent('Lugar: La Tagua')
-    expect(summary).toHaveTextContent('Época: 1960 a 1979')
+    expect(summary).toHaveTextContent('Cuándo: 1965 a 1970')
     expect(summary).toHaveTextContent('Formatos: Texto')
   })
 
@@ -158,12 +159,12 @@ describe('Contar una historia: el lugar puede ser cualquiera de la zona', () => 
     await writeStory(user)
     await user.type(screen.getByLabelText('Ponle un título'), 'Un camino de herradura')
     await user.click(screen.getByRole('button', { name: /Usar mi ubicación/ }))
-    await user.selectOptions(screen.getByRole('combobox', { name: /Cuándo ocurrió/ }), 'Antes de 1960')
+    await user.type(screen.getByRole('textbox', { name: 'Desde' }), '1955')
 
     expect(nextButton()).toBeEnabled() // no sector needed
     expect(screen.getByRole('complementary', { name: 'Resumen de tu historia' })).toHaveTextContent('Lugar: Otro lugar de la zona')
     await proceed(user)
-    expect(screen.getByText(/Otro lugar de la zona · Antes de 1960/)).toBeInTheDocument()
+    expect(screen.getByText(/Otro lugar de la zona · 1955/)).toBeInTheDocument()
     await proceed(user)
 
     await screen.findByRole('heading', { name: 'Mis historias' })
@@ -178,7 +179,7 @@ describe('Contar una historia: el lugar puede ser cualquiera de la zona', () => 
     await writeStory(user)
     await user.type(screen.getByLabelText('Ponle un título'), 'La trilla')
     await user.click(screen.getByRole('button', { name: /Usar mi ubicación/ }))
-    await user.selectOptions(screen.getByRole('combobox', { name: /Cuándo ocurrió/ }), 'Antes de 1960')
+    await user.type(screen.getByRole('textbox', { name: 'Desde' }), '1955')
 
     await user.type(screen.getByLabelText(/Nombre del lugar/), '  Finca La Esperanza ')
 
@@ -196,7 +197,7 @@ describe('Contar una historia: el lugar puede ser cualquiera de la zona', () => 
     await writeStory(user)
     await user.type(screen.getByLabelText('Ponle un título'), 'La trilla')
     await user.click(screen.getByRole('button', { name: /Usar mi ubicación/ }))
-    await user.selectOptions(screen.getByRole('combobox', { name: /Cuándo ocurrió/ }), 'Antes de 1960')
+    await user.type(screen.getByRole('textbox', { name: 'Desde' }), '1955')
 
     await proceed(user)
     await proceed(user)
@@ -231,7 +232,7 @@ describe('Contar una historia: el lugar puede ser cualquiera de la zona', () => 
     open()
     await writeStory(user)
     await user.type(screen.getByLabelText('Ponle un título'), 'Desde lejos')
-    await user.selectOptions(screen.getByRole('combobox', { name: /Cuándo ocurrió/ }), 'Antes de 1960')
+    await user.type(screen.getByRole('textbox', { name: 'Desde' }), '1955')
 
     await user.click(screen.getByRole('button', { name: /Usar mi ubicación/ }))
 
@@ -260,7 +261,8 @@ describe('Contar una historia: sending (F3, F5, F4)', () => {
     expect(body).toMatchObject({
       titulo: 'El camino de mulas',
       texto: 'Antes de que hubiera carretera, el café bajaba en mula.',
-      epoca: 'Antes de 1960',
+      anio_desde: 1955,
+      anio_hasta: 1955,
       ubicacion: { lat: 11.14, lon: -74.118 },
       ubicacion_origen: 'sector',
       etiquetas: ['#café'], // the design's default when no tag is chosen
@@ -445,7 +447,7 @@ function serverWithStories() {
           codigo: `HIS-2026-${String(20 + sent.length)}`,
           titulo: body.titulo,
           sector_id: 'minca',
-          epoca: body.epoca,
+          epoca: String(body.anio_desde),
           formatos: body.medios.length ? ['Audio'] : ['Texto'],
           estado: 'revision',
           motivo_rechazo: null,
@@ -1029,7 +1031,7 @@ describe('Contar una historia: dónde ocurrió (lugar aproximado o sin ubicació
     open()
     await writeStory(user)
     await user.type(screen.getByLabelText('Ponle un título'), 'Lo que contaba mi abuela')
-    await user.selectOptions(screen.getByRole('combobox', { name: /Cuándo ocurrió/ }), 'Antes de 1960')
+    await user.type(screen.getByRole('textbox', { name: 'Desde' }), '1955')
     expect(nextButton()).toBeDisabled() // with a place, a place is needed
 
     await user.click(place('Sin ubicación'))
@@ -1056,7 +1058,7 @@ describe('Contar una historia: dónde ocurrió (lugar aproximado o sin ubicació
     const { fetchMock } = open()
     await writeStory(user)
     await user.type(screen.getByLabelText('Ponle un título'), 'Lo que contaba mi abuela')
-    await user.selectOptions(screen.getByRole('combobox', { name: /Cuándo ocurrió/ }), 'Antes de 1960')
+    await user.type(screen.getByRole('textbox', { name: 'Desde' }), '1955')
     await user.click(place('Sin ubicación'))
     await user.type(screen.getByLabelText(/Nombre de referencia/), 'Cerca de San Lorenzo')
     await user.click(nextButton())

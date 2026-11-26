@@ -1,13 +1,14 @@
 import { OTHER_PLACE } from '../config/constants.js'
 import { hasLocation } from './geo.js'
+import { inYears } from './years.js'
 
 /**
- * The filters of the map (F11): sector, origin, a search, period and format. Pure functions over the published stories
+ * The filters of the map (F11): sector, origin, a search, the years (from / to, written by whoever looks) and format. Pure functions over the published stories
  * the map already has, so they work without signal and a new filter never needs the server.
  */
 
 /** Sector: "todos", a sector id, or "otro" (a place outside every sector). Origin: todos | comunidad | proyecto. */
-export const NO_FILTERS = { sector: 'todos', origen: 'todos', q: '', epoca: 'todas', formato: 'todos' }
+export const NO_FILTERS = { sector: 'todos', origen: 'todos', q: '', desde: '', hasta: '', formato: 'todos' }
 
 export const OTHER_SECTOR = 'otro'
 
@@ -48,7 +49,7 @@ export function applyOtherFilters(stories, filters, sectors = []) {
   return stories.filter(
     (story) =>
       (filters.origen === 'todos' || story.origen === filters.origen) &&
-      (filters.epoca === 'todas' || story.epoca === filters.epoca) &&
+      inYears(story, filters.desde, filters.hasta) &&
       (filters.formato === 'todos' || story.formatos.includes(filters.formato)) &&
       matchesSearch(story, words, sectors),
   )

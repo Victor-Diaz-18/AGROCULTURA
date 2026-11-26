@@ -36,7 +36,7 @@ const open = (route = '/admin/historias', overrides) => renderApp({ route, user:
 const authorize = (dialog, user) => user.click(within(dialog).getByRole('checkbox', { name: /^Tengo la autorización de quien cuenta la historia/ }))
 const pickPlaceAndPeriod = async (dialog, user) => {
   await user.click(await within(dialog).findByRole('button', { name: 'Minca' })) // the sectors appear once the map has them
-  await user.selectOptions(within(dialog).getByRole('combobox', { name: 'Época' }), '1960 a 1979')
+  await user.type(within(dialog).getByRole('textbox', { name: 'Desde' }), '1965')
   await authorize(dialog, user) // the team also says it has the authorization of whoever tells the story
 }
 const publishButton = () => screen.getByRole('button', { name: /Publicar historia del proyecto|Publicando…/ })
@@ -123,7 +123,7 @@ describe('Nueva historia del proyecto', () => {
     expect(publishButton()).toBeDisabled()
     await user.type(within(dialog).getByLabelText('Relato'), 'Un relato.')
     expect(publishButton()).toBeDisabled() // still no place and no period
-    await user.selectOptions(within(dialog).getByRole('combobox', { name: 'Época' }), 'Antes de 1960')
+    await user.type(within(dialog).getByRole('textbox', { name: 'Desde' }), '1955')
     expect(publishButton()).toBeDisabled() // still no place
     await user.click(within(dialog).getByRole('button', { name: 'Minca' }))
     expect(publishButton()).toBeDisabled() // the team has to say it has the authorization of whoever tells the story
@@ -151,7 +151,7 @@ describe('Nueva historia del proyecto', () => {
 
     await user.type(within(dialog).getByLabelText('Título'), '  El patio de secado ')
     await user.click(within(dialog).getByRole('button', { name: 'San Lorenzo' }))
-    await user.selectOptions(within(dialog).getByRole('combobox', { name: 'Época' }), '1980 a 1999')
+    await user.type(within(dialog).getByRole('textbox', { name: 'Desde' }), '1985')
     await user.type(within(dialog).getByLabelText('Nombre del lugar (opcional)'), '  Patio  de los Pérez ')
     await user.type(within(dialog).getByLabelText('Quién la cuenta'), 'Doña Rosa')
     await user.type(within(dialog).getByLabelText('Relato'), 'Se secaba al sol.')
@@ -163,7 +163,8 @@ describe('Nueva historia del proyecto', () => {
     expect(sentBody(fetchMock)).toMatchObject({
       titulo: 'El patio de secado',
       texto: 'Se secaba al sol.',
-      epoca: '1980 a 1999',
+      anio_desde: 1985,
+      anio_hasta: 1985,
       ubicacion: { lat: 11.116315, lon: -74.034676 },
       ubicacion_origen: 'sector',
       etiquetas: ['#finca'],
@@ -182,7 +183,7 @@ describe('Nueva historia del proyecto', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByLabelText('Título'), 'Un camino lejos de los sectores')
     await user.type(within(dialog).getByLabelText('Relato'), 'Texto.')
-    await user.selectOptions(within(dialog).getByRole('combobox', { name: 'Época' }), '1960 a 1979')
+    await user.type(within(dialog).getByRole('textbox', { name: 'Desde' }), '1965')
 
     fireEvent.click(within(dialog).getByRole('application', { name: 'Mapa para elegir dónde ocurrió' }), { clientX: 400, clientY: 115 })
     await authorize(dialog, user)
@@ -395,7 +396,7 @@ describe('Nueva historia del proyecto: lugar, nombre y autorización', () => {
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByLabelText('Título'), 'Lo que no se dice')
     await user.type(within(dialog).getByLabelText('Relato'), 'Texto.')
-    await user.selectOptions(within(dialog).getByRole('combobox', { name: 'Época' }), '1960 a 1979')
+    await user.type(within(dialog).getByRole('textbox', { name: 'Desde' }), '1965')
     await user.click(within(dialog).getByRole('radio', { name: 'Sin ubicación' }))
     expect(publishButton()).toBeDisabled()
 

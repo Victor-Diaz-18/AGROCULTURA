@@ -3,6 +3,7 @@ import LocationPicker from '../map/LocationPicker.jsx'
 import Chip from '../ui/Chip.jsx'
 import FCode from '../ui/FCode.jsx'
 import PlaceOptions from './PlaceOptions.jsx'
+import YearsField from './YearsField.jsx'
 
 /**
  * Step 2, "Dónde y cuándo": title, where (F1), period and tags.
@@ -11,7 +12,7 @@ import PlaceOptions from './PlaceOptions.jsx'
  * public sees a point rounded to about 500 m. With «Sin ubicación» there is no map and no point: what they may write is a
  * name of reference that only the team reads. The name of the farm or brand is public in both.
  */
-export default function StepWhereWhen({ config, titulo, onTitulo, modo, onModo, location, onLocation, lugar, onLugar, finca, onFinca, epoca, onEpoca, etiquetas, onToggleTag }) {
+export default function StepWhereWhen({ config, titulo, onTitulo, modo, onModo, location, onLocation, lugar, onLugar, finca, onFinca, anioDesde, onAnioDesde, anioHasta, onAnioHasta, etiquetas, onToggleTag }) {
   const withoutPlace = modo === 'ninguna'
   return (
     <>
@@ -88,17 +89,7 @@ export default function StepWhereWhen({ config, titulo, onTitulo, modo, onModo, 
       </div>
 
       <div className="ag-tell__fields">
-        <label className="ag-tell__when">
-          ¿Cuándo ocurrió?
-          <select className="ag-tell__select" value={epoca} onChange={(event) => onEpoca(event.target.value)}>
-            <option value="">Elige una época</option>
-            {config.epocas.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
+        <YearsField id="ag-anios" className="ag-tell__when" desde={anioDesde} hasta={anioHasta} onDesde={onAnioDesde} onHasta={onAnioHasta} />
         <div className="ag-tell__tags">
           <span className="ag-tell__label">Etiquetas</span>
           <div className="ag-tell__chips">

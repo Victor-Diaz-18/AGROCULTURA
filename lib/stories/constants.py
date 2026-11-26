@@ -7,6 +7,29 @@ EPOCAS = (
     "2000 en adelante",
 )
 
+# Since the person writes the years now. The four periods of before stay valid for stories (and drafts on a phone) that have one.
+ANIO_MINIMO = 1700
+# What each period of before covers, to filter it by years: None is "open" on that side.
+EPOCA_ANIOS = {
+    "Antes de 1960": (None, 1959),
+    "1960 a 1979": (1960, 1979),
+    "1980 a 1999": (1980, 1999),
+    "2000 en adelante": (2000, None),
+}
+
+
+def epoch_of_years(desde: int, hasta: int) -> str:
+    """How the years read on the card and the lists: «1955», or «1950 a 1960»."""
+    return str(desde) if desde == hasta else f"{desde} a {hasta}"
+
+
+def years_of(story: dict) -> tuple[int | None, int | None]:
+    """The years of a story, also for one told with a period of before."""
+    if story.get("anio_desde") is not None:
+        return story["anio_desde"], story.get("anio_hasta", story["anio_desde"])
+    return EPOCA_ANIOS.get(story.get("epoca", ""), (None, None))
+
+
 ESTADOS = ("borrador", "revision", "publicada", "rechazada")
 
 # A published story the main administrator deletes goes first to the trash: it leaves the map and every list (also its

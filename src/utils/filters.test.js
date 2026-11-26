@@ -25,9 +25,9 @@ describe('filters of the map (F11)', () => {
     expect(find({ sector: 'san-lorenzo' })).toEqual([])
   })
 
-  it('filters by origin, period and format', () => {
+  it('filters by origin, years and format', () => {
     expect(find({ origen: 'proyecto' })).toEqual(['HIS-2026-003'])
-    expect(find({ epoca: '1960 a 1979' })).toEqual(['HIS-2026-002'])
+    expect(find({ desde: '1960', hasta: '1979' })).toEqual(['HIS-2026-002'])
     expect(find({ formato: 'Video' })).toEqual(['HIS-2026-003'])
     expect(find({ formato: 'Texto' })).toEqual(['HIS-2026-004'])
     expect(find({ formato: 'Audio' })).toEqual(['HIS-2026-001', 'HIS-2026-002'])
@@ -70,7 +70,7 @@ describe('filters of the map (F11)', () => {
   it('combines the filters', () => {
     expect(find({ sector: 'minca', origen: 'comunidad' })).toEqual(['HIS-2026-001'])
     expect(find({ sector: 'minca', formato: 'Video', q: 'fiesta' })).toEqual(['HIS-2026-003'])
-    expect(find({ sector: 'minca', epoca: '1960 a 1979' })).toEqual([])
+    expect(find({ sector: 'minca', desde: '1960', hasta: '1979' })).toEqual([])
   })
 
   it('knows when something is being filtered', () => {
@@ -127,8 +127,8 @@ describe('stories published without a place on the map', () => {
     expect(findAll({ sector: OTHER_SECTOR })).toEqual(['HIS-2026-004']) // the one that does have a place outside the sectors
   })
 
-  it('are found with the same filters as the rest: period, format, origin and search', () => {
-    expect(findAll({ epoca: 'Antes de 1960' })).toEqual(['HIS-2026-001', 'HIS-2026-005'])
+  it('are found with the same filters as the rest: years, format, origin and search', () => {
+    expect(findAll({ hasta: '1959' })).toEqual(['HIS-2026-001', 'HIS-2026-005'])
     expect(findAll({ formato: 'Audio' })).toEqual(['HIS-2026-001', 'HIS-2026-002', 'HIS-2026-005'])
     expect(findAll({ origen: 'comunidad' })).toContain('HIS-2026-005')
     expect(findAll({ q: 'abuela' })).toEqual(['HIS-2026-005']) // title
@@ -157,5 +157,30 @@ describe('stories published without a place on the map', () => {
     const only = [mapStory(), storyWithoutPlace()]
 
     expect(sectorTabs(only, NO_FILTERS, sectors).map((tab) => tab.id)).not.toContain(OTHER_SECTOR)
+  })
+})
+
+describe('el filtro de años', () => {
+  const told = [
+    mapStory({ codigo: 'HIS-2026-031', epoca: '1955', anio_desde: 1955, anio_hasta: 1955 }),
+    mapStory({ codigo: 'HIS-2026-032', epoca: '1950 a 1970', anio_desde: 1950, anio_hasta: 1970 }),
+    mapStory({ codigo: 'HIS-2026-033', epoca: '1990', anio_desde: 1990, anio_hasta: 1990 }),
+    mapStory({ codigo: 'HIS-2026-034', epoca: '2000 en adelante' }), // a period of before, kept on the phone without its years
+  ]
+  const pick = (filters) => applyFilters(told, { ...NO_FILTERS, ...filters }).map((story) => story.codigo)
+
+  it('a story that lasted counts when any of its years is in the range', () => {
+    expect(pick({ desde: '1960', hasta: '1965' })).toEqual(['HIS-2026-032'])
+    expect(pick({ desde: '1955', hasta: '1955' })).toEqual(['HIS-2026-031', 'HIS-2026-032'])
+  })
+
+  it('works with only one of the two years', () => {
+    expect(pick({ desde: '1980' })).toEqual(['HIS-2026-033', 'HIS-2026-034'])
+    expect(pick({ hasta: '1952' })).toEqual(['HIS-2026-032'])
+  })
+
+  it('does not jump while the year is being written, and takes the years in either order', () => {
+    expect(pick({ desde: '19' })).toHaveLength(4)
+    expect(pick({ desde: '1995', hasta: '1985' })).toEqual(['HIS-2026-033'])
   })
 })

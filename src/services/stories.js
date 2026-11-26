@@ -42,7 +42,8 @@ export function buildStoryPayload(draft, medios) {
     client_id: draft.clientId,
     titulo: draft.titulo,
     texto: draft.texto,
-    epoca: draft.epoca,
+    // New stories send the years; a draft kept on the phone before them still has its period.
+    ...(draft.anioDesde != null ? { anio_desde: draft.anioDesde, anio_hasta: draft.anioHasta ?? null } : { epoca: draft.epoca }),
     etiquetas: draft.etiquetas,
     ubicacion_modo: modo,
     ...(modo === 'aproximada' ? { ubicacion: { lat: draft.location.lat, lon: draft.location.lon }, ubicacion_origen: draft.location.origen } : {}),

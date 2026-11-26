@@ -603,3 +603,37 @@
     flex: 1;
   }
 }
+
+/* ---------- «¿En qué año ocurrió?» ---------- */
+.ag-years {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.ag-years__legend {
+  padding: 0;
+  margin-bottom: 4px;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--texto);
+}
+.ag-years__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.ag-years__field {
+  display: flex;
+  flex: 1 1 140px;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--texto-2);
+}
+.ag-years__input {
+  max-width: 180px;
+}

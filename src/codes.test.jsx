@@ -75,7 +75,7 @@ describe('without VITE_SHOW_CODES the people who use the platform never see the 
 
     await user.type(screen.getByLabelText('Ponle un título'), 'Mi historia')
     await user.click(screen.getByRole('button', { name: 'Minca' }))
-    await user.selectOptions(screen.getByRole('combobox', { name: /Cuándo ocurrió/ }), 'Antes de 1960')
+    await user.type(screen.getByRole('textbox', { name: 'Desde' }), '1955')
     await user.click(screen.getByRole('button', { name: 'Siguiente' }))
     await screen.findByText('REVISA ANTES DE ENVIAR')
     expect(screen.getByText('Marca la autorización para poder enviarla.')).toBeInTheDocument()

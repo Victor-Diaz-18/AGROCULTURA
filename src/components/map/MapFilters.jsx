@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react'
-import { EPOCAS } from '../../config/constants.js'
 import { NO_FILTERS, sectorTabs } from '../../utils/filters.js'
 import FCode from '../ui/FCode.jsx'
 import Icon from '../ui/Icon.jsx'
@@ -20,11 +19,11 @@ const FORMATS = ['Audio', 'Foto', 'Video', 'Texto']
  * box and period and format menus. `onChange(patch)` is told only what changed.
  * The search is applied a moment after typing stops, so the map does not move at every key.
  */
-export default function MapFilters({ filters, onChange, stories, sectors, epocas = EPOCAS }) {
+export default function MapFilters({ filters, onChange, stories, sectors }) {
   const [text, setText] = useState(filters.q)
   const applied = useRef(filters.q)
   const [moreOpen, setMoreOpen] = useState(false) // on a phone only; on a wide screen everything is always there
-  const moreActive = ['origen', 'epoca', 'formato'].filter((key) => filters[key] !== NO_FILTERS[key]).length
+  const moreActive = ['origen', 'desde', 'hasta', 'formato'].filter((key) => filters[key] !== NO_FILTERS[key]).length
 
   // Cleared from outside ("Quitar los filtros"): the box follows. Typing is never overwritten by an older value.
   useEffect(() => {
@@ -72,18 +71,31 @@ export default function MapFilters({ filters, onChange, stories, sectors, epocas
           Más filtros{moreActive > 0 ? ` (${moreActive})` : ''}
         </button>
         <div className="ag-mapfilters__more">
-        <label className="ag-mapfilters__select">
-          <Icon name="reloj" size={16} />
-          Época
-          <select value={filters.epoca} onChange={(event) => onChange({ epoca: event.target.value })}>
-            <option value={NO_FILTERS.epoca}>Todas</option>
-            {epocas.map((epoca) => (
-              <option key={epoca} value={epoca}>
-                {epoca}
-              </option>
-            ))}
-          </select>
-        </label>
+        <fieldset className="ag-mapfilters__years">
+          <legend>
+            <Icon name="reloj" size={16} />
+            Años
+          </legend>
+          <input
+            type="text"
+            inputMode="numeric"
+            maxLength={4}
+            aria-label="Desde el año"
+            placeholder="Desde"
+            value={filters.desde}
+            onChange={(event) => onChange({ desde: event.target.value.replace(/\D/g, '').slice(0, 4) })}
+          />
+          <span aria-hidden="true">–</span>
+          <input
+            type="text"
+            inputMode="numeric"
+            maxLength={4}
+            aria-label="Hasta el año"
+            placeholder="Hasta"
+            value={filters.hasta}
+            onChange={(event) => onChange({ hasta: event.target.value.replace(/\D/g, '').slice(0, 4) })}
+          />
+        </fieldset>
         <label className="ag-mapfilters__select">
           <Icon name="camara" size={16} />
           Formato
