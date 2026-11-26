@@ -69,12 +69,35 @@ class UbicacionIn(BaseModel):
     lon: float = Field(ge=-180, le=180)
 
 
+YOUTUBE = re.compile(r"^https://(?:www\.|m\.)?(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/embed/)([A-Za-z0-9_-]{11})(?:[?&#].*)?$")
+
+
 class MedioIn(BaseModel):
-    tipo: Literal["foto", "audio", "video"]
+    """A file of a story (uploaded to our Blob store) or, for "youtube", a video that stays on YouTube and is shown with its
+    player. `leyenda`: what it is and its credit, shown under it (a song of a bird is not «Audio del narrador»)."""
+
+    tipo: Literal["foto", "audio", "video", "youtube"]
     url: str = Field(max_length=500)
     mime: str | None = Field(None, max_length=60)
     bytes: int | None = Field(None, ge=0)
     duracion_s: int | None = Field(None, ge=0, le=3600)
+    leyenda: str | None = Field(None, max_length=300)
+
+    @field_validator("leyenda")
+    @classmethod
+    def clean_caption(cls, value: str | None) -> str | None:
+        caption = re.sub(r"\s+", " ", value or "").strip()
+        return caption or None
+
+    @model_validator(mode="after")
+    def youtube_address(self):
+        if self.tipo == "youtube":
+            match = YOUTUBE.match(self.url.strip())
+            if not match:
+                raise ValueError("El enlace de YouTube no es válido. Copia la dirección del video.")
+            self.url = f"https://www.youtube.com/watch?v={match.group(1)}"
+            self.mime = self.bytes = None
+        return self
 
 
 class VideoIn(BaseModel):
@@ -229,7 +252,7 @@ class HistoriaIn(BaseModel):
         kinds = [medio.tipo for medio in self.medios]
         if not self.texto and "audio" not in kinds:
             raise ValueError("Graba tu historia con tu voz o escríbela.")
-        if kinds.count("audio") > 1 or kinds.count("video") > 1 or kinds.count("foto") > MAX_PHOTOS:
+        if kinds.count("audio") > 1 or kinds.count("video") > 1 or kinds.count("youtube") > 1 or kinds.count("foto") > MAX_PHOTOS:
             raise ValueError(f"Puedes subir un audio, un video y hasta {MAX_PHOTOS} fotos.")
         return self
 
@@ -264,6 +287,7 @@ class MedioPublico(BaseModel):
     url: str | None = None
     mime: str | None = None
     duracion_s: int | None = None
+    leyenda: str | None = None
 
 
 class HistoriaMapa(BaseModel):
@@ -307,6 +331,7 @@ class MedioAdmin(BaseModel):
     mime: str | None = None
     bytes: int | None = None
     duracion_s: int | None = None
+    leyenda: str | None = None
 
 
 class ConsentimientoAdmin(BaseModel):
@@ -454,6 +479,7 @@ class MedioEditable(BaseModel):
     mime: str | None = None
     bytes: int | None = None
     duracion_s: int | None = None
+    leyenda: str | None = None
 
 
 class HistoriaEditable(BaseModel):

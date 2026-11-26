@@ -164,7 +164,7 @@ def project_body(**overrides):
         "titulo": "El patio donde se secaba el café",
         "texto": "Historia preparada por el equipo.",
         "anio_desde": 1965,
-        "sector_id": "tijereras",
+        "sector_id": "la-tigrera",
         "etiquetas": ["#finca"],
         "consentimiento": AUTHORIZED,
         "medios": [],

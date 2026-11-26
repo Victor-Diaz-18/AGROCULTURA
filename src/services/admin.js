@@ -98,6 +98,7 @@ export async function publishProjectStory(draft, { uploaded = new WeakMap(), use
     }
     medios.push(medio)
   }
+  if (draft.youtube) medios.push(draft.youtube) // it stays on YouTube: nothing to upload
   // The same options as a narrator's story (place, name, farm, authorization), plus who tells it.
   const payload = { ...buildStoryPayload(draft, medios), narrador_nombre: draft.narrador || undefined }
   return draft.codigo ? updateProjectStory(draft.codigo, payload) : createProjectStory(payload)

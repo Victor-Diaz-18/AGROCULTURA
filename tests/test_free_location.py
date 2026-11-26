@@ -7,7 +7,7 @@ from tests.factories import story_payload
 
 LA_TAGUA = {"lat": 11.082986, "lon": -74.044951}
 SAN_LORENZO = {"lat": 11.116315, "lon": -74.034676}
-TIJERERAS = {"lat": 11.109, "lon": -74.1108}  # provisional point
+TIGRERA = {"lat": 11.170484, "lon": -74.145509}  # La Tigrera, made provisional by `unconfirmed`
 MINCA = {"lat": 11.14, "lon": -74.118}
 SOMEWHERE_ELSE = {"lat": 11.2, "lon": -73.95}  # in the zone, far from every sector
 
@@ -64,18 +64,25 @@ def test_a_story_without_a_sector_at_all_is_accepted(client, db, narrator):
     assert stored(db, response.json()["codigo"])["sector_id"] is None
 
 
-def test_choosing_a_sector_puts_the_story_in_it_even_when_its_point_is_not_confirmed(client, db, narrator):
-    code = tell(client, narrator["headers"], TIJERERAS, origin="sector")
+def unconfirmed(db):
+    """A sector whose point the team has not confirmed yet (today every one is: this keeps the rule tested)."""
+    db.sectores.update_one({"_id": "la-tigrera"}, {"$set": {"centro_provisional": True}})
 
-    assert stored(db, code)["sector_id"] == "tijereras"
+
+def test_choosing_a_sector_puts_the_story_in_it_even_when_its_point_is_not_confirmed(client, db, narrator):
+    unconfirmed(db)
+    code = tell(client, narrator["headers"], TIGRERA, origin="sector")
+
+    assert stored(db, code)["sector_id"] == "la-tigrera"
 
 
 def test_a_point_that_is_not_confirmed_does_not_label_the_stories_around_it(client, db, narrator):
-    near = {"lat": TIJERERAS["lat"] + 0.002, "lon": TIJERERAS["lon"]}
+    unconfirmed(db)
+    near = {"lat": TIGRERA["lat"] + 0.002, "lon": TIGRERA["lon"]}
 
     code = tell(client, narrator["headers"], near, origin="mapa")
 
-    assert stored(db, code)["sector_id"] != "tijereras"
+    assert stored(db, code)["sector_id"] != "la-tigrera"
 
 
 def test_the_story_without_a_sector_shows_up_everywhere_without_breaking_anything(client, db, narrator, admin):

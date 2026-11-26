@@ -39,7 +39,7 @@ def get_stats(db: Database) -> dict:
         "total_sectores": len(catalog.list_sectors(db)),
         "sin_ubicacion": repository.count_without_location(db, estado="publicada"),
         "formatos": {
-            tipo: repository.count(db, estado="publicada", medio=tipo) for tipo in TIPOS_MEDIO
+            tipo: repository.count(db, estado="publicada", medio=["video", "youtube"] if tipo == "video" else tipo) for tipo in TIPOS_MEDIO
         },
     }
 
@@ -89,7 +89,7 @@ def search_text(*parts: str) -> str:
 
 def formats_of(story: dict) -> list[str]:
     """Display formats of a story, in the design's order. A story with no media is "Texto"."""
-    kinds = {medio["tipo"] for medio in story.get("medios", [])}
+    kinds = {"video" if medio["tipo"] == "youtube" else medio["tipo"] for medio in story.get("medios", [])}  # YouTube is a video too
     labels = [label for kind, label in (("audio", "Audio"), ("foto", "Foto"), ("video", "Video")) if kind in kinds]
     return labels or ["Texto"]
 
@@ -97,6 +97,8 @@ def formats_of(story: dict) -> list[str]:
 def _check_media(medios, owners: tuple[str, ...]) -> None:
     """Every file must be one these users uploaded (the narrator; for a team story also the administrator editing it)."""
     for medio in medios:
+        if medio.tipo == "youtube":
+            continue  # it stays on YouTube: its address was checked by the schema
         problem = None
         for owner in owners:
             try:
@@ -226,7 +228,7 @@ def story_to_edit(story: dict) -> dict:
         "lon": coordinates[0] if coordinates else None,
         "anonima": bool(story.get("anonima")),
         "narrador_nombre": story.get("narrador_nombre", ""),
-        "medios": [{key: medio.get(key) for key in ("tipo", "url", "mime", "bytes", "duracion_s")} for medio in story.get("medios", [])],
+        "medios": [{key: medio.get(key) for key in ("tipo", "url", "mime", "bytes", "duracion_s", "leyenda")} for medio in story.get("medios", [])],
         "estado": story["estado"],
         "origen": story["origen"],
     }
@@ -394,7 +396,7 @@ def story_public(story: dict) -> dict:
         **story_for_map(story),
         "texto": story.get("texto", ""),
         "medios": [
-            {key: medio.get(key) for key in ("tipo", "url", "mime", "duracion_s")} for medio in story.get("medios", [])
+            {key: medio.get(key) for key in ("tipo", "url", "mime", "duracion_s", "leyenda")} for medio in story.get("medios", [])
         ],
     }
 

@@ -10,7 +10,7 @@ import { callsTo, renderApp, reply } from '../../test/renderApp.jsx'
 const NEAR = [
   mapStory({ codigo: 'HIS-2026-001', titulo: 'El camino de mulas', lat: 11.14, lon: -74.118 }),
   mapStory({ codigo: 'HIS-2026-002', titulo: 'La primera cosecha', narrador_nombre: 'Rosa Elena Pérez', sector_id: 'la-tagua', epoca: '1960 a 1979', formatos: ['Foto', 'Audio'], lat: 11.13, lon: -74.087 }),
-  mapStory({ codigo: 'HIS-2026-004', titulo: 'El patio donde se secaba el café', narrador_nombre: 'Equipo AGROCULTURA', sector_id: 'tijereras', epoca: '1960 a 1979', formatos: ['Foto'], origen: 'proyecto', lat: 11.109, lon: -74.111, foto_url: 'https://s.public.blob.vercel-storage.com/historias/u/p.jpg' }),
+  mapStory({ codigo: 'HIS-2026-004', titulo: 'El patio donde se secaba el café', narrador_nombre: 'Equipo AGROCULTURA', sector_id: 'la-tigrera', epoca: '1960 a 1979', formatos: ['Foto'], origen: 'proyecto', lat: 11.109, lon: -74.111, foto_url: 'https://s.public.blob.vercel-storage.com/historias/u/p.jpg' }),
 ]
 const stats = { ...STATS, publicadas: 7, aprobadas_comunidad: 5, por_origen: { comunidad: 5, proyecto: 2 } }
 
@@ -169,7 +169,7 @@ describe('Mapa de historias: filtros y búsqueda (F11)', () => {
   const STORIES = [
     mapStory({ codigo: 'HIS-2026-001', titulo: 'El camino de mulas', lat: 11.14, lon: -74.118, formatos: ['Audio', 'Foto'], etiquetas: ['#arriería'] }),
     mapStory({ codigo: 'HIS-2026-002', titulo: 'La primera cosecha', narrador_nombre: 'Rosa Elena Pérez', sector_id: 'la-tagua', epoca: '1960 a 1979', formatos: ['Foto', 'Audio'], lat: 11.13, lon: -74.087, etiquetas: ['#cosecha'] }),
-    mapStory({ codigo: 'HIS-2026-004', titulo: 'El patio donde se secaba el café', narrador_nombre: 'Equipo AGROCULTURA', sector_id: 'tijereras', epoca: '1960 a 1979', formatos: ['Video', 'Foto'], origen: 'proyecto', lat: 11.109, lon: -74.111, etiquetas: ['#familia'] }),
+    mapStory({ codigo: 'HIS-2026-004', titulo: 'El patio donde se secaba el café', narrador_nombre: 'Equipo AGROCULTURA', sector_id: 'la-tigrera', epoca: '1960 a 1979', formatos: ['Video', 'Foto'], origen: 'proyecto', lat: 11.109, lon: -74.111, etiquetas: ['#familia'] }),
     mapStory({ codigo: 'HIS-2026-005', titulo: 'Un secadero junto al río', narrador_nombre: 'Luz Marina Ospina', sector_id: null, epoca: '1980 a 1999', formatos: ['Texto'], lat: 11.2, lon: -74.2, etiquetas: [] }),
   ]
   const bar = () => within(screen.getByRole('group', { name: 'Filtrar por sector' }))
@@ -185,7 +185,7 @@ describe('Mapa de historias: filtros y búsqueda (F11)', () => {
 
     const sectorsBar = bar()
     expect(sectorsBar.getByRole('button', { name: /^Todos\s*4$/ })).toHaveAttribute('aria-pressed', 'true')
-    for (const [name, count] of [['Minca', 1], ['La Tagua', 1], ['San Lorenzo', 0], ['Tijereras', 1], ['Otro lugar', 1]]) {
+    for (const [name, count] of [['Minca', 1], ['La Tagua', 1], ['San Lorenzo', 0], ['La Tigrera', 1], ['Otro lugar', 1]]) {
       expect(sectorsBar.getByRole('button', { name: new RegExp(`^${name}\\s*${count}$`) })).toBeInTheDocument()
     }
     const origins = within(screen.getByRole('group', { name: 'Filtrar por origen' }))
@@ -273,7 +273,7 @@ describe('Mapa de historias: filtros y búsqueda (F11)', () => {
     await user.selectOptions(screen.getByRole('combobox', { name: 'Formato' }), 'Video')
 
     expect(bar().getByRole('button', { name: /^Todos\s*1$/ })).toBeInTheDocument()
-    expect(bar().getByRole('button', { name: /^Tijereras\s*1$/ })).toBeInTheDocument()
+    expect(bar().getByRole('button', { name: /^La Tigrera\s*1$/ })).toBeInTheDocument()
     expect(bar().getByRole('button', { name: /^Minca\s*0$/ })).toBeInTheDocument()
   })
 
@@ -312,7 +312,7 @@ describe('Mapa de historias: filtros y búsqueda (F11)', () => {
     await openFiltered()
     act(() => toggleSimulatedOffline())
 
-    await user.click(bar().getByRole('button', { name: /^Tijereras/ }))
+    await user.click(bar().getByRole('button', { name: /^La Tigrera/ }))
 
     expect(titles()).toEqual(['El patio donde se secaba el café'])
   })

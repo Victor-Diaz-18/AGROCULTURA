@@ -109,7 +109,12 @@ def _as_first_deployed(db):
     old = {"la-tagua": [-74.0868, 11.1301], "san-lorenzo": [-74.154, 11.1245]}
     for sector_id, coordinates in old.items():
         db.sectores.update_one({"_id": sector_id}, {"$set": {"centro": {"type": "Point", "coordinates": coordinates}, "centro_version": 1}})
-    db.sectores.update_many({"_id": {"$in": ["minca", "tijereras"]}}, {"$set": {"centro_version": 1}})
+    db.sectores.update_many({"_id": "minca"}, {"$set": {"centro_version": 1}})
+    # Then the fourth sector was called «Tijereras», with a provisional point.
+    db.sectores.delete_one({"_id": "la-tigrera"})
+    db.sectores.insert_one(
+        {"_id": "tijereras", "nombre": "Tijereras", "orden": 4, "centro": {"type": "Point", "coordinates": [-74.1108, 11.109]}, "centro_provisional": True, "centro_version": 1}
+    )
     return old
 
 
@@ -121,7 +126,8 @@ def test_the_real_positions_of_la_tagua_and_san_lorenzo_reach_a_database_left_by
     assert point(db, "la-tagua") == [-74.044951, 11.082986]
     assert point(db, "san-lorenzo") == [-74.034676, 11.116315]
     assert point(db, "minca") == [-74.118, 11.14]  # it was right already
-    assert point(db, "tijereras") == [-74.1108, 11.109]  # still waiting for its real position
+    assert point(db, "la-tigrera") == [-74.145509, 11.170484]  # «Tijereras» does not exist: it is La Tigrera
+    assert db.sectores.find_one({"_id": "tijereras"}) is None
 
 
 def test_the_stories_of_those_sectors_follow_them_and_the_others_stay(db):
@@ -131,7 +137,7 @@ def test_the_stories_of_those_sectors_follow_them_and_the_others_stay(db):
         [
             make_story(codigo="HIS-2026-001", sector_id="la-tagua", ubicacion_origen="sector", ubicacion={"type": "Point", "coordinates": [old_lon + 0.0035, old_lat]}),
             make_story(codigo="HIS-2026-002", sector_id="la-tagua", ubicacion_origen="gps", ubicacion={"type": "Point", "coordinates": [-74.09, 11.131]}),
-            make_story(codigo="HIS-2026-003", sector_id="tijereras", ubicacion_origen="sector", ubicacion={"type": "Point", "coordinates": [-74.1108, 11.109]}),
+            make_story(codigo="HIS-2026-003", sector_id="minca", ubicacion_origen="sector", ubicacion={"type": "Point", "coordinates": [-74.118, 11.14]}),
         ]
     )
 
@@ -140,15 +146,37 @@ def test_the_stories_of_those_sectors_follow_them_and_the_others_stay(db):
     moved = db.historias.find_one({"codigo": "HIS-2026-001"})["ubicacion"]["coordinates"]
     assert moved == [round(-74.044951 + 0.0035, 6), 11.082986]
     assert db.historias.find_one({"codigo": "HIS-2026-002"})["ubicacion"]["coordinates"] == [-74.09, 11.131]
-    assert db.historias.find_one({"codigo": "HIS-2026-003"})["ubicacion"]["coordinates"] == [-74.1108, 11.109]
+    assert db.historias.find_one({"codigo": "HIS-2026-003"})["ubicacion"]["coordinates"] == [-74.118, 11.14]
 
 
-def test_only_tijereras_is_marked_as_not_confirmed(client):
+def test_every_sector_is_confirmed_and_the_fourth_is_la_tigrera(client):
     sectors = {s["id"]: s for s in client.get("/api/config").json()["sectores"]}
 
-    assert {sector_id: s["provisional"] for sector_id, s in sectors.items()} == {
-        "minca": False,
-        "la-tagua": False,
-        "san-lorenzo": False,
-        "tijereras": True,
+    assert {sector_id: (s["nombre"], s["provisional"]) for sector_id, s in sectors.items()} == {
+        "minca": ("Minca", False),
+        "la-tagua": ("La Tagua", False),
+        "san-lorenzo": ("San Lorenzo", False),
+        "la-tigrera": ("La Tigrera", False),
     }
+
+
+def test_tijereras_becomes_la_tigrera_and_its_stories_go_with_it(db):
+    _as_first_deployed(db)
+    db.historias.insert_many(
+        [
+            make_story(codigo="HIS-2026-004", sector_id="tijereras", ubicacion_origen="sector", ubicacion={"type": "Point", "coordinates": [-74.1108, 11.109]}, busqueda="el patio tijereras"),
+            make_story(codigo="HIS-2026-005", sector_id="tijereras", ubicacion_origen="gps", ubicacion={"type": "Point", "coordinates": [-74.12, 11.12]}, busqueda="otra tijereras"),
+        ]
+    )
+
+    sync_sector_centers(db)
+    sync_sector_centers(db)  # a second start changes nothing
+
+    sector = db.sectores.find_one({"_id": "la-tigrera"})
+    assert (sector["nombre"], sector["centro_provisional"]) == ("La Tigrera", False)
+    placed = db.historias.find_one({"codigo": "HIS-2026-004"})
+    assert placed["sector_id"] == "la-tigrera"
+    assert placed["ubicacion"]["coordinates"] == [-74.145509, 11.170484]  # it was at the center: it follows it
+    assert placed["busqueda"] == "el patio la tigrera"
+    own = db.historias.find_one({"codigo": "HIS-2026-005"})
+    assert own["sector_id"] == "la-tigrera" and own["ubicacion"]["coordinates"] == [-74.12, 11.12]  # its own point stays

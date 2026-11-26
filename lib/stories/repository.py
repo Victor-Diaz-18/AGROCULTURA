@@ -45,7 +45,7 @@ def count_by_author(db: Database, author_ids: list | None = None) -> dict:
     return {row["_id"]: row["n"] for row in collection(db).aggregate(pipeline)}
 
 
-def count(db: Database, *, estado: str | None = None, origen: str | None = None, medio: str | None = None) -> int:
+def count(db: Database, *, estado: str | None = None, origen: str | None = None, medio: str | list[str] | None = None) -> int:
     """Count stories by state, origin and/or having at least one media of a type."""
     query: dict = {}
     if estado:
@@ -53,7 +53,7 @@ def count(db: Database, *, estado: str | None = None, origen: str | None = None,
     if origen:
         query["origen"] = origen
     if medio:
-        query["medios.tipo"] = medio
+        query["medios.tipo"] = {"$in": medio} if isinstance(medio, list) else medio
     return collection(db).count_documents(query)
 
 

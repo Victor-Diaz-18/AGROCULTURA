@@ -19,6 +19,7 @@ import Button from '../ui/Button.jsx'
 import Modal from '../ui/Modal.jsx'
 import YearsField from '../tell/YearsField.jsx'
 import { checkYears, parseYear } from '../../utils/years.js'
+import { youtubeId } from '../../utils/youtube.js'
 
 /**
  * "Nueva historia del proyecto" (F12): a story the team uploads; it is published at once.
@@ -37,6 +38,7 @@ function startingPoint(story) {
   const named = (tipo, number) => `${tipo}_${String(number).padStart(2, '0')}`
   const audioMedio = medios.find((medio) => medio.tipo === 'audio' && medio.url)
   const videoMedio = medios.find((medio) => medio.tipo === 'video' && medio.url)
+  const youtubeMedio = medios.find((medio) => medio.tipo === 'youtube' && medio.url)
   const written = /^\d{4}( a \d{4})?$/.test(story.epoca ?? '') && story.anio_desde != null // years, not a period of before
   return {
     location: story.lat != null && story.lon != null ? { lat: story.lat, lon: story.lon, origen: story.ubicacion_origen ?? 'mapa', sectorId: story.sector_id } : null,
@@ -46,6 +48,7 @@ function startingPoint(story) {
       .filter((medio) => medio.tipo === 'foto' && medio.url)
       .map((medio, index) => ({ id: newId(), name: named('foto', index + 1), url: medio.url, bytes: medio.bytes, medio })),
     video: videoMedio ? { id: newId(), name: named('video', 1), url: videoMedio.url, bytes: videoMedio.bytes, mime: videoMedio.mime, medio: videoMedio } : null,
+    youtube: youtubeMedio ?? null,
     audio: audioMedio ? { name: named('audio', 1), url: audioMedio.url, bytes: audioMedio.bytes, seconds: audioMedio.duracion_s, medio: audioMedio } : null,
   }
 }
@@ -72,6 +75,7 @@ export default function ProjectStoryModal({ story: editing = null, onClose, onPu
   const [video, setVideo] = useState(start?.video ?? null) // { id, name, blob, mime }: it goes straight to Blob
   const [progress, setProgress] = useState(null) // percent of the video that is going up
   const [audio, setAudio] = useState(start?.audio ?? null)
+  const [youtube, setYoutube] = useState(start?.youtube?.url ?? '') // a video that stays on YouTube, shown with its player
   const [audioProblem, setAudioProblem] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -89,7 +93,7 @@ export default function ProjectStoryModal({ story: editing = null, onClose, onPu
   const accepted = isAccepted(consent, choice)
   const authorization = consentText(choice, 'equipo')
   const placed = modo === 'ninguna' || Boolean(location)
-  const valid = titulo.trim().length >= LIMITS.tituloMin && placed && yearsOk && (texto.trim().length > 0 || Boolean(audio)) && accepted
+  const valid = (!youtube.trim() || Boolean(youtubeId(youtube))) && titulo.trim().length >= LIMITS.tituloMin && placed && yearsOk && (texto.trim().length > 0 || Boolean(audio)) && accepted
 
   const photos = {
     photos: fotos,
@@ -147,6 +151,9 @@ export default function ProjectStoryModal({ story: editing = null, onClose, onPu
           audio,
           fotos,
           video,
+          youtube: youtube.trim()
+            ? { tipo: 'youtube', url: youtube.trim(), ...(start?.youtube?.url === youtube.trim() && start.youtube.leyenda ? { leyenda: start.youtube.leyenda } : {}) }
+            : null,
         },
         { uploaded: uploaded.current, userId: user?.id, onProgress: setProgress },
       )
@@ -332,6 +339,23 @@ export default function ProjectStoryModal({ story: editing = null, onClose, onPu
           </ul>
         )}
       </div>
+
+      <label className="ag-project-modal__field">
+        Video de YouTube (opcional)
+        <input
+          type="url"
+          className="ag-project-modal__input"
+          value={youtube}
+          onChange={(event) => setYoutube(event.target.value)}
+          placeholder="https://www.youtube.com/watch?v=…"
+          aria-describedby="ag-proyecto-youtube-ayuda"
+        />
+        <span id="ag-proyecto-youtube-ayuda" className={youtube.trim() && !youtubeId(youtube) ? 'ag-error' : 'ag-hint'}>
+          {youtube.trim() && !youtubeId(youtube)
+            ? 'Ese enlace no es de un video de YouTube.'
+            : 'El video se queda en YouTube y se ve dentro de la ficha. Úsalo solo si su dueño permite insertarlo.'}
+        </span>
+      </label>
 
       <div className="ag-consent">
         <label className="ag-consent__box">

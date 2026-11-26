@@ -16,7 +16,7 @@ def test_stats_count_only_what_is_published_on_the_map(client, db):
         [
             make_story(origen="comunidad", sector_id="minca", medios=[{"tipo": "audio"}, {"tipo": "foto"}]),
             make_story(origen="comunidad", sector_id="minca", medios=[{"tipo": "audio"}]),
-            make_story(origen="proyecto", sector_id="tijereras", medios=[{"tipo": "video"}]),
+            make_story(origen="proyecto", sector_id="la-tigrera", medios=[{"tipo": "video"}]),
             make_story(estado="revision", sector_id="la-tagua", medios=[{"tipo": "audio"}]),
             make_story(estado="rechazada", sector_id="san-lorenzo"),
         ]
@@ -29,5 +29,5 @@ def test_stats_count_only_what_is_published_on_the_map(client, db):
     assert body["rechazadas"] == 1
     assert body["por_origen"] == {"comunidad": 2, "proyecto": 1}
     assert body["aprobadas_comunidad"] == 2
-    assert body["sectores_con_historias"] == 2  # minca and tijereras; the others are not published
+    assert body["sectores_con_historias"] == 2  # minca and la-tigrera; the others are not published
     assert body["formatos"] == {"foto": 1, "audio": 2, "video": 1}

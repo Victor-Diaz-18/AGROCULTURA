@@ -101,6 +101,28 @@
   border-radius: 12px;
   background: #17261f;
 }
+.ag-media__figure {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+}
+.ag-media__youtube {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  border-radius: 12px;
+  background: #17261f;
+}
+.ag-media__caption,
+.ag-media__credits {
+  margin: 0;
+  padding: 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--texto-3);
+  list-style: none;
+}
 
 /* ---------- Photo gallery ---------- */
 .ag-gallery {

@@ -83,7 +83,7 @@ describe('filters of the map (F11)', () => {
       const tabs = sectorTabs(stories, NO_FILTERS, sectors)
 
       expect(tabs.map((tab) => [tab.label, tab.count])).toEqual([
-        ['Todos', 4], ['Minca', 2], ['La Tagua', 1], ['San Lorenzo', 0], ['Tijereras', 0], ['Otro lugar', 1],
+        ['Todos', 4], ['Minca', 2], ['La Tagua', 1], ['San Lorenzo', 0], ['La Tigrera', 0], ['Otro lugar', 1],
       ])
       const video = sectorTabs(stories, { ...NO_FILTERS, formato: 'Video' }, sectors)
       expect(video.map((tab) => tab.count)).toEqual([1, 1, 0, 0, 0, 0])
@@ -121,7 +121,7 @@ describe('stories published without a place on the map', () => {
   })
 
   it('are in no sector: neither a named one nor "Otro lugar" shows them', () => {
-    for (const sector of ['minca', 'la-tagua', 'san-lorenzo', 'tijereras', OTHER_SECTOR]) {
+    for (const sector of ['minca', 'la-tagua', 'san-lorenzo', 'la-tigrera', OTHER_SECTOR]) {
       expect(findAll({ sector })).not.toContain('HIS-2026-005')
     }
     expect(findAll({ sector: OTHER_SECTOR })).toEqual(['HIS-2026-004']) // the one that does have a place outside the sectors

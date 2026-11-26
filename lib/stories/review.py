@@ -68,7 +68,7 @@ def story_for_admin(story: dict) -> dict:
         "etiquetas": story.get("etiquetas", []),
         "formatos": service.formats_of(story),
         "medios": [
-            {key: medio.get(key) for key in ("tipo", "url", "mime", "bytes", "duracion_s")}
+            {key: medio.get(key) for key in ("tipo", "url", "mime", "bytes", "duracion_s", "leyenda")}
             for medio in story.get("medios", [])
         ],
         "estado": story["estado"],

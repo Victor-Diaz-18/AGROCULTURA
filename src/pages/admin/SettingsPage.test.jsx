@@ -124,8 +124,8 @@ describe('Configuración: portal y moderación (F7)', () => {
     open()
 
     const card = await screen.findByRole('region', { name: 'Sectores del mapa' })
-    await within(card).findByText('Tijereras')
-    expect(within(card).getAllByRole('listitem').map((item) => item.textContent)).toEqual(['Minca', 'La Tagua', 'San Lorenzo', 'Tijereras'])
+    await within(card).findByText('La Tigrera')
+    expect(within(card).getAllByRole('listitem').map((item) => item.textContent)).toEqual(['Minca', 'La Tagua', 'San Lorenzo', 'La Tigrera'])
     expect(within(card).queryByRole('button')).not.toBeInTheDocument()
     expect(within(card).queryByRole('textbox')).not.toBeInTheDocument()
   })
@@ -136,7 +136,7 @@ describe('Configuración: portal y moderación (F7)', () => {
     renderApp({ route: '/admin/configuracion', user: ADMIN, api: settings.api })
 
     const card = await screen.findByRole('region', { name: 'Sectores del mapa' })
-    expect((await within(card).findByText('Tijereras')).closest('li')).toHaveTextContent(/^Tijereras$/)
+    expect((await within(card).findByText('La Tigrera')).closest('li')).toHaveTextContent(/^La Tigrera$/)
   })
 
   it('works the same way inside the portal', async () => {

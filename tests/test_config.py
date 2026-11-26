@@ -3,7 +3,7 @@ def test_public_config_lists_the_catalog_in_display_order(client):
 
     assert response.status_code == 200
     body = response.json()
-    assert [s["nombre"] for s in body["sectores"]] == ["Minca", "La Tagua", "San Lorenzo", "Tijereras"]
+    assert [s["nombre"] for s in body["sectores"]] == ["Minca", "La Tagua", "San Lorenzo", "La Tigrera"]
     assert body["etiquetas"] == ["#café", "#finca", "#familia", "#cosecha", "#cocina", "#oficios"]
     assert body["epocas"] == ["Antes de 1960", "1960 a 1979", "1980 a 1999", "2000 en adelante"]
     assert [m["etiqueta"] for m in body["motivos_rechazo"]] == [

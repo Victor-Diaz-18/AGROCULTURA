@@ -16,7 +16,7 @@ const PROJECT = adminStory({
   codigo: 'HIS-2026-004',
   titulo: 'El patio donde se secaba el café',
   narrador_nombre: 'Equipo AGROCULTURA',
-  sector_id: 'tijereras',
+  sector_id: 'la-tigrera',
   epoca: '1960 a 1979',
   formatos: ['Foto'],
   estado: 'publicada',
@@ -52,7 +52,7 @@ describe('Historias del proyecto (F12)', () => {
 
     const row = (await screen.findByText('El patio donde se secaba el café')).closest('[role=row]')
     expect(within(row).getByText('HIS-2026-004')).toBeInTheDocument()
-    expect(within(row).getByText('Tijereras')).toBeInTheDocument()
+    expect(within(row).getByText('La Tigrera')).toBeInTheDocument()
     expect(within(row).getByText('1960 a 1979')).toBeInTheDocument()
     expect(within(row).getByText('Foto')).toBeInTheDocument()
     expect(callsTo(fetchMock, '/admin/historias')[0][0]).toContain('origen=proyecto')

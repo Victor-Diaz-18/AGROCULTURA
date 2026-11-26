@@ -14,7 +14,7 @@ def body(**overrides):
         "titulo": "El patio donde se secaba el café",
         "texto": "Historia preparada por el equipo a partir de fotos y conversaciones.",
         "epoca": "1960 a 1979",
-        "sector_id": "tijereras",
+        "sector_id": "la-tigrera",
         "etiquetas": ["#finca"],
         "consentimiento": {"aceptado": True, "version": consent.VERSION},  # the team has the authorization of whoever tells it
         "medios": [],
@@ -129,3 +129,34 @@ def test_a_narrator_cannot_publish_a_team_story(client, narrator):
 
 def test_the_administrator_is_not_blocked_from_the_media_route(client, admin):
     assert upload(client, admin, "foto", JPEG)["url"].startswith("https://")
+
+
+# ---- captions and a video that stays on YouTube ------------------------------------------
+
+
+def test_a_team_story_can_show_a_youtube_video_and_say_what_each_file_is(client, db, admin):
+    photo = upload(client, admin, "foto", JPEG)
+    response = create(
+        client,
+        admin,
+        medios=[
+            {**photo, "leyenda": "Vista desde Minca. Foto: autor, Wikimedia Commons, CC BY-SA 4.0"},
+            {"tipo": "youtube", "url": "https://youtu.be/ZnR1xU-DRP8?si=abc", "leyenda": "Documental de La Oraloteca"},
+        ],
+    )
+
+    assert response.status_code == 201, response.text
+    story = response.json()
+    assert story["formatos"] == ["Foto", "Video"]
+    youtube = next(medio for medio in story["medios"] if medio["tipo"] == "youtube")
+    assert youtube["url"] == "https://www.youtube.com/watch?v=ZnR1xU-DRP8"  # one address, whatever form was pasted
+    card = client.get(f"/api/historias/{story['codigo']}").json()
+    assert [medio["leyenda"] for medio in card["medios"]] == ["Vista desde Minca. Foto: autor, Wikimedia Commons, CC BY-SA 4.0", "Documental de La Oraloteca"]
+    assert client.get("/api/estadisticas").json()["formatos"]["video"] >= 1
+
+
+def test_only_a_youtube_address_is_taken_as_a_youtube_video(client, admin):
+    response = create(client, admin, medios=[{"tipo": "youtube", "url": "https://evil.example.com/watch?v=ZnR1xU-DRP8"}])
+
+    assert response.status_code == 422
+    assert "YouTube" in response.json()["detail"]

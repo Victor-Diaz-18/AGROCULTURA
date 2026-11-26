@@ -10,7 +10,7 @@ const sectors = CONFIG.sectores
 const far = [
   mapStory({ codigo: 'HIS-2026-001', titulo: 'En Minca', lat: 11.14, lon: -74.118 }),
   mapStory({ codigo: 'HIS-2026-002', titulo: 'En La Tagua', lat: 11.13, lon: -74.087, origen: 'proyecto' }),
-  mapStory({ codigo: 'HIS-2026-003', titulo: 'En Tijereras', lat: 11.109, lon: -74.111 }),
+  mapStory({ codigo: 'HIS-2026-003', titulo: 'En La Tigrera', lat: 11.109, lon: -74.111 }),
 ]
 
 let restore
@@ -30,7 +30,7 @@ describe('StoryMap (F1)', () => {
   it('draws one pin per story, named after it', () => {
     setup()
 
-    for (const title of ['En Minca', 'En La Tagua', 'En Tijereras']) {
+    for (const title of ['En Minca', 'En La Tagua', 'En La Tigrera']) {
       expect(screen.getByRole('button', { name: `Ver ${title}` })).toBeInTheDocument()
     }
     expect(screen.getByRole('application', { name: 'Mapa de historias' })).toBeInTheDocument()
@@ -153,12 +153,12 @@ describe('StoryMap (F1)', () => {
     it('are written for the sectors that are in view, and no other', () => {
       const { container } = setup({ stories: spread, sectors: confirmed })
 
-      // A level closer the map shows about 7 km by 4 km around its center, where only Tijereras is.
-      expect(farThenIn(container, LEVELS_TO_NAMES + 1)).toEqual(['TIJERERAS'])
+      // A level closer the map shows about 7 km by 4 km around its center, where only La Tigrera is.
+      expect(farThenIn(container, LEVELS_TO_NAMES + 1)).toEqual(['LA TIGRERA'])
     })
 
     it('are not written for a sector whose point has not been confirmed', () => {
-      const unsure = sectors.map((sector) => ({ ...sector, provisional: sector.id === 'tijereras' }))
+      const unsure = sectors.map((sector) => ({ ...sector, provisional: sector.id === 'la-tigrera' }))
       const { container } = setup({ stories: spread, sectors: unsure })
       const names = new Set()
 
@@ -169,7 +169,7 @@ describe('StoryMap (F1)', () => {
       }
 
       expect(names.size).toBeGreaterThan(0)
-      expect(names.has('TIJERERAS')).toBe(false)
+      expect(names.has('LA TIGRERA')).toBe(false)
     })
 
     it('are written when the map starts close up, for the sectors in view', () => {

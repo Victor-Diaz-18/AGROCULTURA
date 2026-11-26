@@ -134,7 +134,7 @@ def test_the_card_of_a_published_story_is_public(client, db):
     card = response.json()
     assert card["texto"] == "El texto completo."
     assert card["etiquetas"] == ["#café", "#oficios"]
-    assert card["medios"] == [{"tipo": "audio", "url": "https://s.public.blob.vercel-storage.com/historias/u/a.webm", "mime": "audio/webm", "duracion_s": 204}]
+    assert card["medios"] == [{"tipo": "audio", "url": "https://s.public.blob.vercel-storage.com/historias/u/a.webm", "mime": "audio/webm", "duracion_s": 204, "leyenda": None}]
     assert card["titulo"] and card["lat"] and card["lon"]
 
 

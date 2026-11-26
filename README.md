@@ -3,7 +3,7 @@
 **Memoria viva de la cultura cafetera de Minca y sus alrededores.**
 
 AGROCULTURA es una plataforma web donde las familias cafeteras de **Minca y sectores cercanos** (La Tagua, San Lorenzo y
-Tijereras) cuentan sus historias —con su voz, fotos, video o por escrito— y las dejan guardadas sobre un **mapa**, para que no se
+La Tigrera) cuentan sus historias —con su voz, fotos, video o por escrito— y las dejan guardadas sobre un **mapa**, para que no se
 pierdan y cualquiera pueda explorarlas. Cada historia la revisa una persona del equipo antes de publicarse.
 
 Se usa desde el celular, está pensada para quien no está acostumbrado a las pantallas (todo se puede escuchar y los pasos son pocos
@@ -109,8 +109,8 @@ puestas en internet. Hoy tiene **datos y avisos de demostración**: antes de rec
 
 - **Por definir con el profesor:** el nombre definitivo del portal y si se avisa al narrador cuando se rechaza su historia (y por qué medio:
   correo, mensaje, WhatsApp). La opción existe pero todavía no envía nada; hoy el narrador lo ve en «Mis historias». Como las familias ya no dan celular ni correo, avisarles fuera de la plataforma exigiría volver a pedir un dato de contacto.
-- **Por confirmar con las familias:** la posición de los sectores. Minca, La Tagua y San Lorenzo ya tienen un punto; **Tijereras aún no**, por
-  eso su nombre no sale en el mapa.
+- **Sectores:** Minca, La Tagua, San Lorenzo y La Tigrera tienen su punto. El cuarto sector se llamaba por error «Tijereras»;
+  al arrancar, el sitio lo convierte en La Tigrera (con el punto del caserío en OpenStreetMap) y le pasa sus historias.
 - **Fases futuras (no construidas):** recorridos 360° y avatares en realidad aumentada. **Comentarios anónimos:** es una idea para más adelante,
   pendiente de lo que diga el profesor; no está construida.
 - **Los textos de la autorización** (`lib/stories/consentimiento.json`) están por revisar con el profesor. Si cambia una palabra, se cambia la

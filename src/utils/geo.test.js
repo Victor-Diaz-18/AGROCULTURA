@@ -30,8 +30,8 @@ describe('sectorAt', () => {
   })
 
   it('does not count a sector whose point is not confirmed, unless it was chosen itself', () => {
-    expect(at(11.111, -74.1108)).toBeNull() // right beside Tijereras
-    expect(at(11.109, -74.1108, { includeProvisional: true })).toBe('tijereras')
+    expect(at(11.111, -74.1108)).toBeNull() // right beside La Tigrera
+    expect(at(11.109, -74.1108, { includeProvisional: true })).toBe('la-tigrera')
   })
 
   it('is none when there are no sectors', () => {

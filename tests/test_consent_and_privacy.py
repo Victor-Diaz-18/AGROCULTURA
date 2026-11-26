@@ -36,7 +36,7 @@ def team_story(client, admin, **overrides):
         "titulo": "El patio donde se secaba el café",
         "texto": "Historia preparada por el equipo.",
         "epoca": "1960 a 1979",
-        "sector_id": "tijereras",
+        "sector_id": "la-tigrera",
         "narrador_nombre": "Doña Carmen Quintero",
         "consentimiento": AUTHORIZATION,
         **overrides,
@@ -308,7 +308,7 @@ def test_with_a_place_the_public_point_is_still_rounded_to_about_500_meters(clie
 
 
 def test_the_team_can_publish_a_story_without_a_place_too(client, db, admin):
-    code = team_story(client, admin, **no_place(sector_id="tijereras")).json()["codigo"]
+    code = team_story(client, admin, **no_place(sector_id="la-tigrera")).json()["codigo"]
 
     stored = db.historias.find_one({"codigo": code})
     assert "ubicacion" not in stored and stored["sector_id"] is None

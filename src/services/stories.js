@@ -57,12 +57,13 @@ export function buildStoryPayload(draft, medios) {
     ...(draft.finca ? { finca_nombre: draft.finca } : {}),
     anonima: Boolean(draft.anonima),
     ...(draft.consentimiento ? { consentimiento: consentPayload(draft.consentimiento) } : {}),
-    medios: medios.map(({ tipo, url, mime, bytes, duracion_s: duracion }) => ({
+    medios: medios.map(({ tipo, url, mime, bytes, duracion_s: duracion, leyenda }) => ({
       tipo,
       url,
       ...(mime != null ? { mime } : {}),
       ...(bytes != null ? { bytes } : {}),
       ...(duracion != null ? { duracion_s: duracion } : {}),
+      ...(leyenda ? { leyenda } : {}),
     })),
   }
 }

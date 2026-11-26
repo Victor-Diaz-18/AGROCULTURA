@@ -23,7 +23,7 @@ describe('LocationPicker (F3, F1)', () => {
     for (const name of ['Minca', 'La Tagua', 'San Lorenzo']) {
       expect(screen.getByRole('button', { name })).toBeInTheDocument()
     }
-    expect(screen.queryByRole('button', { name: 'Tijereras' })).not.toBeInTheDocument() // it would put the story on a made-up place
+    expect(screen.queryByRole('button', { name: 'La Tigrera' })).not.toBeInTheDocument() // it would put the story on a made-up place
     expect(screen.getByRole('application', { name: 'Mapa para elegir dónde ocurrió' })).toBeInTheDocument()
   })
 
